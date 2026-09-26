@@ -5,6 +5,7 @@ import * as engine from '../index.js'
 const CONTRACT = [
   'effectiveDusk', 'computeEffectiveDusk', 'cloudShiftMinutes',
   'eveningDate', 'episodeStartFromTime', 'localDateString',
+  'findCity',
   'moonriseStart', 'onsetMinutes',
   'eraYears', 'eraSongs', 'songScore', 'playlist', 'findSong', 'spotifySearchUrl', 'youtubeSearchUrl',
   'weeklyReport', 'formatOnset',
