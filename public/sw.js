@@ -1,49 +1,60 @@
 // Moonrise service worker: makes the app open with no signal after one online visit.
 //
-// What it caches: ONLY this app's static shell (the start page plus the same-origin files it
-// references: Vite's hashed JS/CSS, the manifest and the icon). Never API responses, never
-// cross-origin requests, never non-GET requests; those go straight to the network untouched.
+// WHAT IS CACHED (positive list only):
+//   - The "shell" of the current build: the start page plus every same-origin file its HTML
+//     references (Vite's hashed JS/CSS, the manifest, the icon).
+//   - Files under the build's assets/ folder that are only reached from JS/CSS (e.g. lazy
+//     chunks), and only for script/style/image/font requests.
+// NEVER CACHED: fetch()/XHR requests (API calls, same-origin or not), cross-origin requests,
+// non-GET requests, and anything outside the app's scope. fetch()/XHR requests are not
+// intercepted at all.
 //
-// Vite hashes bundle names, so nothing here hardcodes them. After each online load of the
-// start page, the worker reads that HTML, collects the files it references, and stores the
-// whole set in a cache named after a hash of the HTML ("one cache per build").
+// HOW A BUILD'S SHELL IS SAVED (commit protocol):
+//   1. Fetch the start page. The shell cache is named after a hash of its HTML, so every
+//      Vite build (new hashed file names -> new HTML) gets its own cache.
+//   2. Download the HTML and every referenced file into that cache.
+//   3. Check every file is really there.
+//   4. Only then write the "committed shell" pointer (in moonrise-meta). This is the LAST write.
+//   5. Delete the other shell caches.
+// Pages are only ever served from the committed shell. A half-downloaded build (network drop,
+// failed write, worker stopped mid-way) is never used and is rebuilt from scratch next time.
+// Shell builds run one at a time.
 //
-// Update strategy:
-//   - Start page: network first (4 s timeout), cached copy when offline.
-//   - A new build's shell is cached completely (all-or-nothing) BEFORE the previous shell is
-//     deleted, so an offline reload never mixes one build's HTML with another build's assets.
-//   - Hashed assets: cache first (their names change whenever their content does).
-//   - SW_VERSION: bump only when this file's logic changes; activation deletes every cache
-//     from older logic versions.
-//   - No shell cached yet (first visit offline, or the first caching failed): the start page
-//     shows a short "connect once" message instead of a browser error.
+// UPDATES:
+//   - Start page: network first (4 s timeout); the committed shell's copy when offline.
+//   - A new build replaces the committed shell only after it is complete (steps 1-5).
+//   - Worker logic changes (bump SW_VERSION): the new worker's install must commit a complete
+//     shell first. If it can't (e.g. offline), install fails, the browser keeps the old worker,
+//     and the old committed shell is untouched. Old caches are removed only on activate,
+//     which only happens after a successful install.
+//   - No committed shell (first visit was offline, or site data was cleared): the start page
+//     is a short "connect once" page (HTTP 503) instead of a browser error.
 
-const SW_VERSION = 'v1'
-const SHELL_PREFIX = `moonrise-shell-${SW_VERSION}-`
-// A shell being downloaded lives here until complete; it never matches SHELL_PREFIX,
-// so a half-downloaded build is never served.
-const BUILDING_PREFIX = `moonrise-building-${SW_VERSION}-`
-const RUNTIME_CACHE = `moonrise-runtime-${SW_VERSION}`
+const SW_VERSION = 'v2'
+const SHELL_PREFIX = 'moonrise-shell-' // not versioned: a committed shell survives worker updates
+const META_CACHE = 'moonrise-meta'
+const RUNTIME_CACHE = `moonrise-assets-${SW_VERSION}`
 const NAV_TIMEOUT_MS = 4000
+const STATIC_DESTINATIONS = new Set(['script', 'style', 'image', 'font', 'manifest'])
 
 const SCOPE = self.registration.scope // e.g. https://host/ or https://host/moonrise/
 const START_URL = new URL('./', SCOPE).href
 const SELF_URL = new URL('sw.js', SCOPE).href
+const ASSET_DIR = new URL('assets/', SCOPE).href
+const POINTER_URL = new URL('__moonrise_committed_shell__', SCOPE).href
 
 self.addEventListener('install', (event) => {
-  // Try to cache the shell right away; if we're offline, the next online load will.
-  event.waitUntil(cacheShell().catch(() => {}).then(() => self.skipWaiting()))
+  // Must succeed; otherwise the browser keeps the previous worker and its shell.
+  event.waitUntil(cacheShell().then(() => self.skipWaiting()))
 })
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
+      const committed = await readPointer()
+      const keep = new Set([META_CACHE, RUNTIME_CACHE, committed?.name])
       const keys = await caches.keys()
-      await Promise.all(
-        keys
-          .filter((k) => k.startsWith('moonrise-') && !k.startsWith(SHELL_PREFIX) && k !== RUNTIME_CACHE)
-          .map((k) => caches.delete(k))
-      )
+      await Promise.all(keys.filter((k) => k.startsWith('moonrise-') && !keep.has(k)).map((k) => caches.delete(k)))
       await self.clients.claim()
     })()
   )
@@ -52,15 +63,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request
   if (req.method !== 'GET') return
-  const url = new URL(req.url)
-  if (url.origin !== self.location.origin || !req.url.startsWith(SCOPE)) return
-  if (req.url === SELF_URL) return
+  if (!req.url.startsWith(SCOPE) || new URL(req.url).origin !== self.location.origin) return
+  if (req.url === SELF_URL || req.url === POINTER_URL) return
 
   if (req.mode === 'navigate') {
     event.respondWith(navigate(event))
-  } else {
-    event.respondWith(cacheFirst(req))
+    return
   }
+  // fetch()/XHR (destination '') and anything that isn't a static file: not intercepted.
+  if (!STATIC_DESTINATIONS.has(req.destination)) return
+  event.respondWith(staticFile(req))
 })
 
 async function navigate(event) {
@@ -69,58 +81,90 @@ async function navigate(event) {
     if (res.ok) event.waitUntil(cacheShell().catch(() => {}))
     return res
   } catch {
-    const cached = await matchShell(START_URL)
-    return cached ?? offlinePage()
+    return (await matchShell(START_URL)) ?? offlinePage()
   }
 }
 
-async function cacheFirst(req) {
-  const hit = (await matchShell(req.url)) ?? (await caches.match(req, { cacheName: RUNTIME_CACHE }))
+async function staticFile(req) {
+  const fromShell = await matchShell(req.url)
+  if (fromShell) return fromShell
+  if (!req.url.startsWith(ASSET_DIR)) return fetch(req) // passed through, never cached
+
+  const hit = await caches.match(req.url, { cacheName: RUNTIME_CACHE })
   if (hit) return hit
   const res = await fetch(req)
-  // Files only reached from JS/CSS (e.g. lazy chunks) are kept too, same origin only.
   if (res.ok && res.type === 'basic') {
     const cache = await caches.open(RUNTIME_CACHE)
-    cache.put(req, res.clone())
+    await cache.put(req.url, res.clone())
   }
   return res
 }
 
-// Look only in the current shell cache(s), so a half-built new shell is never used.
-async function matchShell(url) {
-  const keys = (await caches.keys()).filter((k) => k.startsWith(SHELL_PREFIX))
-  for (const key of keys) {
-    const cache = await caches.open(key)
-    const hit = await cache.match(url)
-    if (hit) return hit
+// ---- Committed shell -------------------------------------------------------------------
+
+async function readPointer() {
+  const res = await caches.match(POINTER_URL, { cacheName: META_CACHE })
+  if (!res) return null
+  try {
+    const pointer = await res.json()
+    return typeof pointer?.name === 'string' && Array.isArray(pointer.urls) ? pointer : null
+  } catch {
+    return null
   }
-  return undefined
 }
 
-// Fetch the start page, and if it's a build we haven't cached, cache it with every
-// same-origin file it references. Only then delete older shells.
-async function cacheShell() {
+async function writePointer(pointer) {
+  const meta = await caches.open(META_CACHE)
+  await meta.put(POINTER_URL, new Response(JSON.stringify(pointer), { headers: { 'Content-Type': 'application/json' } }))
+}
+
+async function isComplete(pointer) {
+  if (!pointer || !(await caches.has(pointer.name))) return false
+  for (const url of pointer.urls) {
+    if (!(await caches.match(url, { cacheName: pointer.name }))) return false
+  }
+  return true
+}
+
+// Only ever reads the committed shell, and only URLs that belong to it.
+async function matchShell(url) {
+  const pointer = await readPointer()
+  if (!pointer || !pointer.urls.includes(url)) return undefined
+  return caches.match(url, { cacheName: pointer.name })
+}
+
+// One shell build at a time.
+let shellQueue = Promise.resolve()
+function cacheShell() {
+  const run = shellQueue.then(buildShell)
+  shellQueue = run.catch(() => {})
+  return run
+}
+
+async function buildShell() {
   const res = await fetch(START_URL, { cache: 'no-store' })
   if (!res.ok) throw new Error(`start page HTTP ${res.status}`)
   const html = await res.clone().text()
   const name = SHELL_PREFIX + (await shortHash(html))
-  const keys = await caches.keys()
-  if (keys.includes(name)) return
+  const pointer = { name, urls: [START_URL, ...referencedFiles(html)], builtAt: new Date().toISOString() }
 
-  const assets = referencedFiles(html)
-  const buildingName = BUILDING_PREFIX + name.slice(SHELL_PREFIX.length)
-  const temp = await caches.open(buildingName)
+  const committed = await readPointer()
+  if (committed?.name === name && (await isComplete(committed))) return
+
+  // Anything already stored under this name is uncommitted (or broken): start clean.
+  await caches.delete(name)
   try {
-    await temp.addAll(assets)
+    const cache = await caches.open(name)
+    await cache.addAll(pointer.urls.slice(1))
+    await cache.put(START_URL, res)
+    if (!(await isComplete(pointer))) throw new Error('shell incomplete after download')
   } catch (err) {
-    await caches.delete(buildingName)
+    await caches.delete(name)
     throw err
   }
-  const shell = await caches.open(name)
-  await shell.put(START_URL, res)
-  for (const req of await temp.keys()) await shell.put(req, await temp.match(req))
-  await caches.delete(buildingName)
 
+  await writePointer(pointer) // commit: the last write
+  const keys = await caches.keys()
   await Promise.all(keys.filter((k) => k.startsWith(SHELL_PREFIX) && k !== name).map((k) => caches.delete(k)))
 }
 
@@ -135,6 +179,8 @@ function referencedFiles(html) {
   }
   return [...found]
 }
+
+// ---- Helpers ---------------------------------------------------------------------------
 
 async function shortHash(text) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))

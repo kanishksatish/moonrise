@@ -25,6 +25,17 @@ const P = fs.mkdtempSync(path.join(os.tmpdir(), 'moonrise-offline-'))
     html = html.replace(f, renamed)
   }
   fs.writeFileSync(`${P}/buildB/index.html`, html)
+  // Build C: a bad deploy. New worker code (forces an update), new asset names, CSS file missing.
+  execSync(`cp -r ${P}/buildB ${P}/buildC`)
+  let htmlC = fs.readFileSync(`${P}/buildC/index.html`, 'utf8').replace('Moonrise B', 'Moonrise C')
+  for (const f of fs.readdirSync(`${P}/buildC/assets`)) {
+    const renamed = f.replace(/\.(js|css)$/, 'c.$1')
+    fs.renameSync(`${P}/buildC/assets/${f}`, `${P}/buildC/assets/${renamed}`)
+    htmlC = htmlC.replace(f, renamed)
+    if (renamed.endsWith('.css')) fs.rmSync(`${P}/buildC/assets/${renamed}`)
+  }
+  fs.writeFileSync(`${P}/buildC/index.html`, htmlC)
+  fs.appendFileSync(`${P}/buildC/sw.js`, '\n// build C\n')
 }
 const { chromium } = require('playwright')
 const { execSync, spawn } = require('child_process')
@@ -80,10 +91,15 @@ async function scenario(browser, { base, port, dir, label, root }) {
   // 1. First online load of build A registers the worker and caches the shell.
   await page.goto(start)
   await page.getByText('Welcome to Moonrise').waitFor()
+  // Ready = a committed shell (pointer written last) with every one of its files present.
   const shellHasStart = async () =>
-    page.evaluate(async (start) => {
-      const keys = (await caches.keys()).filter((k) => k.startsWith('moonrise-shell-'))
-      return keys.length === 1 && !!(await (await caches.open(keys[0])).match(start))
+    page.evaluate(async (scope) => {
+      const res = await caches.match(scope + '__moonrise_committed_shell__', { cacheName: 'moonrise-meta' })
+      if (!res) return false
+      const pointer = await res.json()
+      for (const url of pointer.urls) if (!(await caches.match(url, { cacheName: pointer.name }))) return false
+      const shells = (await caches.keys()).filter((k) => k.startsWith('moonrise-shell-'))
+      return shells.length === 1 && shells[0] === pointer.name
     }, start)
   const cachedA = await waitFor(shellHasStart)
   const keysA = await shellCaches(page)
@@ -140,6 +156,41 @@ async function scenario(browser, { base, port, dir, label, root }) {
     check('update: offline page uses build B assets', scripts.includes('b.js'), scripts)
     await online(port, root)
 
+    // 3b. A bad deploy (new worker + a missing asset) must not replace the last good shell.
+    const committedBefore = await shellCaches(page)
+    deploy('buildC', dir)
+    // Trigger the update check and record what happens to the new worker.
+    const attempt = await page.evaluate(async () => {
+      const reg = await navigator.serviceWorker.getRegistration()
+      const seen = new Promise((resolve) => {
+        reg.addEventListener('updatefound', () => {
+          const w = reg.installing
+          w.addEventListener('statechange', () => {
+            if (w.state === 'redundant' || w.state === 'installed' || w.state === 'activated') resolve(w.state)
+          })
+        })
+        setTimeout(() => resolve('no update found'), 8000)
+      })
+      try {
+        await reg.update()
+      } catch (e) {
+        // update() rejects when the new worker's install fails; the statechange tells us why.
+      }
+      return seen
+    })
+    check('bad deploy: new worker was tried and rejected (redundant)', attempt === 'redundant', attempt)
+    const regState = await page.evaluate(async () => {
+      const reg = await navigator.serviceWorker.getRegistration()
+      return { waiting: !!reg.waiting, installing: !!reg.installing, active: !!reg.active }
+    })
+    check('bad deploy: new worker install fails, old worker stays active', !regState.waiting && regState.active, JSON.stringify(regState))
+    check('bad deploy: committed shell unchanged', JSON.stringify(await shellCaches(page)) === JSON.stringify(committedBefore), (await shellCaches(page)).join(','))
+    await offline(port)
+    await page.reload()
+    check('bad deploy: offline reload still renders build B', (await page.getByText('Welcome to Moonrise').isVisible()) && (await page.title()) === 'Moonrise B', await page.title())
+    await online(port, root)
+    deploy('buildB', dir)
+
     // 4. Worker installed but no shell cached (e.g. the first caching failed).
     await page.evaluate(async () => Promise.all((await caches.keys()).map((k) => caches.delete(k))))
     await offline(port)
@@ -154,9 +205,9 @@ async function scenario(browser, { base, port, dir, label, root }) {
     check('no shell yet: next online load re-caches the shell', recached)
   }
 
-  const unexpected = failed.filter((f) => !f.includes('sw.js') || !f.startsWith('4'))
-  check(`${label}: no failed same-origin asset requests`, unexpected.length === 0 ||
-    unexpected.every((u) => u.startsWith('503')), unexpected.join(', '))
+  // The only expected failure is the deliberate 503 "connect once" page.
+  const unexpected = failed.filter((f) => !f.startsWith('503 '))
+  check(`${label}: no failed same-origin asset requests`, unexpected.length === 0, unexpected.join(', '))
   await ctx.close()
 }
 
