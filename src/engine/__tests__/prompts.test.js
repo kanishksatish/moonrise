@@ -44,6 +44,22 @@ describe('memoryPrompts', () => {
   })
 })
 
+describe('prompt variety', () => {
+  it('never repeats a prompt and gives a long session plenty to rotate through', () => {
+    const p = memoryPrompts({ birthYear: 1942, anchors: { hometown: 'Dayton', spouse: 'Frank', job: 'nurse' } })
+    expect(new Set(p).size).toBe(p.length)
+    expect(p.length).toBeGreaterThanOrEqual(20) // 20 x 3 min = an hour without repeating
+  })
+  it('gates the 1957 satellite prompt by age like other era events', () => {
+    const sat = 'Do you remember when the first satellite crossed the night sky in 1957?'
+    expect(memoryPrompts({ birthYear: 1942 })).toContain(sat)
+    expect(memoryPrompts({ birthYear: 1952 })).not.toContain(sat)
+  })
+  it('still works with no profile at all', () => {
+    expect(memoryPrompts().length).toBeGreaterThanOrEqual(10)
+  })
+})
+
 describe('promptAt', () => {
   const prompts = ['a', 'b', 'c']
   it('rotates every 3 minutes by default and wraps', () => {
