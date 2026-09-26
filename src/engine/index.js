@@ -18,4 +18,15 @@ export { weeklyReport, formatOnset } from './report.js'
 export { moonPhase, skyState, skyGradient } from './moon.js'
 export { memoryPrompts, promptAt } from './prompts.js'
 export { generateDemoWeek } from './demo.js'
-export { loadState, saveState, addLog, addDemoLogs, clearDemoLogs, emptyState } from './storage.js'
+export {
+  loadState,
+  saveState,
+  addLog,
+  addDemoLogs,
+  clearDemoLogs,
+  emptyState,
+  loadAiKey,
+  saveAiKey,
+  clearAiKey,
+} from './storage.js'
+export { generateMemoryPrompts, AiPromptError, AI_MODEL } from './ai.js'

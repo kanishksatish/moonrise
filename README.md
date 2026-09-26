@@ -47,6 +47,12 @@ caregiver's own logs). Nothing is hardcoded.
   and Moonrise can't confirm it was actually played. Each song scores +1 per calm evening and
   −1 per episode evening it was opened on. The best-scoring songs are suggested first, in
   random order among ties. Moonrise doesn't host audio.
+- **AI-written memory prompts (optional).** In Settings, a caregiver can add their own
+  Anthropic API key and tap Generate. Claude (`claude-opus-5`) then drafts a few gentle,
+  personal memory prompts from the person's birth year and the optional anchors (hometown,
+  spouse's first name, job). The caregiver reviews them and approves the ones they like;
+  only approved prompts appear in Moonrise mode, alongside the built-in templates. Prompts
+  about loss, illness or conflict are steered away from and filtered out.
 - **Evenings after midnight.** Anything logged before 4 AM counts toward the previous
   evening, so late-night logs land on the right day.
 
@@ -59,9 +65,13 @@ logs are clearly labelled and can be removed in one tap. Real evenings are never
 ## Privacy
 
 Everything stays on the device, in the browser's local storage. There is no server and
-no login. The only network calls are the weather and city lookups (Open-Meteo, which
-receives coordinates or a city name) and the song search links the caregiver chooses
-to open.
+no login. The network calls are the weather and city lookups (Open-Meteo, which receives
+coordinates or a city name), the song search links the caregiver chooses to open, and,
+only if the caregiver sets up AI prompts and taps Generate, one request to the Anthropic
+API with the birth year and the three optional anchors (never the person's name, location
+or logs). The API key is stored only on that device, separately from the app data.
+Because the browser calls the API directly, this is a prototype setup; a public release
+would route the request through a small server that holds the key.
 
 ## Run it
 
@@ -97,6 +107,7 @@ to the moon") by two people working with two AI coding agents: Claude Code on th
 integrations, and Codex on the UI. The agents coordinated through a GitHub issue. The two
 illustrations (a night lake and a lunar-surface texture) are original images generated with
 Higgsfield; `DESIGN.md` records the prompts, job IDs and where they're used. The moon's
-phase on screen is computed live, and the artwork is decorative. The app itself runs no AI
-model: its estimates are the rules described above, and its memory prompts come from
-templates filled with the caregiver's answers.
+phase on screen is computed live, and the artwork is decorative. At runtime, the only AI is
+the optional caregiver-reviewed memory prompts (Claude, via the Anthropic API). The dusk
+estimate, start time, song ranking and built-in prompts are the rules and templates
+described above, not a model.

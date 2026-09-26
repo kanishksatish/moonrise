@@ -161,3 +161,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - README now discloses how it was built (two AI coding agents), the Higgsfield artwork (see DESIGN.md), the outcome-neutral constellation, and that the app runs no AI model at runtime.
 - DEMO.md steps updated for the redesign ("Your evening begins at", "Tonight's sky · estimated dusk", constellation).
 - Open question for Kanishk: the hackathon page reportedly lists "a working AI-powered project"; the app has no runtime AI.
+
+## 2026-09-26 03:29 UTC — Claude — runtime AI: caregiver-reviewed memory prompts (engine side)
+- Kanishk asked to add runtime AI now (hackathon lists "a working AI-powered project"). Key stays on the device (pasted in Settings); cheapest option, no hosting.
+- New `src/engine/ai.js`: `generateMemoryPrompts(profile, { apiKey, existing?, count? }) -> Promise<string[]>`, rejects with `AiPromptError` (`.code`: no_key | bad_key | rate_limited | offline | refused | bad_output | service). Official @anthropic-ai/sdk, loaded lazily (not in the startup bundle/offline shell), `claude-opus-5`, effort low, Zod structured output, server-side refusal fallback. Sends only birth year/era + non-blank anchors; never the name, location or logs. Output cleaned (length, dupes, upsetting topics) before caregiver review.
+- `memoryPrompts(profile, { song, approved })`: approved prompts come right after the song prompt, deduped. `state.approvedPrompts` cleaned on load. Key: `loadAiKey/saveAiKey/clearAiKey` under its own localStorage key, never in app state.
+- Verified: 163 tests; a live call with a fake key reaches the API and maps to bad_key (Node). In headless Chromium the SDK loads and sends the browser-access header, but the sandbox proxy's certificate isn't trusted by Chromium, so browser->API is unverified here.
+- UI needed (Codex): Settings key field + Generate + review/approve list; pass approvedPrompts to memoryPrompts.

@@ -38,7 +38,9 @@ function clean(value) {
 
 // profile: { name, birthYear, anchors: { hometown, spouse, job } }
 // Returns an array of prompt strings, most personal first.
-export function memoryPrompts(profile = {}, { song = null } = {}) {
+// `approved`: caregiver-approved prompts (e.g. AI-drafted ones, see ai.js). They come right
+// after the song prompt, before the templated ones. Duplicates are removed.
+export function memoryPrompts(profile = {}, { song = null, approved = [] } = {}) {
   const prompts = []
   const anchors = profile.anchors ?? {}
   const hometown = clean(anchors.hometown)
@@ -46,6 +48,9 @@ export function memoryPrompts(profile = {}, { song = null } = {}) {
   const job = clean(anchors.job)
 
   if (song) prompts.push(`Do you remember "${song.title}" by ${song.artist}?`)
+  for (const text of Array.isArray(approved) ? approved : []) {
+    if (typeof text === 'string' && text.trim()) prompts.push(text.trim())
+  }
 
   if (hometown) {
     prompts.push(`Tell me about ${hometown} when you were young.`)
@@ -74,7 +79,7 @@ export function memoryPrompts(profile = {}, { song = null } = {}) {
   }
 
   prompts.push(...GENERAL)
-  return prompts
+  return [...new Set(prompts)]
 }
 
 // Which prompt to show after elapsedMs of Moonrise mode, rotating every few minutes.

@@ -101,8 +101,9 @@ which is why the dusk footage is a recording of a real evening run.
 
 - ✅ "Helps caregivers plan ahead for evening agitation." "Caregiver support." "Estimated
   dusk", "suggested start time", "songs linked with calmer evenings".
-- ❌ "Knows when it gets dark", "learns which songs help", "AI-powered" (the app runs no AI
-  model; AI was used to build it and to make two illustrations).
+- ❌ "Knows when it gets dark", "learns which songs help", or calling the dusk estimate or
+  song ranking "AI" (they're rules). The AI part is the optional caregiver-reviewed memory
+  prompts written by Claude.
 - ❌ "Treats", "prevents", "reduces sundowning", or any clinical outcome claim. Moonrise
   makes no medical claims.
 - ✅ "All data stays on the tablet. No account, no server."
