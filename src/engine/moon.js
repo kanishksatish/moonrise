@@ -40,10 +40,12 @@ export function darknessFromAltitude(altitudeDegrees) {
   return Math.min(1, Math.max(0, t))
 }
 
-// Sky gradient stops: day blue -> dusk (purple over orange) -> night navy.
+// Sky gradient stops: day blue -> dusk (purple over deep orange) -> night navy.
+// Chosen so white text has at least 4.5:1 contrast (WCAG AA) on every color the gradient
+// passes through, top and bottom, so text laid directly on the sky stays readable.
 const SKY_STOPS = [
-  { at: 0, top: '#4a90d9', bottom: '#bcdcf5' },
-  { at: 0.5, top: '#3b3a78', bottom: '#f28c50' },
+  { at: 0, top: '#2b64a8', bottom: '#3f78b8' },
+  { at: 0.5, top: '#3b3a78', bottom: '#a4522a' },
   { at: 1, top: '#0b1030', bottom: '#26204a' },
 ]
 
