@@ -20,7 +20,7 @@
   .btn.primary:hover, .btn.play:hover { background: #ffe7b9; box-shadow: 0 6px 35px #c39b4520; }
   .btn:focus-visible, .nav-btn:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
   .sky-card { position: relative; isolation: isolate; border-radius: 28px 28px 0 0; border: 1px solid #7f96b23b; border-bottom: 0; padding: 32px 36px 28px; overflow: hidden; }
-  .sky-card::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(#07111a26, #07111a33), url('../assets/night-lake.webp') center / cover; }
+  .sky-card::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(#07111a55, #07111a55), url('../assets/night-lake.webp') center / cover; }
   .sky-row { align-items: center; min-height: 250px; gap: 30px; }
   .big-number { font-family: Georgia, serif; font-weight: 400; font-size: clamp(50px, 8vw, 84px); letter-spacing: -3px; margin: 12px 0 8px; }
   .label { font-weight: 400; color: #e4d8c2; }
@@ -89,7 +89,7 @@
   .moonrise-content { padding: 80px 32px 32px; min-height: 100dvh; max-width: 1440px; margin: auto; justify-content: center; gap: 18px; }
   .moonrise .finish { background: #0b1425f5; right: max(20px, env(safe-area-inset-right)); }
   .fullscreen-toggle { position: absolute; top: 16px; left: 20px; z-index: 2; background: #0b1425f5; }
-  .session-sky { position: relative; height: 280px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border-radius: 32px; background: url('../assets/night-lake.webp') center / cover; box-shadow: inset 0 0 70px #090f1e77; }
+  .session-sky { position: relative; height: 280px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; border-radius: 32px; background: linear-gradient(#07111a55, #07111a55), url('../assets/night-lake.webp') center / cover; box-shadow: inset 0 0 70px #090f1e77; }
   .session-moon { position: relative; z-index: 1; transition: transform 10s linear; }
   .session-moon .moon-icon { width: 175px; height: 175px; filter: drop-shadow(0 0 60px #fff0c84a); }
   .session-orbit { width: 700px; height: 300px; border: 1px solid #ecddb542; border-radius: 50%; position: absolute; top: 74%; background: radial-gradient(ellipse at 50% 0%, #d3ad6440, transparent 60%); }
