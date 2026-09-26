@@ -239,3 +239,7 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - 245 tests pass across 20 files with one worker at a time; the 42 worker tests now exercise inert-template discovery plus the existing offline audio boundaries. Root and /moonrise/ builds pass, and DOM checks confirm the inert reference matches the player bundle and emitted 3,499,346-byte recording in both. Normal dist remains the root build. No browser, server or media-render process was started for this fix; a fresh browser offline-network audit remains for Claude.
 ## 2026-09-26 05:16 UTC — Claude — wording matches final music behaviour
 - evidenceText now reads "Played in the app on N logged evenings: …" (songs are recorded only on an observed in-app PLAYING event; piano/local files never). Milestone 'first-song' titled "First song played in the app". METHODOLOGY/README updated. Not yet shown by any screen. 244 tests.
+
+## 2026-09-26 05:56 UTC — Claude — SUBMISSION.md + deploy blocker
+- Added SUBMISSION.md: paste-ready Devpost text with required disclosures (no patient testing/clinical validation; rules not predictions; AI-built; generated fictional promo; TIHM boundary; CC0 piano).
+- Pages deploy on 87e710e failed again (404): the repository is PRIVATE, and GitHub Pages on a free plan needs a public repo (or Pro). History scanned: no secrets (96 commits; only fake test keys), no media besides the CC0 piano. Making it public exposes commit author emails/hostnames.
