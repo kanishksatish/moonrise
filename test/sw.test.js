@@ -438,11 +438,11 @@ describe('base path', () => {
 // Includes bytes that are not valid UTF-8, so a text-based cache fake would fail.
 const AUDIO_BYTES = new Uint8Array([73, 68, 51, 0, 255, 128, 1, 254, 7, 0, 192, 175, 250, 21, 22, 23])
 const audioPath = tag => `/assets/fur-elise-v-gao-${tag}.mp3`
-function audioBuild(tag) {
+function audioBuild(tag, contentType = 'audio/mpeg') {
   const files = build(tag)
   files['/'] = files['/'].replace('</head>', `<template id="offline-audio-assets"><audio src="${audioPath(tag)}"></audio></template></head>`)
   files[audioPath(tag)] = new Response(AUDIO_BYTES, {
-    headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(AUDIO_BYTES.length), ETag: '"piano-v1"' },
+    headers: { 'Content-Type': contentType, 'Content-Length': String(AUDIO_BYTES.length), ETag: '"piano-v1"' },
   })
   return files
 }
@@ -539,7 +539,7 @@ describe('bundled piano offline playback', () => {
   })
 })
 
-describe('bundled piano update failures', () => {
+describe.each(['audio/mpeg', 'audio/mp3'])('bundled piano update failures (%s)', contentType => {
   it.each(['missing', 'partial', 'html', 'empty', 'content-range', 'quota'])('keeps the old complete shell after %s audio failure', async failure => {
     server.deploy(audioBuild('A'))
     const sw = loadWorker(caches, server)
@@ -547,10 +547,10 @@ describe('bundled piano update failures', () => {
     const previous = await committed(caches)
     const next = audioBuild('B')
     if (failure === 'missing') delete next[audioPath('B')]
-    if (failure === 'partial') next[audioPath('B')] = new Response(AUDIO_BYTES.slice(0, 2), { status: 206, headers: { 'Content-Type': 'audio/mpeg' } })
+    if (failure === 'partial') next[audioPath('B')] = new Response(AUDIO_BYTES.slice(0, 2), { status: 206, headers: { 'Content-Type': contentType } })
     if (failure === 'html') next[audioPath('B')] = new Response('<html>Fallback</html>', { headers: { 'Content-Type': 'text/html' } })
-    if (failure === 'empty') next[audioPath('B')] = new Response(null, { headers: { 'Content-Type': 'audio/mpeg' } })
-    if (failure === 'content-range') next[audioPath('B')] = new Response(AUDIO_BYTES.slice(0, 2), { headers: { 'Content-Type': 'audio/mpeg', 'Content-Range': 'bytes 0-1/16' } })
+    if (failure === 'empty') next[audioPath('B')] = new Response(null, { headers: { 'Content-Type': contentType } })
+    if (failure === 'content-range') next[audioPath('B')] = new Response(AUDIO_BYTES.slice(0, 2), { headers: { 'Content-Type': contentType, 'Content-Range': 'bytes 0-1/16' } })
     if (failure === 'quota') caches.faults.beforePut = (_name, url) => { if (url.endsWith(audioPath('B'))) throw new Error('Audio quota exceeded') }
     server.deploy(next)
     await expect(sw.install()).rejects.toThrow()
@@ -561,9 +561,20 @@ describe('bundled piano update failures', () => {
   })
 })
 
-it('serves the committed piano range offline under a subpath', async () => {
+it.each(['audio/mp3evil', 'audio/mpeg3', 'application/octet-stream'])('rejects an unrelated or malformed audio MIME %s without replacing the shell', async contentType => {
+  server.deploy(audioBuild('A'))
+  const sw = loadWorker(caches, server)
+  await sw.install()
+  const previous = await committed(caches)
+  server.deploy(audioBuild('B', contentType))
+  await expect(sw.install()).rejects.toThrow('shell incomplete after download')
+  expect(await committed(caches)).toEqual(previous)
+  expect(await shellNames(caches)).toEqual([previous.name])
+})
+
+it.each(['audio/mpeg', 'audio/mp3', 'Audio/MP3; charset=binary'])('installs and activates a subpath shell with %s audio, then serves the app and piano range offline', async contentType => {
   const sub = makeServer()
-  const buildFiles = audioBuild('sub')
+  const buildFiles = audioBuild('sub', contentType)
   sub.files = new Map(Object.entries(buildFiles).map(([path, value]) => [
     `${ORIGIN}/moonrise${path}`,
     path === '/' ? value.replaceAll('"/', '"/moonrise/') : value,
@@ -571,9 +582,19 @@ it('serves the committed piano range offline under a subpath', async () => {
   const subCaches = new FakeCacheStorage(sub.fetch)
   const sw = loadWorker(subCaches, sub, `${ORIGIN}/moonrise/`)
   await sw.install()
+  await sw.activate()
   sub.down = true
+  const page = await sw.navigate('/moonrise/')
+  expect(page.status).toBe(200)
+  expect(page.text).toContain('/moonrise/assets/index-sub.js')
+  const full = await sw.request(`/moonrise${audioPath('sub')}`, { destination: 'audio' })
+  expect(full.status).toBe(200)
+  expect(full.bytes).toEqual(AUDIO_BYTES)
+  expect(full.response.headers.get('Content-Type')).toBe(contentType)
   const reply = await sw.request(`/moonrise${audioPath('sub')}`, { destination: 'audio', headers: { Range: 'bytes=2-6' } })
   expect(reply.status).toBe(206)
   expect(reply.bytes).toEqual(AUDIO_BYTES.slice(2, 7))
+  expect(reply.response.headers.get('Content-Range')).toBe('bytes 2-6/16')
+  expect(reply.response.headers.get('Content-Type')).toBe(contentType)
   expect((await sw.request(audioPath('sub'), { destination: 'audio' })).intercepted).toBe(false)
 })

@@ -33,7 +33,7 @@
 //   - No committed shell (first visit was offline, or site data was cleared): the start page
 //     is a short "connect once" page (HTTP 503) instead of a browser error.
 
-const SW_VERSION = 'v3'
+const SW_VERSION = 'v4'
 const SHELL_PREFIX = 'moonrise-shell-' // not versioned: a committed shell survives worker updates
 const META_CACHE = 'moonrise-meta'
 const RUNTIME_CACHE = `moonrise-assets-${SW_VERSION}`
@@ -185,7 +185,8 @@ async function isComplete(pointer) {
     if (isBundledPiano(url)) {
       // A static host may return its HTML fallback with status 200 for a missing
       // MP3. Do not commit that, a partial response, or an empty audio response.
-      if (res.status !== 200 || res.headers.has('Content-Range') || !/^audio\/mpeg(?:;|$)/i.test(res.headers.get('Content-Type') || '')) return false
+      // GitHub Pages serves this MP3 as audio/mp3 rather than audio/mpeg.
+      if (res.status !== 200 || res.headers.has('Content-Range') || !/^audio\/(?:mpeg|mp3)(?:;|$)/i.test(res.headers.get('Content-Type') || '')) return false
       if (!(await res.arrayBuffer()).byteLength) return false
     }
   }
