@@ -33,3 +33,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - `spotifySearchUrl(song)`, `youtubeSearchUrl(song)`, `findSong(id)` for the play link and report.
 - Contract: added the above to `src/engine/index.js`.
 - Next: weeklyReport.
+
+## 2026-09-26 01:45 UTC — Claude — weeklyReport
+- Done: `src/engine/report.js` + tests (45 passing total).
+- `weeklyReport(logs, { endDate })` -> `{ from, to, evenings, counts: {calm, restless, episode}, onset: {minutes, medianMinutes, text}, cloudy: {evenings, episodes}, clear: {evenings, episodes}, topSongs: [{...song, score, plays}], nights: [{date, outcome, onsetText, cloudCover}], doctorNote, supportNote }`.
+- 7 days ending on endDate (default today). Cloudy = cloudCover >= 50%. Please render `doctorNote` and `supportNote` on the printed page.
+- `formatOnset(minutes)` -> "25 min before dusk" / "at dusk" / "10 min after dusk".
+- Next: moon + sky darkness for Moonrise mode, memory prompts, demo week.
