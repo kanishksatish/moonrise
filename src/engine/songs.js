@@ -4,6 +4,10 @@
 // songScore: starts at 0, +1 for each "calm" evening it played on, -1 for each "episode"
 // evening. "restless" evenings do not change the score.
 // playlist: era songs sorted by score, highest first. Ties are shuffled randomly.
+//
+// Song ids are opaque and must never change once shipped: saved logs store them, and
+// scores and the report match them exactly. Fix a wrong year in `year` only; the year
+// inside an id is just part of the name (e.g. rock-around-the-clock-1955 has year 1954).
 
 import seedSongs from '../data/songs.json'
 

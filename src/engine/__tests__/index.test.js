@@ -4,6 +4,7 @@ import * as engine from '../index.js'
 // The UI imports only these. If this list changes, note it in STATUS.md.
 const CONTRACT = [
   'effectiveDusk', 'computeEffectiveDusk', 'cloudShiftMinutes',
+  'eveningDate', 'episodeStartFromTime', 'localDateString',
   'moonriseStart', 'onsetMinutes',
   'eraYears', 'eraSongs', 'songScore', 'playlist', 'findSong', 'spotifySearchUrl', 'youtubeSearchUrl',
   'weeklyReport', 'formatOnset',
