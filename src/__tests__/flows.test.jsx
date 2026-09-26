@@ -78,6 +78,72 @@ it('focuses Today when first setup completes even though the initial screen was 
   expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Today' }))
 })
 
+it('delivers routine reminders from Settings without repeating them when screens change', async () => {
+  const delivered = vi.fn()
+  vi.stubGlobal('Notification', class {
+    static permission = 'granted'
+    static requestPermission = vi.fn().mockResolvedValue('granted')
+    constructor(...args) { delivered(...args) }
+  })
+  vi.setSystemTime(new Date(2026, 8, 26, 18, 15))
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  click('Settings')
+  vi.setSystemTime(new Date(2026, 8, 26, 18, 21))
+  await act(async () => vi.advanceTimersByTime(15000))
+  expect(delivered).toHaveBeenCalledOnce()
+  expect(delivered.mock.calls[0][1].body).toMatch(/starts in/)
+  expect(screen.getByRole('button', { name: 'View routine' })).toBeTruthy()
+  click('Report'); click('Today'); click('Settings')
+  expect(delivered).toHaveBeenCalledOnce()
+  vi.setSystemTime(new Date(2026, 8, 26, 18, 31))
+  await act(async () => vi.advanceTimersByTime(15000))
+  expect(delivered).toHaveBeenCalledTimes(2)
+  expect(delivered.mock.calls[1][1].body).toMatch(/Start Moonrise now/)
+  click('Today')
+  expect(delivered).toHaveBeenCalledTimes(2)
+})
+
+it('keeps a routine reminder visible on other screens when browser notifications are off', async () => {
+  const delivered = vi.fn()
+  vi.stubGlobal('Notification', class {
+    static permission = 'denied'
+    static requestPermission = vi.fn().mockResolvedValue('denied')
+    constructor(...args) { delivered(...args) }
+  })
+  vi.setSystemTime(new Date(2026, 8, 26, 18, 31))
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  click('Report')
+  expect(screen.getByRole('status').textContent).toMatch(/Start Moonrise now/)
+  click('View routine')
+  expect(screen.getByRole('button', { name: 'Start Moonrise now' })).toBeTruthy()
+  expect(delivered).not.toHaveBeenCalled()
+})
+
+it('does not remind during or after an already-started routine, then allows the next evening', async () => {
+  const delivered = vi.fn()
+  vi.stubGlobal('Notification', class {
+    static permission = 'granted'
+    static requestPermission = vi.fn().mockResolvedValue('granted')
+    constructor(...args) { delivered(...args) }
+  })
+  vi.setSystemTime(new Date(2026, 8, 26, 18, 10))
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  click('Start Moonrise now'); click('Skip launch')
+  vi.setSystemTime(new Date(2026, 8, 26, 18, 21))
+  await act(async () => vi.advanceTimersByTime(15000))
+  expect(delivered).not.toHaveBeenCalled()
+  click('Finish'); click('Today')
+  expect(delivered).not.toHaveBeenCalled()
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(saved().logs).toEqual([])
+  vi.setSystemTime(new Date(2026, 8, 27, 18, 21))
+  await act(async () => vi.advanceTimersByTime(15000))
+  expect(delivered).toHaveBeenCalledOnce()
+})
+
 it('keeps a failed note visibly unsaved after navigation and retries the complete state', async () => {
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))

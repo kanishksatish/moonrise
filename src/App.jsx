@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { effectiveDusk, eveningDate, loadState, moonPhase, saveState } from './engine/index.js'
 import { currentSky, eveningKey } from './components/eveningLog.js'
 import useNow from './components/useNow.js'
+import useRoutineReminders from './components/useRoutineReminders.js'
 import NavBar from './components/NavBar.jsx'
 import Brand from './components/Brand.jsx'
 import LaunchSequence from './components/LaunchSequence.jsx'
@@ -21,12 +22,17 @@ function App() {
   const [sky, setSky] = useState(null)
   const [storageError, setStorageError] = useState(false)
   const [storageRetryAvailable, setStorageRetryAvailable] = useState(false)
+  const [startedEvening, setStartedEvening] = useState(null)
   const profile = state.profile
   const now = useNow()
   const evening = eveningKey(now)
   const visibleSky = profile ? currentSky(sky, profile, now) : null
   const screenContent = useRef(null)
   const visibleScreen = !profile || screen === 'setup' ? 'setup' : screen
+  const reminders = useRoutineReminders({
+    now, sky: visibleSky, logs: state.logs,
+    suppressed: visibleScreen === 'setup' || visibleScreen === 'launch' || visibleScreen === 'moonrise' || startedEvening === evening,
+  })
 
   useEffect(() => {
     // Move keyboard/screen-reader entry ahead of the new controls. Background
@@ -115,9 +121,16 @@ function App() {
           <div className="header-note"><span className="status-dot" aria-hidden="true"/>A little calm, every evening.</div>
           <button className="profile-chip" onClick={() => setScreen('settings')} aria-label={`Settings for ${profile.name}`}><span aria-hidden="true">{profile.name.trim().slice(0, 1).toUpperCase()}</span><span className="profile-name">{profile.name}</span></button>
         </header>
+        {screen !== 'today' && reminders.alertText && <div className="alert" role="status">
+          <p>{reminders.alertText}</p>
+          <button className="btn" onClick={() => setScreen('today')}>View routine</button>
+        </div>}
         {storageError && <div className="status" role="alert"><p>This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>{storageRetryAvailable && screen !== 'log' && <button className="btn" onClick={() => update(state)}>Retry saving changes</button>}</div>}
         <main ref={screenContent} tabIndex={-1} aria-label={SCREEN_NAMES[screen]}>
-        {screen === 'today' && <Today state={state} sky={visibleSky} saveError={storageError} onStart={() => setScreen('launch')} onPersonalize={() => setScreen('settings')} />}
+        {screen === 'today' && <Today state={state} sky={visibleSky} saveError={storageError} reminders={reminders} onStart={() => {
+          setStartedEvening(eveningKey())
+          setScreen('launch')
+        }} onPersonalize={() => setScreen('settings')} />}
         {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
         {screen === 'report' && <Report state={state} />}
         {screen === 'settings' && (

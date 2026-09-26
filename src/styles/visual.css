@@ -2,6 +2,7 @@
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 @media screen {
   :root { --bg:#101719; --surface:#182226; --surface-2:#39484a; --text:#f5f0e7; --muted:#bec8c2; --accent:#efc5a3; --accent-text:#24201b; --calm:#bbcdc2; --restless:#d0bf9f; --episode:#c2b2cb; --radius:18px; --hairline:#d4dfce26; --font-editorial:Georgia,'Times New Roman',serif; }
+  :root { background:var(--bg); }
   body { background:radial-gradient(ellipse at 75% -15%,#35433c55,transparent 50%),var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
   h1,h2,h3,p { overflow-wrap:anywhere; }
   h1 { font-family:Georgia,'Times New Roman',serif; font-size:clamp(40px,4.4vw,64px); font-weight:400; letter-spacing:-1.8px; line-height:1.06; }
@@ -9,6 +10,8 @@
   h2 { font-size:28px; font-weight:500; letter-spacing:-.7px; }
   .eyebrow { font-size:20px; line-height:1.4; color:var(--accent); margin:0 0 16px; }
   .screen { width:100%; max-width:1460px; padding:28px 40px 142px; gap:36px; overflow-wrap:anywhere; }
+  /* Route entry targets are not controls; their children retain visible focus. */
+  .screen > main:focus, .setup[tabindex="-1"]:focus { outline:none; }
   .app-header { display:flex; align-items:center; justify-content:space-between; gap:24px; min-height:64px; padding-bottom:24px; border-bottom:1px solid #d3dbc41c; }
   .brand { display:flex; align-items:center; gap:9px; font:34px/1 Georgia,serif; letter-spacing:-1.5px; white-space:nowrap; margin:0; }
   .brand .moon-icon { width:34px; height:34px; filter:none; }

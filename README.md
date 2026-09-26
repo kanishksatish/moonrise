@@ -27,6 +27,8 @@ The hosted app needs no hardware, account or backend. It is a web app (PWA) that
 | Log | Three large observation buttons: **Calm**, **Restless**, **Episode**; optional onset time and explicitly recorded comfort steps. Unknown is distinct from a reported “none.” |
 | Report | A printable weekly care handoff with recorded observations, missingness, onset times and optional comfort steps. Recorded evenings and fictional examples are separate views. Song activity describes logged associations, not benefit or verified historical listening. |
 
+Routine reminders remain active across caregiver screens while the app is open. Each stage is delivered at most once during that open app session, and reminders stop for an evening after the routine begins or a real observation is recorded. Browser notifications require permission; an on-screen reminder also offers a route back to Today. Delivery depends on the browser and device staying available; reloading starts a new reminder session.
+
 The optional record is `log.careContext = { source: 'caregiver', comfortSteps: string[] }`.
 Supported step IDs are `familiar-music`, `conversation`, `quiet-company`,
 `lowered-stimulation`, and `stopped-session`. Missing or invalid context is unrecorded;

@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react'
 import { eveningDate, moonPhase, moonriseStart, skyGradient, skyState } from '../engine/index.js'
 import includedCatalog from '../assets/audio/catalog.json'
 import { formatDuration, formatTime } from '../components/format.js'
@@ -8,66 +7,15 @@ import MoonIcon from '../components/MoonIcon.jsx'
 import Constellation from '../components/Constellation.jsx'
 import '../styles/observatory.css'
 
-const HEADS_UP_MINUTES = 10
-const MINUTE = 60000
-
-// Which alert, if any, should show right now.
-function alertStage(now, start) {
-  const untilStart = start - now
-  if (untilStart <= 0) return 'start'
-  if (untilStart <= HEADS_UP_MINUTES * MINUTE) return 'soon'
-  return null
-}
-
-function notify(text) {
-  try {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Moonrise', { body: text })
-    }
-    navigator.vibrate?.([200, 100, 200])
-  } catch {
-    // Alerts are a bonus; the on-screen banner is always shown.
-  }
-}
-
-export default function Today({ state, sky, saveError = false, onStart, onPersonalize }) {
+export default function Today({ state, sky, saveError = false, onStart, onPersonalize, reminders }) {
   const now = useNow()
-  const firedRef = useRef(new Set())
-  const [permission, setPermission] = useState(() =>
-    'Notification' in window ? Notification.permission : 'unsupported'
-  )
+  const { permission = 'unsupported', askPermission, alertText = null } = reminders ?? {}
   const { profile, logs } = state
 
   const schedule = sky ? moonriseStart(sky.effectiveDusk, logs) : null
-  const stage = schedule ? alertStage(now, schedule.start) : null
-  const duskPassed = sky && now > sky.effectiveDusk
-  const tonightLog = logs.find((l) => l.date === eveningKey(now))
+  const tonightLog = logs.find((l) => l.date === eveningKey(now) && !l.demo)
   const moon = moonPhase(now)
   const gradient = skyGradient(skyState(now, profile.lat, profile.lon).darkness)
-
-  const alertText =
-    stage === 'soon'
-      ? `Moonrise starts in ${formatDuration(schedule.start - now)}. Time to settle in.`
-      : stage === 'start' && !duskPassed
-        ? 'It’s time. Start Moonrise now.'
-        : null
-
-  // Fire each alert once per evening.
-  useEffect(() => {
-    if (!alertText || tonightLog) return
-    const key = `${eveningKey(now)}:${stage}`
-    if (firedRef.current.has(key)) return
-    firedRef.current.add(key)
-    notify(alertText)
-  }, [alertText, stage, now, tonightLog])
-
-  async function askPermission() {
-    try {
-      setPermission(await Notification.requestPermission())
-    } catch {
-      setPermission('denied')
-    }
-  }
 
   const approvedCount = state.approvedPrompts?.length ?? 0
 
@@ -139,8 +87,10 @@ export default function Today({ state, sky, saveError = false, onStart, onPerson
 
       <footer className="today-footer">
         <div className="reminder-line">
-          {permission === 'default' && <button className="btn" onClick={askPermission}>Turn on reminders</button>}
+          {permission === 'default' && askPermission && <button className="btn" onClick={askPermission}>Turn on reminders</button>}
           {(permission === 'default' || permission === 'granted') && <p className="small alert-hint">Keep Moonrise open for routine reminders.</p>}
+          {permission === 'denied' && <p className="small alert-hint">Browser notifications are off. Routine reminders still appear here.</p>}
+          {permission === 'unsupported' && <p className="small alert-hint">This browser does not support notifications. Routine reminders still appear here.</p>}
         </div>
         <p className="small care-note">A suggested routine based on the sky and your logs.<br/>Caregiver support, not a medical treatment.</p>
       </footer>
