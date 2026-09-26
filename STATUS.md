@@ -86,3 +86,32 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 02:06 UTC — Claude — handover: Codex owns `claude-ui`
 - User decision: Codex takes over branch `claude-ui` (all screens). Claude will not push to it again.
 - Claude stays on `engine` (engine + integrations). Any engine interface change will be raised in the coordination issue before it is made.
+## 2026-09-26 02:14 UTC — Claude — weather timeout (engine branch)
+- Fix: `effectiveDusk` now gives up on Open-Meteo after 8 s (request or body) and returns the offline SunCalc sunset, so bad wifi can't leave Today stuck on "Checking the sky…". The request is aborted, timer cleaned up. 3 new tests (76 total).
+- Interface: backward compatible. Optional `{ timeoutMs }` option added; UI callers need no change.
+
+## 2026-09-26 02:15 UTC — Claude — weather cache + song fact-check (engine branch)
+- `effectiveDusk`: if a refresh fails, reuses this session's last good weather for the same day and place (`source: 'open-meteo', cached: true`) instead of jumping back to plain sunset mid-evening. Additive field only. 78 tests pass.
+- songs.json fact-checked by web search: 44/47 confirmed. Fixed Rock Around the Clock 1955 -> 1954 (released May 1954, charted 1955) and Paper Doll 1943 -> 1942 (released 1942, charted 1943). Their ids changed to `rock-around-the-clock-1954` and `paper-doll-1942`; no code references song ids, and old demo logs just stop matching those two songs.
+- Kept "As Time Goes By" as Dooley Wilson 1942 (the Casablanca performance people remember; his own record came later). Search links still find it.
+- Pending Codex OK: `eveningDate` / `episodeStartFromTime` for after-midnight logging (built locally, not pushed).
+
+## 2026-09-26 02:17 UTC — Claude — after-midnight logging helpers (approved by Codex in issue #1)
+- New in `src/engine/evening.js`, exported from `index.js` (existing exports unchanged):
+  - `eveningDate(now = new Date()) -> Date | null`: new Date at device-local noon of the evening `now` belongs to; before 04:00 = previous calendar day. Calendar arithmetic (DST/month/year safe), input not mutated. null for an invalid date.
+  - `episodeStartFromTime(evening, 'HH:MM') -> string | null`: ISO timestamp; 00:00-03:59 = the next calendar day, otherwise the evening's own day. **null** for empty/malformed/out-of-range time, invalid evening, or a local time skipped by a DST jump.
+  - `localDateString(date) -> 'YYYY-MM-DD'` now exported.
+- Use `eveningDate` only for evening grouping (log date, `effectiveDusk(eveningDate(), ...)`, `tonight.date`); countdowns/animation stay on `now`.
+- Tests: 23:59/00:00/03:59/04:00, month + year rollover, Chicago DST both ways (test file runs with TZ=America/Chicago), null cases, no mutation, and the 00:30-log / 23:30-onset scenario keeping the previous evening's date and dusk. 93 tests pass; also pass under TZ=Asia/Kolkata and Pacific/Auckland.
+
+## 2026-09-26 02:17 UTC — Claude — song ids restored (per Codex review)
+- Correction to the song fact-check entry above: ids are **not** renamed. `rock-around-the-clock-1955` (year 1954) and `paper-doll-1943` (year 1942) keep their shipped ids so saved logs keep their scores and report entries. Song ids are opaque and stable; only `year` changes. Documented in songs.js and pinned by tests. 95 tests pass.
+
+## 2026-09-26 02:28 UTC — Claude — findCity (approved by Codex in issue #1)
+- New export `findCity(name, { fetchFn?, timeoutMs? }) -> Promise<{ lat, lon, city } | null>` (Open-Meteo geocoding).
+  - Resolves **null** only for a blank name or a successful response with no matches.
+  - **Rejects** on HTTP error, network failure, 8 s timeout (request aborted), or a malformed response/result (non-finite coordinates, missing place name).
+  - UI (Codex): Setup must handle null ("couldn't find that city") separately from a rejection ("couldn't check right now"); the current local findCity throws on no-match, so it's not a drop-in swap.
+- Internal: new `net.js` `fetchJson` timeout helper now shared by effectiveDusk and findCity (effectiveDusk behaviour unchanged).
+- Deferred per Codex: duskForecast (not built into the engine).
+- 106 tests pass.

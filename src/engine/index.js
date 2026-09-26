@@ -2,6 +2,8 @@
 // Change only after noting it in STATUS.md.
 
 export { effectiveDusk, computeEffectiveDusk, cloudShiftMinutes } from './sky.js'
+export { eveningDate, episodeStartFromTime, localDateString } from './evening.js'
+export { findCity } from './geo.js'
 export { moonriseStart, onsetMinutes } from './schedule.js'
 export {
   eraYears,
