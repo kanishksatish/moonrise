@@ -12,7 +12,7 @@ It is caregiver support, not a medical treatment. Never claim it treats or preve
 - Secondary: the person with dementia, who only ever sees Moonrise mode. No text they need to read, no buttons they need to press.
 
 ## Stack and constraints
-- Single-page web app. Vite + React + plain CSS. No backend. No login.
+- Single-page web app. Vite + React + plain CSS. No hosted backend or login. The user authorized an optional laptop-only OpenAI gateway in `local-ai/`; bind it only to 127.0.0.1, keep keys in server memory, retain the strict request/profile limits and caregiver approval gate, and never deploy it as a public proxy. The hosted Anthropic path stays unchanged.
 - State in localStorage, wrapped in try/catch.
 - Weather and sun: Open-Meteo API (free, no key). Daily sunset, hourly cloud_cover for the user's lat/lon.
 - Moon position and phase: SunCalc (npm).

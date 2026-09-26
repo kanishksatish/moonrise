@@ -34,7 +34,7 @@
 //   - No committed shell (first visit was offline, or site data was cleared): the start page
 //     is a short "connect once" page (HTTP 503) instead of a browser error.
 
-const SW_VERSION = 'v6'
+const SW_VERSION = 'v7'
 // Exact approved stems; new downloads also require a current HTML-declared URL.
 const BUNDLED_AUDIO_FILES = [
   'fur-elise-v-gao',
@@ -90,6 +90,8 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return
   if (!req.url.startsWith(SCOPE) || new URL(req.url).origin !== self.location.origin) return
   if (req.url === SELF_URL || req.url === POINTER_URL) return
+  // Local credential setup must reach the running gateway, never an offline app fallback.
+  if (req.url === new URL('connect', SCOPE).href || req.url.startsWith(new URL('__moonrise/', SCOPE).href)) return
 
   if (req.mode === 'navigate') {
     event.respondWith(navigate(event))

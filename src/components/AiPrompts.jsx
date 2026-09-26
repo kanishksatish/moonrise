@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { AiPromptError, clearAiKey, generateMemoryPrompts, loadAiKey, saveAiKey } from '../engine/index.js'
+import { generateLocalPrompts, localAiStatus } from './localAi.js'
 
 // Drafts stay in this screen's memory. Only an explicit approval enters app state.
 export default function AiPrompts({ state, update, generatePrompts = generateMemoryPrompts }) {
   const [savedKey, setSavedKey] = useState(loadAiKey)
+  const [local, setLocal] = useState(null)
   const [keyDraft, setKeyDraft] = useState('')
   const [drafts, setDrafts] = useState([])
   const [busy, setBusy] = useState(false)
@@ -13,7 +15,14 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
   const inFlight = useRef(false)
   const approved = state.approvedPrompts ?? []
 
-  useEffect(() => () => { request.current += 1 }, [])
+  useEffect(() => {
+    let live = true
+    const refresh = () => localAiStatus().then(status => { if (live) setLocal(status) })
+    refresh()
+    window.addEventListener('focus', refresh)
+    return () => { live = false; request.current += 1; window.removeEventListener('focus', refresh) }
+  }, [])
+  const canGenerate = local ? local.configured : Boolean(savedKey)
 
   function saveKey(event) {
     event.preventDefault()
@@ -41,14 +50,16 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
   }
 
   async function generate() {
-    if (inFlight.current || !savedKey) return
+    if (inFlight.current || !canGenerate) return
     inFlight.current = true
     const id = ++request.current
     setBusy(true)
     setError('')
     setMessage('Writing a few prompts for you to review…')
     try {
-      const prompts = await generatePrompts(state.profile, { apiKey: savedKey, existing: approved })
+      const prompts = local
+        ? await generateLocalPrompts(state.profile, { existing: approved })
+        : await generatePrompts(state.profile, { apiKey: savedKey, existing: approved })
       if (id !== request.current) return
       setDrafts(prompts)
       setMessage(prompts.length
@@ -76,10 +87,14 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     <section className="card ai-prompts" aria-labelledby="ai-heading">
       <p className="eyebrow">A little more personal</p>
       <h2 id="ai-heading">AI memory prompts <span className="muted">(optional)</span></h2>
-      <p>Let Claude draft gentle conversation starters. You choose which ones belong in your routine.</p>
+      <p>Let {local ? 'OpenAI' : 'Claude'} draft gentle conversation starters. You choose which ones belong in your routine.</p>
       <p className="muted">Built-in prompts always work without AI. Nothing new enters Moonrise mode until you approve it.</p>
 
-      <details className="ai-key-details">
+      {local ? <div className="ai-key-details">
+        <p>{local.configured ? 'OpenAI key configured for this local session.' : 'Connect OpenAI for this local session.'}</p>
+        <p className="muted">The key stays in this laptop’s local server memory. API access is checked when you generate. Disconnect on the connection page or stop the server to remove it; clearing browser data does not disconnect this local key.</p>
+        <a className="btn" href="/connect">{local.configured ? 'Manage local OpenAI connection' : 'Connect OpenAI on this laptop'}</a>
+      </div> : <details className="ai-key-details">
         <summary>{savedKey ? 'API key saved · manage key' : 'Set up your API key'}</summary>
         <p className="muted">Uses your own Anthropic API credits. The key is saved in this browser. Remove it after using a shared device.</p>
         <form onSubmit={saveKey}>
@@ -93,12 +108,12 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
             {savedKey && <button className="btn" type="button" onClick={removeKey} disabled={busy}>Remove key</button>}
           </div>
         </form>
-      </details>
+      </details>}
 
-      <p id="ai-privacy" className="muted">When you tap Generate, your birth year and any hometown, spouse and job answers go to Anthropic. Your profile name, coordinates and evening logs are not sent.</p>
-      <button className="btn primary" onClick={generate} disabled={!savedKey || busy || drafts.length > 0}
+      <p id="ai-privacy" className="muted">When you tap Generate, your birth year and any hometown, spouse and job answers go to {local ? 'OpenAI through this laptop’s local server' : 'Anthropic'}. Your profile name, coordinates and evening logs are not sent.</p>
+      <button className="btn primary" onClick={generate} disabled={!canGenerate || busy || drafts.length > 0}
         aria-describedby="ai-privacy">{busy ? 'Writing prompts…' : 'Generate prompts'}</button>
-      {!savedKey && <p className="muted">Add a key above to generate prompts.</p>}
+      {!canGenerate && <p className="muted">{local ? 'Connect a key above to generate prompts.' : 'Add a key above to generate prompts.'}</p>}
       {message && <p className="status" role="status">{message}</p>}
       {error && <p className="status" role="alert">{error}</p>}
 

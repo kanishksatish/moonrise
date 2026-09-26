@@ -396,6 +396,12 @@ describe('static-only caching', () => {
     expect((await everyCachedUrl()).some((u) => u.includes('/api/'))).toBe(false)
   })
 
+  it('never intercepts local connection setup, scripts or AI requests', async () => {
+    expect((await sw.request('/connect', { mode: 'navigate', destination: 'document' })).intercepted).toBe(false)
+    expect((await sw.request('/__moonrise/connect.js', { destination: 'script' })).intercepted).toBe(false)
+    expect((await sw.request('/__moonrise/ai/status', { method: 'POST', destination: '' })).intercepted).toBe(false)
+  })
+
   it('does not cache a static-looking request outside the shell and assets/', async () => {
     server.files.set(`${ORIGIN}/api/chart.png`, 'png')
     const r = await sw.request('/api/chart.png', { destination: 'image' })

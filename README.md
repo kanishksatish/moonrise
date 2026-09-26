@@ -15,7 +15,7 @@ Song rankings reflect associations in the caregiver's own logs, not proof a song
 > treat or prevent anything. Sudden changes in evening behaviour can have medical causes
 > (pain, infection, medication), so mention them to a doctor.
 
-No hardware, no account, no backend. It is a web app (PWA) that runs on any tablet or phone.
+The hosted app needs no hardware, account or backend. It is a web app (PWA) that runs on any tablet or phone. An optional laptop-only OpenAI demo gateway is described below; it is not deployed with the hosted app.
 
 ## How it works
 
@@ -83,7 +83,7 @@ logs are clearly labelled and can be removed in one tap. Real evenings are never
 ## Privacy
 
 Profiles, evening logs and approved prompts are saved in the browser's local storage.
-There is no Moonrise account or backend. The network calls are weather and city lookups (Open-Meteo, which receives
+The hosted app has no Moonrise account or backend. Its network calls are weather and city lookups (Open-Meteo, which receives
 coordinates or a city name), YouTube when the caregiver explicitly loads an available player, and,
 only if the caregiver sets up AI prompts and taps Generate, one request to the Anthropic
 API with the birth year and the optional hometown, spouse and job answers. The profile
@@ -125,6 +125,41 @@ downloaded tracks. Failed core updates retain the previous complete core. Missin
 recordings offer the piano fallback. Other audio and YouTube are never cached. Browser
 storage eviction can remove offline data, and status is checked again when the app reconnects.
 
+### Optional OpenAI connection on this laptop
+
+Build for the root path, then run `npm run local-ai` and open
+`http://127.0.0.1:4180/connect`. Paste a dedicated OpenAI API key into the masked form,
+then open Moonrise and go to Settings. This uses your OpenAI API credits. A configured
+key is **not** a verified API connection; generation must succeed before live access can
+be claimed. Nothing is generated or sent to OpenAI when a key is saved.
+
+The Node server binds only to `127.0.0.1`, serves `dist/`, and retains the key in memory
+until **Disconnect OpenAI** or process exit. `OPENAI_API_KEY` may alternatively be supplied
+by the launch environment; never put a key in command arguments, a `VITE_` variable, a
+committed file or browser storage. The setup page, API requests and replies are not cached.
+App **Delete all data** removes browser data; disconnect the separate local server key
+on the connection page or stop the server. Each local origin has its own browser profile
+and approved prompts; hosted data is not automatically copied to this demo.
+
+Only Settings **Generate** sends birth year and optional hometown, spouse and job answers
+to OpenAI. Name, saved city/coordinates, evening logs and earlier prompts are excluded.
+Anchor answers can themselves contain names or places. Drafts stay in screen memory;
+only an explicit caregiver approval saves them to the routine. Built-in prompts remain
+available. The fixed model is `gpt-4.1-mini-2025-04-14`, using structured Responses output,
+`store: false`, at most 700 output tokens, a 30-second timeout, one in-flight request,
+and at most three attempts per minute / twenty per hour. There are no model, URL or tool
+controls in client requests. Host/Origin checks and a JSON-only custom-header protocol
+reject cross-site requests; no CORS or public proxy is provided.
+
+This gateway is for a laptop demo, not a public backend or phone connection. Keep the
+process running and the laptop online for new drafts; stopping it forgets the key.
+Settings only probes it from `http://127.0.0.1`. The public Pages app retains the existing
+Anthropic flow and never probes a local gateway. OpenAI's `store: false` disables stored
+Responses application state; it does not promise zero retention of abuse-monitoring logs.
+See the official [model page](https://developers.openai.com/api/docs/models/gpt-4.1-mini),
+[structured-output guide](https://developers.openai.com/api/docs/guides/structured-outputs),
+and [data controls](https://developers.openai.com/api/docs/guides/your-data).
+
 ## Project layout
 
 ```
@@ -150,6 +185,6 @@ integrations, and Codex on the UI. The agents coordinated through a GitHub issue
 illustrations (a night lake and a lunar-surface texture) are original images generated with
 Higgsfield; `DESIGN.md` records the prompts, job IDs and where they're used. The moon's
 phase on screen is computed live, and the artwork is decorative. At runtime, the only AI is
-the optional caregiver-reviewed memory prompts (Claude, via the Anthropic API). The dusk
+the optional caregiver-reviewed memory prompts (Claude via Anthropic in the hosted app, or OpenAI through the separately launched laptop demo gateway). The dusk
 estimate, start time, song ranking and built-in prompts are the rules and templates
 described above, not a model.

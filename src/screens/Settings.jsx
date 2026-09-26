@@ -79,7 +79,7 @@ export default function Settings({ state, update, onEditProfile }) {
         </p>
         {confirmReset ? (
           <>
-            <p>This deletes everything on this device. Are you sure?</p>
+            <p>This deletes your profile, logs, approved prompts and browser-saved API key. Are you sure?</p>
             <button className="btn danger" onClick={resetAll}>
               Yes, delete everything
             </button>
