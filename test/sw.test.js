@@ -6,6 +6,8 @@ import fs from 'node:fs'
 import vm from 'node:vm'
 import { JSDOM } from 'jsdom'
 
+const audioCatalog = JSON.parse(fs.readFileSync(new URL('../src/assets/audio/catalog.json', import.meta.url), 'utf8'))
+
 const SW_SOURCE = fs.readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
 const ORIGIN = 'https://app.test'
 const SCOPE = `${ORIGIN}/`
@@ -18,9 +20,9 @@ it('declares bundled audio for the shell without an active media element or reso
     expect(document.querySelector('audio')).toBeNull()
     expect(document.querySelector('link[as="audio"]')).toBeNull()
     expect(document.querySelector('[src$=".mp3"], [href$=".mp3"]')).toBeNull()
-    const audio = document.getElementById('offline-audio-assets').content.querySelector('audio')
-    expect(audio.getAttribute('src')).toBe('/src/assets/audio/fur-elise-v-gao.mp3')
-    expect(audio.isConnected).toBe(false)
+    const recordings = [...document.getElementById('offline-audio-assets').content.querySelectorAll('audio')]
+    expect(recordings.map(audio => audio.getAttribute('src')).sort()).toEqual(audioCatalog.map(item => `/src/assets/audio/${item.filename}`).sort())
+    expect(recordings.every(audio => !audio.isConnected)).toBe(true)
   } finally {
     dom.window.close()
   }
@@ -438,6 +440,71 @@ describe('base path', () => {
 // Includes bytes that are not valid UTF-8, so a text-based cache fake would fail.
 const AUDIO_BYTES = new Uint8Array([73, 68, 51, 0, 255, 128, 1, 254, 7, 0, 192, 175, 250, 21, 22, 23])
 const audioPath = tag => `/assets/fur-elise-v-gao-${tag}.mp3`
+const libraryStems = audioCatalog.map(item => item.filename.replace(/\.mp3$/, ''))
+function libraryBuild(tag) {
+  const files = build(tag)
+  const declarations = libraryStems.map(stem => `<audio src="/assets/${stem}-${tag}.mp3"></audio>`).join('')
+  files['/'] = files['/'].replace('</head>', `<template id="offline-audio-assets">${declarations}</template></head>`)
+  libraryStems.forEach((stem, i) => {
+    const bytes = new Uint8Array([...AUDIO_BYTES, i])
+    files[`/assets/${stem}-${tag}.mp3`] = new Response(bytes, { headers: { 'Content-Type': 'audio/mpeg' } })
+  })
+  return files
+}
+
+describe('included recording library offline playback', () => {
+  it.each(libraryStems)('plays and seeks %s offline before it has ever been played', async stem => {
+    server.deploy(libraryBuild('library'))
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    const pointer = await committed(caches)
+    for (const name of libraryStems) expect(pointer.urls).toContain(`${ORIGIN}/assets/${name}-library.mp3`)
+    server.down = true
+    const path = `/assets/${stem}-library.mp3`
+    const bytes = new Uint8Array([...AUDIO_BYTES, libraryStems.indexOf(stem)])
+    expect((await sw.request(path, { destination: 'audio' })).bytes).toEqual(bytes)
+    for (const [range, from, to] of [['bytes=0-1', 0, 1], ['bytes=8-12', 8, 12], ['bytes=13-', 13, 16], ['bytes=-3', 14, 16]]) {
+      const reply = await sw.request(path, { destination: 'audio', headers: { Range: range } })
+      expect(reply.status).toBe(206)
+      expect(reply.bytes).toEqual(bytes.slice(from, to + 1))
+      expect(reply.response.headers.get('Content-Range')).toBe(`bytes ${from}-${to}/17`)
+    }
+    expect((await sw.request(path, { destination: 'audio' })).bytes).toEqual(bytes)
+  })
+
+  it.each(['missing', 'html', 'partial', 'quota'])('keeps every previous recording usable when a second recording update is %s', async failure => {
+    server.deploy(libraryBuild('old'))
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    const previous = await committed(caches)
+    const next = libraryBuild('new')
+    const failingPath = '/assets/gymnopedie-1-macleod-new.mp3'
+    if (failure === 'missing') delete next[failingPath]
+    if (failure === 'html') next[failingPath] = new Response('<html>Not audio</html>', { headers: { 'Content-Type': 'text/html' } })
+    if (failure === 'partial') next[failingPath] = new Response(AUDIO_BYTES.slice(0, 2), { status: 206, headers: { 'Content-Type': 'audio/mpeg' } })
+    if (failure === 'quota') caches.faults.beforePut = (_name, url) => { if (url.endsWith(failingPath)) throw new Error('Storage full') }
+    server.deploy(next)
+    await expect(sw.install()).rejects.toThrow()
+    expect(await committed(caches)).toEqual(previous)
+    server.down = true
+    for (const [i, stem] of libraryStems.entries()) {
+      const reply = await sw.request(`/assets/${stem}-old.mp3`, { destination: 'audio', headers: { Range: 'bytes=-1' } })
+      expect(reply.bytes).toEqual(new Uint8Array([i]))
+    }
+  })
+
+  it('restricts all catalog audio paths to explicit approved names and declared shell members', () => {
+    const context = vm.createContext({ self: { registration: { scope: SCOPE }, location: { origin: ORIGIN }, addEventListener() {} }, URL, Set })
+    vm.runInContext(SW_SOURCE, context)
+    for (const item of audioCatalog) {
+      const stem = item.filename.replace(/\.mp3$/, '')
+      expect(context.isBundledAudio(`${SCOPE}assets/${stem}-testHash.mp3`)).toBe(true)
+      expect(context.isBundledAudio(`${SCOPE}assets/${stem}-testHash.mp3?other=1`)).toBe(false)
+    }
+    expect(context.isBundledAudio(`${SCOPE}assets/unapproved-testHash.mp3`)).toBe(false)
+  })
+})
+
 function audioBuild(tag, contentType = 'audio/mpeg') {
   const files = build(tag)
   files['/'] = files['/'].replace('</head>', `<template id="offline-audio-assets"><audio src="${audioPath(tag)}"></audio></template></head>`)

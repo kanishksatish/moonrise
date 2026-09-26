@@ -3,7 +3,7 @@
 Hackathon theme: "Fly me to the moon." Build overnight, demo in the morning.
 
 ## What we are building
-Moonrise is a zero-hardware web app (PWA, runs on any tablet or phone) that helps family caregivers get ahead of sundowning in people with dementia. It schedules a calming evening routine against the real sky: it computes today's effective dusk from local sunset and cloud cover, alerts the caregiver before it, then runs "Moonrise mode": warm screen light that brightens as the sky darkens, era-matched music from the person's reminiscence bump (ages ~10 to 30), and simple memory prompts. The caregiver logs how the evening went with one tap, and the app learns the best start time and which songs help.
+Moonrise is a zero-hardware web app (PWA, runs on any tablet or phone) that helps family caregivers make an evening routine for people with dementia. It schedules the routine against the real sky: it computes today's effective dusk from local sunset and cloud cover, reminds the caregiver before it, then runs "Moonrise mode": warm screen light that brightens as the sky darkens, a licensed listening library or the caregiver's own music file, and simple memory prompts. The caregiver logs how the evening went with one tap. The app adjusts its suggested start using those logs and summarizes recorded music activity without claiming that a song caused an outcome.
 
 It is caregiver support, not a medical treatment. Never claim it treats or prevents anything.
 
@@ -16,7 +16,7 @@ It is caregiver support, not a medical treatment. Never claim it treats or preve
 - State in localStorage, wrapped in try/catch.
 - Weather and sun: Open-Meteo API (free, no key). Daily sunset, hourly cloud_cover for the user's lat/lon.
 - Moon position and phase: SunCalc (npm).
-- Music: we do not host audio. Songs are stored as title + artist + year and open as Spotify or YouTube search links. A small seed list of era songs per decade (1940s to 1970s) lives in `src/data/songs.json`.
+- Music: the user authorized bundled licensed audio. `src/assets/audio/catalog.json` identifies the included MP3s and their recording credits/licenses; the visible picker uses native in-app playback and supports offline seeking after a complete online download. This shared collection is not era-matched. Personal files stay on the device and are not assigned catalog IDs. Existing `src/data/songs.json` IDs retain their meaning; an optional YouTube recording is offered only when verified for playback. Do not substitute search links, infer rights from an old composition, or reassign historical IDs.
 - Never hardcode demo results. Everything shown is computed from the stored data.
 - Accessibility: minimum 20px body text, 48px tap targets, high contrast, works in dark rooms.
 
@@ -30,7 +30,7 @@ It is caregiver support, not a medical treatment. Never claim it treats or preve
 ## Screens (UI)
 1. Setup (first run only): name, birth year, location (browser geolocation with manual city fallback), 3 optional personal anchors (hometown, spouse, job).
 2. Today: big sky card showing effective dusk, Moonrise start time, moon phase, and one big "Start Moonrise now" button. A countdown to start.
-3. Moonrise mode: full screen. Background is a sky gradient that tracks the real sky (blue to dusk to night). A moon slowly rises over the session. Screen warmth and brightness increase as the real sky darkens. Current song title in large text with a play link. One memory prompt at a time in large text for the caregiver to read aloud, rotated every few minutes. Prompts are built from the person's anchors and era, e.g. "Tell me about [hometown] when you were young" or "Where were you when they landed on the moon in 1969?" (only if born before ~1962).
+3. Moonrise mode: full screen. Background is a sky gradient that tracks the real sky (blue to dusk to night). A moon slowly rises over the session. Screen warmth and brightness increase as the real sky darkens. Show the real selected recording, an accessible library picker, and native playback controls. Only a playback event may add that recording's own ID to the evening. One memory prompt at a time is read aloud by the caregiver; prompts use personal anchors and age-appropriate context independently of the music selection. Never mention an unrelated era song while another recording plays.
 4. Log: three giant buttons (Calm, Restless, Episode) plus optional "Episode started at" time picker.
 5. Report: printable weekly summary.
 
@@ -47,7 +47,7 @@ It is caregiver support, not a medical treatment. Never claim it treats or preve
 
 ## Demo script (3 minutes)
 1. The problem in one sentence, one stat.
-2. Setup for a person born in 1942. Show era songs appear.
+2. Setup for a person born in 1942. Explain birth year informs conversation context; show the included library and play an actual recording.
 3. Today screen: cloudy day pulls dusk earlier. Alert fires.
 4. Moonrise mode running full screen, moon rising.
 5. Load demo week, show start time shifting and the weekly report.

@@ -23,8 +23,28 @@
 .music-player-eyebrow { margin: 0; color: var(--accent, #eac39c); font-size: 20px; line-height: 1.4; }
 .music-player-eyebrow span { display: block; color: #bac8c5; }
 .music-player .music-player-title { margin: 0 0 8px; font: 36px/1.13 Georgia, 'Times New Roman', serif; letter-spacing: -.5px; color: var(--text, #f5f0e7); }
-.music-player-artist { margin: 0 0 22px; font-size: 20px; color: #bac8c5; }
+.music-player-artist { margin: 0 0 22px; font-size: 20px; color: #bac8c5; overflow-wrap: anywhere; }
+.music-player-title, .music-player-details { overflow-wrap: anywhere; }
 .music-player-note { font-size: 20px; line-height: 1.45; color: #bac8c5; margin: 0 0 18px; }
+.music-player-picker { margin: 0 0 26px; }
+.music-player-picker label { display: block; margin-bottom: 10px; font-size: 20px; line-height: 1.4; color: #f5f0e7; }
+.music-player-picker select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px solid #8b9a90;
+  border-radius: 10px;
+  background: #202b2b;
+  color: #f5f0e7;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1.4;
+  color-scheme: dark;
+}
+.music-player-picker .music-player-note { margin: 12px 0 0; }
+.music-player-picker select:focus-visible { outline: 3px solid #eac39c; outline-offset: 4px; }
 .music-player-video:empty { display: none; }
 .music-player-frame { display: block; width: 100%; min-width: 200px; min-height: 200px; height: auto; aspect-ratio: 16/9; border: 0; background: #080b0d; }
 .music-player-status { margin: 14px 0 18px; min-height: 29px; color: #c8d6cd; font-size: 20px; line-height: 1.45; }
@@ -56,7 +76,7 @@
 .music-player-details { margin-top: 18px; font-size: 20px; line-height: 1.5; color: #bac8c5; }
 .music-player-details summary { min-height: 48px; padding: 9px 0; cursor: pointer; color: #d5dbce; }
 .music-player-details p { margin: 12px 0; }
-.music-player-details a { color: #eac39c; text-underline-offset: 4px; }
+.music-player-details a { display: inline-flex; align-items: center; min-height: 48px; color: #eac39c; text-underline-offset: 4px; }
 @media (max-width: 600px) {
   .music-player { padding: 24px 10px; }
   .music-player .music-player-title { font-size: 34px; }

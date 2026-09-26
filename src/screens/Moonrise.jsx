@@ -43,7 +43,9 @@ export default function Moonrise({ state, onPlayed, onExit }) {
   const { profile, logs } = state
   const now = useNow(10000)
   const [startedAt] = useState(() => Date.now())
-  const [songs] = useState(() => playlist(profile.birthYear, logs))
+  // Only offer an era title when there is a verified playable source. The
+  // included library is separate and is available for every birth year.
+  const [songs] = useState(() => playlist(profile.birthYear, logs).filter(item => songVideo(item.id)))
   const [songIndex, setSongIndex] = useState(0)
   const [promptOffset, setPromptOffset] = useState(0)
   const [quiet, setQuiet] = useState(false)
@@ -55,7 +57,9 @@ export default function Moonrise({ state, onPlayed, onExit }) {
   const moon = moonPhase(now)
   const elapsed = now.getTime() - startedAt
   const moonProgress = Math.max(0, Math.min(1, elapsed / (MOON_RISE_MINUTES * 60000)))
-  const prompt = promptAt(memoryPrompts(profile, { song, approved: state.approvedPrompts }), elapsed + promptOffset * 3 * 60000)
+  // Conversation remains independent of the player: a bundled or personal
+  // recording must never be introduced as an unrelated era-catalog song.
+  const prompt = promptAt(memoryPrompts(profile, { approved: state.approvedPrompts }), elapsed + promptOffset * 3 * 60000)
   // Warm lamp light rises from the bottom of the screen as the real sky darkens.
   const glow = 0.15 + 0.6 * sky.warmth
 

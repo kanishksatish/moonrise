@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { eraSongs, eraYears, findCity } from '../engine/index.js'
+import { findCity } from '../engine/index.js'
+import includedCatalog from '../assets/audio/catalog.json'
 import Brand from '../components/Brand.jsx'
 import MoonIcon from '../components/MoonIcon.jsx'
 import '../styles/onboarding.css'
@@ -20,8 +21,6 @@ export default function Setup({ profile, onDone, onCancel }) {
 
   const year = Number(birthYear)
   const yearValid = Number.isInteger(year) && year >= 1900 && year <= THIS_YEAR - 30
-  const songs = yearValid ? eraSongs(year) : []
-  const era = yearValid ? eraYears(year) : null
   const canSave = name.trim() && yearValid && place
 
   function useMyLocation() {
@@ -118,15 +117,10 @@ export default function Setup({ profile, onDone, onCancel }) {
                 />
               </label>
             </div>
-            {era && (
+            {yearValid && (
               <div className="onboarding-era">
-                <p className="era-title">Their songs: {era.from} to {era.to} · {songs.length} found</p>
-                <ul className="era-list">
-                  {songs.slice(0, 5).map((s) => (
-                    <li key={s.id}>{s.title} <span className="muted">· {s.artist}, {s.year}</span></li>
-                  ))}
-                  {songs.length > 5 && <li className="muted">and {songs.length - 5} more</li>}
-                </ul>
+                <p className="era-title">A little context for their stories.</p>
+                <p>Their birth year helps choose conversation starters. Everyone can choose from {includedCatalog.length} included recordings or play a music file of their own.</p>
               </div>
             )}
           </section>

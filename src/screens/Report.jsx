@@ -1,8 +1,16 @@
 import { weeklyReport } from '../engine/index.js'
+import eraCatalog from '../data/songs.json'
+import includedCatalog from '../assets/audio/catalog.json'
 import { prettyDate } from '../components/format.js'
 import '../styles/report-visual.css'
 
 const OUTCOME_LABELS = { calm: 'Calm', restless: 'Restless', episode: 'Episode' }
+// Read old era IDs and new recording IDs side by side. Never replace old IDs or
+// infer past bundled listening from an era title or an unlogged personal file.
+const REPORT_SONGS = [...eraCatalog, ...includedCatalog.map(recording => ({
+  id: recording.id, title: recording.title, artist: recording.artist,
+  recordingYear: recording.recordingYear, included: true,
+}))]
 
 // Equal-sized marks describe the record; their height and size do not score it.
 function EveningMark({ outcome }) {
@@ -51,7 +59,7 @@ function WeekRhythm({ report }) {
 
 export default function Report({ state }) {
   const { profile, logs } = state
-  const r = weeklyReport(logs)
+  const r = weeklyReport(logs, { songs: REPORT_SONGS })
   const weekLogs = logs.filter((l) => l.date >= r.from && l.date <= r.to)
   const hasDemo = weekLogs.some((l) => l.demo)
   const unknownWeather = weekLogs.filter((l) => !Number.isFinite(l.cloudCover)).length
@@ -130,7 +138,7 @@ export default function Report({ state }) {
               <ol className="top-songs">
                 {r.topSongs.map((s) => (
                   <li key={s.id}>
-                    <span className="report-song-title">{s.title}</span> <span className="muted report-song-artist">· {s.artist}, {s.year}</span>
+                    <span className="report-song-title">{s.title}</span> <span className="muted report-song-artist">· {s.artist}{s.included ? ` · Included recording${s.recordingYear ? ` (${s.recordingYear})` : ''}` : `, ${s.year}`}</span>
                   </li>
                 ))}
               </ol>

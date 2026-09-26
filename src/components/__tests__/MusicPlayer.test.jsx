@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { StrictMode } from 'react'
 import MusicPlayer from '../MusicPlayer.jsx'
+import { bundledMusic } from '../bundledMusic.js'
 
 const firstSong = { id: 'stand-by-me-1961', title: 'Stand By Me', artist: 'Ben E. King', year: 1961 }
 const secondSong = { id: 'what-a-wonderful-world-1967', title: 'What a Wonderful World', artist: 'Louis Armstrong', year: 1967 }
@@ -46,8 +47,14 @@ afterEach(() => {
   delete window.onYouTubeIframeAPIReady
 })
 
+function chooseYouTube() {
+  const details = screen.getByText('Optional YouTube song').closest('details')
+  details.open = true
+  fireEvent.click(screen.getByRole('button', { name: /Load YouTube player/ }))
+}
+
 async function loadYouTube() {
-  fireEvent.click(screen.getByRole('button', { name: /Load YouTube player|Back to their song/ }))
+  chooseYouTube()
   await act(async () => {})
   return players.at(-1)
 }
@@ -60,13 +67,15 @@ it('contacts no media provider before an explicit choice and rejects search URLs
   const onPlayed = vi.fn()
   const { rerender } = render(<MusicPlayer song={firstSong} youtubeId={firstId} onPlayed={onPlayed} />)
   expect(document.querySelector('iframe')).toBeNull()
-  expect(document.querySelector('audio')).toBeNull()
+  expect(document.querySelector('audio').autoplay).toBe(false)
+  expect(document.querySelector('audio').preload).toBe('none')
   expect(document.getElementById('moonrise-youtube-api')).toBeNull()
   expect(onPlayed).not.toHaveBeenCalled()
   rerender(<MusicPlayer song={firstSong} youtubeId="https://youtube.com/results?search_query=stand+by+me" onPlayed={onPlayed} />)
   expect(screen.queryByRole('button', { name: /Load YouTube/ })).toBeNull()
-  expect(screen.getByText(/in-app recording of this song isn’t available/)).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Choose piano instead' })).toBeTruthy()
+  expect(screen.queryByText(/in-app recording of this song isn’t available/)).toBeNull()
+  expect(screen.getByRole('combobox', { name: 'Choose an included recording' })).toBeTruthy()
+  expect(screen.queryByText('Stand By Me')).toBeNull()
 })
 
 it('uses a visible private-enhanced inline embed and records actual PLAYING only once', async () => {
@@ -106,7 +115,8 @@ it('cleans up on song changes and ignores old player events', async () => {
   expect(document.querySelector('iframe')).toBeNull()
   state(first, 1)
   expect(onPlayed).not.toHaveBeenCalled()
-  const second = await loadYouTube()
+  await act(async () => {})
+  const second = players.at(-1)
   state(second, 1)
   expect(onPlayed).toHaveBeenCalledExactlyOnceWith(secondSong.id)
   unmount()
@@ -130,6 +140,16 @@ it('stops for quiet mode and deduplicates resumed songs until a new session', as
   rerender(<MusicPlayer {...props} sessionId="session-b" />)
   state(await loadYouTube(), 1)
   expect(onPlayed).toHaveBeenCalledTimes(2)
+})
+
+it('falls back to the included library if a previously selected YouTube source is removed', async () => {
+  const { rerender } = render(<MusicPlayer song={firstSong} youtubeId={firstId} />)
+  const player = await loadYouTube()
+  rerender(<MusicPlayer />)
+  expect(player.destroy).toHaveBeenCalledOnce()
+  expect(document.querySelector('iframe')).toBeNull()
+  expect(document.querySelector('audio')).toBeTruthy()
+  expect(screen.getByRole('heading', { name: bundledMusic[0].title })).toBeTruthy()
 })
 
 it('honors played IDs after remount and observes the latest callback without restarting playback', async () => {
@@ -162,17 +182,17 @@ it('destroys a rejected embed, offers piano/Next, and never counts failed or blo
   expect(document.querySelector('iframe')).toBeNull()
   state(player, 1)
   expect(onPlayed).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', { name: /Next song/ }))
+  fireEvent.click(screen.getByRole('button', { name: /Next YouTube song/ }))
   expect(onNext).toHaveBeenCalledOnce()
-  expect(screen.getByRole('button', { name: 'Choose piano instead' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Back to included recordings' })).toBeTruthy()
 })
 
 it('provides honest native piano controls without assigning the era song’s outcome', async () => {
   const onPlayed = vi.fn()
   const { unmount } = render(<MusicPlayer song={firstSong} youtubeId={firstId} onPlayed={onPlayed} />)
   const player = await loadYouTube()
-  fireEvent.click(screen.getByRole('button', { name: 'Choose piano instead' }))
-  const audio = screen.getByLabelText('Für Elise, piano performed by V Gao')
+  fireEvent.click(screen.getByRole('button', { name: 'Back to included recordings' }))
+  const audio = screen.getByLabelText(/Für Elise —/)
   expect(screen.getByRole('heading', { name: 'Für Elise' })).toBeTruthy()
   expect(audio.controls).toBe(true)
   expect(audio.autoplay).toBe(false)
@@ -182,12 +202,12 @@ it('provides honest native piano controls without assigning the era song’s out
   expect(player.destroy).toHaveBeenCalledOnce()
   fireEvent.playing(audio)
   expect(screen.getByRole('status').textContent).toBe('Playing here')
-  expect(onPlayed).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', { name: 'Back to their song' }))
+  expect(onPlayed).toHaveBeenCalledExactlyOnceWith(bundledMusic[0].id)
+  chooseYouTube()
   await act(async () => {})
   expect(document.querySelector('audio')).toBeNull()
-  expect(pauseAudio).toHaveBeenCalledOnce()
-  expect(loadAudio).toHaveBeenCalledOnce()
+  expect(pauseAudio).toHaveBeenCalledTimes(2)
+  expect(loadAudio).toHaveBeenCalledTimes(2)
   expect(audio.getAttribute('src')).toBeNull()
   unmount()
   expect(players.at(-1).destroy).toHaveBeenCalledOnce()
@@ -195,19 +215,104 @@ it('provides honest native piano controls without assigning the era song’s out
 
 it('offers a local recording without any era song and reports native audio failures', () => {
   render(<MusicPlayer />)
-  fireEvent.click(screen.getByRole('button', { name: 'Choose piano instead' }))
-  const audio = screen.getByLabelText('Für Elise, piano performed by V Gao')
+  const audio = screen.getByLabelText(/Für Elise —/)
   fireEvent.error(audio)
   expect(screen.getByRole('status').textContent).toMatch(/audio couldn’t load/)
-  expect(screen.queryByRole('button', { name: 'Back to their song' })).toBeNull()
+  expect(screen.queryByRole('button', { name: /Load YouTube player/ })).toBeNull()
 })
 
 it('keeps native piano playable after StrictMode replays setup and cleanup', () => {
   render(<StrictMode><MusicPlayer /></StrictMode>)
-  fireEvent.click(screen.getByRole('button', { name: 'Choose piano instead' }))
-  const audio = screen.getByLabelText('Für Elise, piano performed by V Gao')
+  const audio = screen.getByLabelText(/Für Elise —/)
   expect(audio.getAttribute('src')).toMatch(/fur-elise-v-gao\.mp3/)
   expect(audio.crossOrigin).toBe('anonymous')
+})
+
+it('shows the entire included library and switches the real source without autoplay or era-song logging', () => {
+  const onPlayed = vi.fn()
+  const recordings = [bundledMusic[0], {
+    ...bundledMusic[0], id: 'bundled-test-second', title: 'A second recording',
+    artist: 'Another performer', src: '/second-recording.mp3', recordingYear: null,
+  }]
+  render(<MusicPlayer song={firstSong} onPlayed={onPlayed} recordings={recordings} />)
+  const picker = screen.getByRole('combobox', { name: 'Choose an included recording' })
+  expect(screen.getAllByRole('option')).toHaveLength(2)
+  expect(picker.value).toBe(recordings[0].id)
+  const firstAudio = document.querySelector('audio')
+  firstAudio.currentTime = 31
+  fireEvent.playing(firstAudio)
+  fireEvent.change(picker, { target: { value: recordings[1].id } })
+  const nextAudio = screen.getByLabelText('A second recording — Another performer')
+  expect(firstAudio.getAttribute('src')).toBeNull()
+  expect(pauseAudio).toHaveBeenCalledOnce()
+  expect(nextAudio.src).toContain('/second-recording.mp3')
+  expect(nextAudio.currentTime).toBe(0)
+  expect(nextAudio.autoplay).toBe(false)
+  expect(nextAudio.controls).toBe(true)
+  expect(screen.getByRole('heading', { name: 'A second recording' })).toBeTruthy()
+  expect(screen.getByRole('status').textContent).toBe('Use the player to begin.')
+  fireEvent.playing(nextAudio)
+  expect(onPlayed.mock.calls).toEqual([[recordings[0].id], [recordings[1].id]])
+  fireEvent.click(screen.getByRole('button', { name: /Next included recording/ }))
+  expect(picker.value).toBe(recordings[0].id)
+  expect(screen.getByRole('heading', { name: recordings[0].title })).toBeTruthy()
+})
+
+it('stops included audio for quiet mode and keeps source and attribution paired', () => {
+  const { rerender } = render(<MusicPlayer />)
+  const audio = document.querySelector('audio')
+  fireEvent.playing(audio)
+  const details = screen.getByText('About this recording').closest('details')
+  details.open = true
+  expect(screen.getByRole('link', { name: 'Recording source' }).href).toBe(bundledMusic[0].sourceUrl)
+  expect(screen.getByRole('link', { name: 'Use and license details' }).href).toBe(bundledMusic[0].licenseUrl)
+  rerender(<MusicPlayer active={false} />)
+  expect(document.querySelector('audio')).toBeNull()
+  expect(audio.getAttribute('src')).toBeNull()
+  expect(pauseAudio).toHaveBeenCalledOnce()
+})
+
+it('makes every shipped recording selectable and logs its own ID only after playback', () => {
+  const onPlayed = vi.fn()
+  render(<MusicPlayer onPlayed={onPlayed} />)
+  const picker = screen.getByRole('combobox', { name: 'Choose an included recording' })
+  expect(screen.getAllByRole('option')).toHaveLength(bundledMusic.length)
+  for (const [index, recording] of bundledMusic.entries()) {
+    fireEvent.change(picker, { target: { value: recording.id } })
+    const audio = screen.getByLabelText(`${recording.title} — ${recording.artist}`)
+    expect(audio.src).toContain(recording.filename)
+    expect(audio.autoplay).toBe(false)
+    expect(onPlayed).toHaveBeenCalledTimes(index)
+    fireEvent.playing(audio)
+    expect(onPlayed).toHaveBeenLastCalledWith(recording.id)
+  }
+  expect(onPlayed.mock.calls.flat()).toEqual(bundledMusic.map(item => item.id))
+})
+
+it('records each included track only on playing, once per session, honoring saved IDs after remount', () => {
+  const onPlayed = vi.fn()
+  const { rerender, unmount } = render(<MusicPlayer onPlayed={onPlayed} sessionId="a" />)
+  const audio = document.querySelector('audio')
+  fireEvent.loadStart(audio)
+  fireEvent.loadedMetadata(audio)
+  fireEvent.canPlay(audio)
+  fireEvent.error(audio)
+  expect(onPlayed).not.toHaveBeenCalled()
+  fireEvent.playing(audio)
+  fireEvent.pause(audio)
+  fireEvent.playing(audio)
+  expect(onPlayed).toHaveBeenCalledExactlyOnceWith(bundledMusic[0].id)
+  rerender(<MusicPlayer onPlayed={onPlayed} sessionId="a" active={false} />)
+  rerender(<MusicPlayer onPlayed={onPlayed} sessionId="a" />)
+  fireEvent.playing(document.querySelector('audio'))
+  expect(onPlayed).toHaveBeenCalledOnce()
+  rerender(<MusicPlayer onPlayed={onPlayed} sessionId="b" />)
+  fireEvent.playing(document.querySelector('audio'))
+  expect(onPlayed).toHaveBeenCalledTimes(2)
+  unmount()
+  render(<MusicPlayer onPlayed={onPlayed} sessionId="b" playedSongIds={[bundledMusic[0].id]} />)
+  fireEvent.playing(document.querySelector('audio'))
+  expect(onPlayed).toHaveBeenCalledTimes(2)
 })
 
 it('plays a chosen local file separately, revoking URLs on replacement and exit', async () => {
@@ -231,12 +336,12 @@ it('plays a chosen local file separately, revoking URLs on replacement and exit'
   const second = new File(['more audio'], 'Another song.m4a', { type: 'audio/mp4' })
   fireEvent.change(input, { target: { files: [second] } })
   expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:http://localhost/local-audio-1')
-  expect(pauseAudio).toHaveBeenCalledOnce()
+  expect(pauseAudio).toHaveBeenCalledTimes(2)
   expect(document.querySelectorAll('audio')).toHaveLength(1)
   expect(screen.getByLabelText('Your audio file: Another song.m4a').src).toBe('blob:http://localhost/local-audio-2')
   unmount()
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/local-audio-2')
-  expect(pauseAudio).toHaveBeenCalledTimes(2)
+  expect(pauseAudio).toHaveBeenCalledTimes(3)
   expect(onPlayed).not.toHaveBeenCalled()
 })
 
@@ -246,7 +351,7 @@ it('clears local audio on quiet mode and on changing to the included piano', () 
     target: { files: [new File(['audio'], 'Song.mp3', { type: 'audio/mpeg' })] },
   })
   select()
-  fireEvent.click(screen.getByRole('button', { name: 'Choose piano instead' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Back to included recordings' }))
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:http://localhost/local-audio-1')
   expect(document.querySelectorAll('audio')).toHaveLength(1)
   select()
@@ -289,14 +394,14 @@ it('shows a useful fallback for a browser identification failure', async () => {
   const player = await loadYouTube()
   act(() => player.events.onError({ data: 153 }))
   expect(screen.getByRole('status').textContent).toMatch(/couldn’t connect in this browser/)
-  expect(screen.getByRole('button', { name: 'Choose piano instead' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Back to included recordings' })).toBeTruthy()
 })
 
 it('handles a blocked API script and lets the caregiver retry later', async () => {
   delete window.YT
   const onPlayed = vi.fn()
   const { unmount } = render(<MusicPlayer song={firstSong} youtubeId={firstId} onPlayed={onPlayed} />)
-  fireEvent.click(screen.getByRole('button', { name: /Load YouTube player/ }))
+  chooseYouTube()
   const script = document.getElementById('moonrise-youtube-api')
   expect(script.src).toBe('https://www.youtube.com/iframe_api')
   await act(async () => fireEvent.error(script))
@@ -304,7 +409,7 @@ it('handles a blocked API script and lets the caregiver retry later', async () =
   expect(onPlayed).not.toHaveBeenCalled()
   unmount()
   render(<MusicPlayer song={firstSong} youtubeId={firstId} />)
-  fireEvent.click(screen.getByRole('button', { name: /Load YouTube player/ }))
+  chooseYouTube()
   expect(document.getElementById('moonrise-youtube-api')).not.toBe(script)
   await act(async () => vi.advanceTimersByTime(12000))
   expect(screen.getByRole('status').textContent).toMatch(/YouTube couldn’t connect/)
@@ -317,9 +422,9 @@ it('does not create a late YouTube player after switching to piano while the API
   window.onYouTubeIframeAPIReady = previousReady
   const onPlayed = vi.fn()
   render(<MusicPlayer song={firstSong} youtubeId={firstId} onPlayed={onPlayed} />)
-  fireEvent.click(screen.getByRole('button', { name: /Load YouTube player/ }))
+  chooseYouTube()
   const ready = window.onYouTubeIframeAPIReady
-  fireEvent.click(screen.getByRole('button', { name: 'Choose piano instead' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Back to included recordings' }))
   window.YT = api
   await act(async () => ready())
   expect(document.querySelector('iframe')).toBeNull()

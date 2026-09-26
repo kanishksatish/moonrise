@@ -6,7 +6,7 @@ Many people living with dementia become more confused or agitated as daylight fa
 called *sundowning*. Moonrise helps family caregivers plan ahead for it. It **estimates** this
 evening's dusk from local sunset and cloud cover, suggests a time to start a calming routine,
 and reminds the caregiver while the app is open. The routine is gentle and full-screen:
-warm light that brightens as the sky darkens, song suggestions from the person's youth, in-app audio controls, and simple
+warm light that brightens as the sky darkens, an included listening library, in-app audio controls, and simple
 memory prompts. After each evening, one tap records how it went. Moonrise then adjusts its
 suggested start time from the logged evenings, and summarizes recorded song activity.
 Song rankings reflect associations in the caregiver's own logs, not proof a song helps.
@@ -23,7 +23,7 @@ No hardware, no account, no backend. It is a web app (PWA) that runs on any tabl
 | --- | --- |
 | Setup | Name, birth year, location (browser location or city search) and up to three optional memory anchors: hometown, spouse, job. |
 | Today | The suggested **start time** with a countdown, the moon phase, and an **estimated dusk** (tap to see sunset and cloud details). A heads-up appears 10 minutes before the start while the app is open. A small "constellation" shows one star per logged evening in the last week. Every outcome counts the same, and there are no streaks or scores. |
-| Moonrise mode | A full-screen sky, a slowly rising moon, warm light, era-song suggestions, a player for an included piano piece or a caregiver-selected local audio file, and one memory prompt at a time. Verified YouTube recordings can play in a visible embedded player when available. |
+| Moonrise mode | A full-screen sky, a slowly rising moon, warm light, a visible picker of included licensed recordings, native playback controls or a caregiver-selected local audio file, and one memory prompt at a time. Verified YouTube recordings remain optional when available. |
 | Log | Three big buttons: **Calm**, **Restless**, **Episode**, plus an optional "episode started at" time. |
 | Report | A one-page printable weekly summary to share with family or a doctor, including "songs from your evenings" (logged associations, not proven benefit). |
 
@@ -43,18 +43,19 @@ the optional demo week is explicitly labelled.
 - **Suggested start time.** 45 minutes before estimated dusk by default. After 3+ logged
   evenings with at least one timed episode, it's the median time episodes began (relative
   to dusk) minus a 20-minute buffer, kept between 90 and 15 minutes before dusk.
-- **Music.** The catalog suggests songs from ages 10 to 30. The visible YouTube player
-  accepts only recordings marked verified after an actual playback check; all 15 shipped
-  candidates currently remain unverified and unavailable. Metadata alone is not proof of
-  playback. Only a YouTube PLAYING event records a new catalog-song entry, once per evening;
-  this does not establish listening duration or benefit. Legacy entries may be link openings.
-  Each song scores +1 per calm evening and −1 per episode evening in its recorded entries;
-  ties remain shuffled. A separately credited CC0 recording of **Für Elise, performed by
-  V Gao**, plays directly in the app. **Play a music file** opens a local audio file without
-  uploading it; the file must be selected again after leaving the routine. Piano and local
-  files are never assigned to the suggested catalog song or its outcome. Nothing autoplays,
-  and Quiet view, Next song and Finish stop playback. Audio provenance is in
-  `src/assets/audio/provenance.json`.
+- **Music.** The included licensed recordings are real local MP3s, selected by title in the
+  listening library and played with native audio controls. This is a shared collection,
+  not music matched to a birth year. Each recording has visible source and license credits
+  in **About this recording** and an immutable `bundled-` ID. Only an actual native `playing`
+  event records that ID, once per evening; selecting, loading, or failing to play does not.
+  This does not establish listening duration or benefit. Old era-song IDs retain their
+  meaning, and historical piano or personal-file activity is not reconstructed. The report
+  can display old era songs and newly played included recordings together, with unknown
+  recording years omitted. Era ranking remains separate internally. Optional YouTube
+  playback still requires a verified recording; the unverified candidates are not shown as
+  playable songs. **Play a music file** uses a temporary local file without uploading or
+  assigning it a catalog ID. Nothing autoplays; changing a recording, Quiet view, and Finish
+  stop playback. Full recording/source/license details are in `src/assets/audio/catalog.json`.
 - **AI-written memory prompts (optional).** In Settings, a caregiver can add their own
   Anthropic API key and tap Generate. Claude Haiku 4.5 (`claude-haiku-4-5`) then drafts a few gentle,
   personal memory prompts from the person's birth year and the optional anchors (hometown,
@@ -95,7 +96,7 @@ would need a different key-management design. Use a dedicated demo key, remove i
 using a shared device, and do not commit it. Delete all data also removes the saved key.
 YouTube receives playback/device information and may show ads or use cookies; privacy-enhanced
 mode limits personalization but does not eliminate data sharing. No profile name, anchors or
-logs are sent to YouTube. Bundled piano is served with the app; selected local audio stays in
+logs are sent to YouTube. Included recordings are served with the app; selected local audio stays in
 the browser through a temporary object URL and is neither uploaded nor saved into the profile.
 
 ## Run it
@@ -115,7 +116,9 @@ A static preview (including the local preview on port 4177) serves `dist/`; run 
 root-path build and reload it after changes. Test a subpath build separately, for example
 `VITE_BASE=/moonrise/ npm run build -- --outDir dist-subpath`, so the normal preview is not replaced.
 After a successful online production install, the committed offline shell includes the
-entire licensed piano recording and supports byte-range seeking. Other audio and YouTube
+entire licensed listening library and supports byte-range seeking. Wait for the initial
+download to finish while online. A failed recording download or storage write keeps the
+previous complete offline build instead of committing a partial library. Other audio and YouTube
 are never cached. Offline availability depends on the browser retaining its site storage.
 
 ## Project layout
@@ -125,7 +128,7 @@ src/engine/     Pure logic with unit tests: sky, schedule, songs, report, moon, 
                 demo data, storage, evening dates, city lookup. index.js is the
                 contract the UI imports from.
 src/data/       songs.json: era songs; videos.json: candidate IDs and verification evidence.
-src/assets/audio/ Included CC0 piano MP3 and its source/license/hash provenance.
+src/assets/audio/ Included licensed MP3s and their catalog, source, license, and hash provenance.
 src/screens/    Setup, Today, Moonrise mode, Log, Report, Settings.
 src/components/ Shared UI pieces.
 src/styles/     Plain CSS: 20px+ text, 48px+ tap targets, high contrast, dark-room friendly.

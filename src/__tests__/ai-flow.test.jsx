@@ -21,6 +21,8 @@ beforeEach(() => {
   localStorage.clear()
   localStorage.setItem('moonrise:v1', JSON.stringify({ profile, logs: [] }))
   vi.clearAllMocks()
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
   effectiveDusk.mockResolvedValue({ sunset: new Date(2026, 8, 26, 19), effectiveDusk: new Date(2026, 8, 26, 19), cloudCover: null, shiftMinutes: 0, source: 'offline' })
   generateMemoryPrompts.mockResolvedValue([first, second])
 })
@@ -63,8 +65,8 @@ it('keeps only approved drafts, survives reload, and shows an approved prompt in
   cleanup()
   await act(async () => render(<App />))
   click('Start Moonrise now'); click('Skip launch')
-  // The first prompt is about the song; the reviewed prompt follows after three minutes.
-  await act(async () => vi.advanceTimersByTime(3 * 60 * 1000))
+  // Conversation is independent of the recording, so the approved prompt comes
+  // first instead of naming an unrelated era song.
   expect(screen.getByText(first)).toBeTruthy()
   expect(screen.getByText('Read aloud · AI-written, reviewed by you')).toBeTruthy()
   expect(screen.queryByText(second)).toBeNull()

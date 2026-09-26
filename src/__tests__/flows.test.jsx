@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App.jsx'
 import Setup from '../screens/Setup.jsx'
 import Moonrise from '../screens/Moonrise.jsx'
+import Report from '../screens/Report.jsx'
+import includedCatalog from '../assets/audio/catalog.json'
 import { effectiveDusk, findCity, songVideo } from '../engine/index.js'
 
 vi.mock('../engine/index.js', async (original) => ({
@@ -15,6 +17,10 @@ const profile = { name: 'Test', birthYear: 1942, city: 'Dallas', lat: 32.78, lon
 const initial = { profile, logs: [], tonight: { date: '2026-09-26', songIds: ['earth-angel-1954'] } }
 const saved = () => JSON.parse(localStorage.getItem('moonrise:v1'))
 const click = (name) => fireEvent.click(screen.getByRole('button', { name, exact: true }))
+const chooseYouTube = () => {
+  screen.getByText('Optional YouTube song').closest('details').open = true
+  fireEvent.click(screen.getByRole('button', { name: /Load YouTube player/ }))
+}
 let players
 
 beforeEach(() => {
@@ -105,27 +111,28 @@ it('records a song only after the integrated player observes playback', async ()
   const unplayedEvening = { ...initial, tonight: { ...initial.tonight, songIds: [] } }
   render(<Moonrise state={unplayedEvening} onPlayed={onPlayed} onExit={() => {}} />)
   expect(onPlayed).not.toHaveBeenCalled()
-  click('Next song')
-  expect(onPlayed).not.toHaveBeenCalled()
-  await act(async () => click('Load YouTube player'))
-  expect(onPlayed).not.toHaveBeenCalled()
-  act(() => players[0].events.onStateChange({ data: 1 }))
+  fireEvent.playing(document.querySelector('audio'))
+  expect(onPlayed).toHaveBeenCalledExactlyOnceWith(includedCatalog[0].id)
+  await act(async () => chooseYouTube())
   expect(onPlayed).toHaveBeenCalledOnce()
-  expect(typeof onPlayed.mock.calls[0][0]).toBe('string')
+  act(() => players[0].events.onStateChange({ data: 1 }))
+  expect(onPlayed).toHaveBeenCalledTimes(2)
+  expect(onPlayed.mock.calls[1][0]).not.toMatch(/^bundled-/)
   click('Quiet view')
   expect(players[0].destroy).toHaveBeenCalledOnce()
   expect(document.querySelector('iframe')).toBeNull()
 })
 
-it('keeps unverified candidates unavailable and offers in-app piano without logging an era song', () => {
+it('offers included audio and generic conversation instead of unavailable era-song titles', () => {
   const onPlayed = vi.fn()
   render(<Moonrise state={initial} onPlayed={onPlayed} onExit={() => {}} />)
   expect(screen.queryByRole('link', { name: /Spotify|YouTube/ })).toBeNull()
   expect(screen.queryByRole('button', { name: /Load YouTube/ })).toBeNull()
-  click('Choose piano instead')
-  const audio = screen.getByLabelText('Für Elise, piano performed by V Gao')
+  expect(screen.getByRole('combobox', { name: 'Choose an included recording' })).toBeTruthy()
+  expect(document.querySelector('.prompt-text').textContent).not.toContain('Do you remember "')
+  const audio = screen.getByLabelText(/Für Elise —/)
   fireEvent.playing(audio)
-  expect(onPlayed).not.toHaveBeenCalled()
+  expect(onPlayed).toHaveBeenCalledExactlyOnceWith(includedCatalog[0].id)
   click('Quiet view')
   expect(document.querySelector('audio')).toBeNull()
   expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
@@ -155,13 +162,40 @@ it('recovers a damaged stored session through a complete song-and-log flow', asy
   }))
   await act(async () => render(<App />))
   click('Start Moonrise now'); click('Skip launch')
-  await act(async () => click('Load YouTube player'))
+  await act(async () => chooseYouTube())
   act(() => players[0].events.onStateChange({ data: 1 }))
   click('Finish'); click('Calm')
   expect(players[0].destroy).toHaveBeenCalledOnce()
   expect(saved().logs).toHaveLength(1)
   expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', outcome: 'calm' })
   expect(saved().logs[0].songIds).toHaveLength(1)
+})
+
+it('preserves actual bundled IDs alongside old era IDs through playback, storage, and the report', async () => {
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  click('Start Moonrise now'); click('Skip launch')
+  fireEvent.playing(document.querySelector('audio'))
+  fireEvent.pause(document.querySelector('audio'))
+  fireEvent.playing(document.querySelector('audio'))
+  click('Finish'); click('Calm')
+  expect(saved().logs[0].songIds).toEqual(['earth-angel-1954', includedCatalog[0].id])
+  cleanup()
+  await act(async () => render(<App />))
+  click('Report')
+  expect(screen.getByText('Earth Angel')).toBeTruthy()
+  expect(screen.getByText(includedCatalog[0].title)).toBeTruthy()
+  expect(screen.getByText(/Included recording/)).toBeTruthy()
+  expect(screen.getByText(/does not show that a song caused a change/)).toBeTruthy()
+})
+
+it('shows bundled tracks with an unknown recording year without inventing a year', () => {
+  const recording = includedCatalog.find(item => item.recordingYear === null)
+  expect(recording).toBeTruthy()
+  render(<Report state={{ ...initial, logs: [{ date: '2026-09-26', outcome: 'calm', songIds: [recording.id] }] }} />)
+  const row = screen.getByText(recording.title).closest('li')
+  expect(row.textContent).toContain('Included recording')
+  expect(row.textContent).not.toMatch(/null|undefined|\(0\)/)
 })
 
 
@@ -184,22 +218,25 @@ it('launches only on request and automatically enters a usable routine', async (
 it('lets the caregiver change the prompt and hide conversation without losing the session', () => {
   const onExit = vi.fn()
   render(<Moonrise state={{ ...initial, approvedPrompts: ['An approved memory question.'] }} onPlayed={() => {}} onExit={onExit} />)
-  click('Next prompt')
   expect(screen.getByText('An approved memory question.')).toBeTruthy()
+  click('Next prompt')
+  const prompt = document.querySelector('.prompt-text').textContent
+  expect(prompt).not.toBe('An approved memory question.')
   const song = document.querySelector('.music-player-title').textContent
   click('Quiet view')
-  expect(screen.queryByText('An approved memory question.')).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Choose piano instead' })).toBeNull()
+  expect(screen.queryByText(prompt)).toBeNull()
+  expect(screen.queryByRole('combobox', { name: 'Choose an included recording' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Show conversation' }).getAttribute('aria-pressed')).toBe('true')
   click('Show conversation')
-  expect(screen.getByText('An approved memory question.')).toBeTruthy()
+  expect(screen.getByText(prompt)).toBeTruthy()
   expect(document.querySelector('.music-player-title').textContent).toBe(song)
   click('Finish')
   expect(onExit).toHaveBeenCalledOnce()
 })
 
-it('does not promise era music when the collection has no matching songs', async () => {
+it('offers the same real listening library for a birth year outside the era catalog', async () => {
   localStorage.setItem('moonrise:v1', JSON.stringify({ ...initial, profile: { ...profile, birthYear: 1900 } }))
   await act(async () => render(<App />))
-  expect(screen.getByText(/Their era is not in our song collection yet/)).toBeTruthy()
+  expect(screen.getByText(`${includedCatalog.length} included recordings to play here, or choose a music file from your device.`)).toBeTruthy()
+  expect(screen.queryByText(/Music from 1910/)).toBeNull()
 })

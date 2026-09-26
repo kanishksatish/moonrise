@@ -5,8 +5,8 @@
 //     references (Vite's hashed JS/CSS, the manifest, the icon).
 //   - Files under the build's assets/ folder that are only reached from JS/CSS (e.g. lazy
 //     chunks), and only for script/style/image/font requests.
-//   - The single bundled CC0 piano MP3 is explicitly referenced by the HTML and cached
-//     in full with the shell. Its cached bytes can satisfy media Range requests offline.
+//   - Licensed bundled MP3s are explicitly referenced by the HTML and cached
+//     in full with the shell. Their cached bytes satisfy media Range requests offline.
 //     Other audio, including all remote music, is never intercepted or cached.
 // NEVER CACHED: fetch()/XHR requests (API calls, same-origin or not), cross-origin requests,
 // non-GET requests, and anything outside the app's scope. fetch()/XHR requests are not
@@ -33,7 +33,15 @@
 //   - No committed shell (first visit was offline, or site data was cleared): the start page
 //     is a short "connect once" page (HTTP 503) instead of a browser error.
 
-const SW_VERSION = 'v4'
+const SW_VERSION = 'v5'
+// Exact approved file stems; membership in the committed shell is also required.
+const BUNDLED_AUDIO_FILES = [
+  'fur-elise-v-gao',
+  'gymnopedie-1-macleod', 'let-me-call-you-sweetheart-1911', 'shine-on-harvest-moon-1909',
+  'clair-de-lune-goedhart', 'canon-in-d-macleod', 'greensleeves-leckschat',
+  'moonlight-sonata-suarez', 'bach-prelude-fugue-c-musopen',
+  'traumerei-musopen', 'ave-maria-fayne-streibel',
+]
 const SHELL_PREFIX = 'moonrise-shell-' // not versioned: a committed shell survives worker updates
 const META_CACHE = 'moonrise-meta'
 const RUNTIME_CACHE = `moonrise-assets-${SW_VERSION}`
@@ -73,8 +81,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(navigate(event))
     return
   }
-  if (req.destination === 'audio' && isBundledPiano(req.url)) {
-    event.respondWith(bundledPiano(req))
+  if (req.destination === 'audio' && isBundledAudio(req.url)) {
+    event.respondWith(bundledAudio(req))
     return
   }
   // fetch()/XHR (destination '') and anything that isn't a static file: not intercepted.
@@ -107,14 +115,14 @@ async function staticFile(req) {
   return res
 }
 
-function isBundledPiano(url) {
-  // Only this owned recording is permitted, including its Vite content hash.
+function isBundledAudio(url) {
+  // Only approved recordings are permitted, including their Vite content hash.
   // Exact membership in the committed shell is checked before serving cached bytes.
   if (!url.startsWith(ASSET_DIR)) return false
-  return /^fur-elise-v-gao-[A-Za-z0-9_-]+\.mp3$/.test(url.slice(ASSET_DIR.length))
+  return BUNDLED_AUDIO_FILES.some(stem => new RegExp(`^${stem}-[A-Za-z0-9_-]+\\.mp3$`).test(url.slice(ASSET_DIR.length)))
 }
 
-async function bundledPiano(req) {
+async function bundledAudio(req) {
   const full = await matchShell(req.url)
   // Preserve the original Range request on network misses. Never cache a streamed
   // partial response, and never opportunistically cache an uncommitted audio URL.
@@ -182,7 +190,7 @@ async function isComplete(pointer) {
   for (const url of pointer.urls) {
     const res = await caches.match(url, { cacheName: pointer.name })
     if (!res) return false
-    if (isBundledPiano(url)) {
+    if (isBundledAudio(url)) {
       // A static host may return its HTML fallback with status 200 for a missing
       // MP3. Do not commit that, a partial response, or an empty audio response.
       // GitHub Pages serves this MP3 as audio/mp3 rather than audio/mpeg.

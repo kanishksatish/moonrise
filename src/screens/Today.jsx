@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { eraSongs, eraYears, eveningDate, moonPhase, moonriseStart, skyGradient, skyState } from '../engine/index.js'
+import { eveningDate, moonPhase, moonriseStart, skyGradient, skyState } from '../engine/index.js'
+import includedCatalog from '../assets/audio/catalog.json'
 import { formatDuration, formatTime } from '../components/format.js'
 import { eveningKey } from '../components/eveningLog.js'
 import useNow from '../components/useNow.js'
@@ -67,8 +68,6 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
     }
   }
 
-  const years = eraYears(profile.birthYear)
-  const hasEraSongs = eraSongs(profile.birthYear).length > 0
   const approvedCount = state.approvedPrompts?.length ?? 0
 
   return (
@@ -124,9 +123,9 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
           {tonightLog && <p className="logged"><span className="logged-star" aria-hidden="true">✦</span><span>Tonight is logged: <strong>{tonightLog.outcome}</strong>.<br/>A star for showing up.</span></p>}
           <section className="personal-note">
             <div className="record-art" aria-hidden="true"><span/></div>
-            <p className="eyebrow">Made for your person</p>
-            <h2>Old songs.<br/><em>New moments.</em></h2>
-            <p>{hasEraSongs ? `Music from ${years.from}–${years.to}, with space for their stories.` : 'Their era is not in our song collection yet. Conversation starters are still ready.'}</p>
+            <p className="eyebrow">The listening library</p>
+            <h2>A little music.<br/><em>A moment together.</em></h2>
+            <p>{includedCatalog.length} included recordings to play here, or choose a music file from your device.</p>
             <p className="muted">{approvedCount ? `${approvedCount} AI-written prompt${approvedCount === 1 ? '' : 's'}, selected by you.` : 'Built-in conversation starters, ready to go.'}</p>
             {onPersonalize && <button className="text-action" onClick={onPersonalize}>Make it personal <span aria-hidden="true">↗</span></button>}
           </section>
@@ -135,8 +134,8 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
 
       <footer className="today-footer">
         <div className="reminder-line">
-          {permission === 'default' && <button className="btn" onClick={askPermission}>Turn on alerts</button>}
-          {(permission === 'default' || permission === 'granted') && <p className="small alert-hint">Keep Moonrise open for your evening heads-up.</p>}
+          {permission === 'default' && <button className="btn" onClick={askPermission}>Turn on reminders</button>}
+          {(permission === 'default' || permission === 'granted') && <p className="small alert-hint">Keep Moonrise open for routine reminders.</p>}
         </div>
         <p className="small care-note">A suggested routine based on the sky and your logs.<br/>Caregiver support, not a medical treatment.</p>
       </footer>
