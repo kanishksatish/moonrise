@@ -25,3 +25,11 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
   Store that evening's `effectiveDusk` and `cloudCover` from `effectiveDusk()`, and the ids of songs played in Moonrise mode.
 - Contract: added `moonriseStart`, `onsetMinutes` to `src/engine/index.js`.
 - Next: songs (songs.json, eraYears, songScore, playlist).
+
+## 2026-09-26 01:44 UTC — Claude — songs
+- Done: `src/data/songs.json` (47 real songs, 1941 to 1978, each `{ id, title, artist, year }`), `src/engine/songs.js`, `src/engine/random.js` (seeded random), tests (37 passing total).
+- `eraYears(birthYear)` -> `{ from, to }` (age 10 to 30). `eraSongs(birthYear)` filters songs.json. Born 1942 -> 1952..1972.
+- `songScore(songId, logs)`: +1 calm, -1 episode, 0 restless. `playlist(birthYear, logs)` -> era songs with `score`, best first, ties shuffled.
+- `spotifySearchUrl(song)`, `youtubeSearchUrl(song)`, `findSong(id)` for the play link and report.
+- Contract: added the above to `src/engine/index.js`.
+- Next: weeklyReport.
