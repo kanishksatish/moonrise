@@ -33,3 +33,5 @@ export { generateMemoryPrompts, AiPromptError, AI_MODEL } from './ai.js'
 export { songEvidence, evidenceText } from './learning.js'
 export { progress, realProgress } from './progress.js'
 export { songVideo } from './video.js'
+
+export { CARE_PLAN_NOTE, COMFORT_STEPS, cleanCareContext, comfortStepsText, logsForHandoff, handoffCoverage } from './careContext.js'

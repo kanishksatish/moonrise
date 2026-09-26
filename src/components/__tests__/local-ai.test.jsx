@@ -44,6 +44,74 @@ it('keeps the existing Anthropic path when no local gateway is detected', async 
   expect(local.generateLocalPrompts).not.toHaveBeenCalled()
 })
 
+it.each([
+  ['a configured local gateway', { configured: true }, 'local'],
+  ['no local gateway', null, 'anthropic'],
+])('waits for a delayed provider check confirming %s before generating', async (_, status, provider) => {
+  let resolveStatus
+  const pendingStatus = new Promise(resolve => { resolveStatus = resolve })
+  local.localAiStatus.mockReturnValue(pendingStatus)
+  // Fixture only: a saved alternate-provider key must not bypass the check.
+  localStorage.setItem('moonrise:ai-key', 'fictional-anthropic-key')
+  const anthropic = vi.fn().mockResolvedValue([draft])
+  const update = vi.fn()
+  render(<AiPrompts state={state} update={update} generatePrompts={anthropic} />)
+
+  const generate = screen.getByRole('button', { name: 'Generate prompts' })
+  expect(generate.disabled).toBe(true)
+  expect(screen.getByText('Checking the optional connection…')).toBeTruthy()
+  fireEvent.click(generate)
+  expect(anthropic).not.toHaveBeenCalled()
+  expect(local.generateLocalPrompts).not.toHaveBeenCalled()
+
+  await act(async () => { resolveStatus(status); await pendingStatus })
+  expect(screen.getByRole('button', { name: 'Generate prompts' }).disabled).toBe(false)
+  // Resolving a provider check itself must not send profile details.
+  expect(anthropic).not.toHaveBeenCalled()
+  expect(local.generateLocalPrompts).not.toHaveBeenCalled()
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Generate prompts' })))
+  if (provider === 'local') {
+    expect(local.generateLocalPrompts).toHaveBeenCalledExactlyOnceWith(state.profile, { existing: [] })
+    expect(anthropic).not.toHaveBeenCalled()
+  } else {
+    expect(anthropic).toHaveBeenCalledExactlyOnceWith(state.profile, { apiKey: 'fictional-anthropic-key', existing: [] })
+    expect(local.generateLocalPrompts).not.toHaveBeenCalled()
+  }
+  expect(update).not.toHaveBeenCalled()
+})
+
+it('disables generation during a focus check and ignores an older provider response', async () => {
+  let resolveOlder, resolveLatest
+  const olderCheck = new Promise(resolve => { resolveOlder = resolve })
+  const latestCheck = new Promise(resolve => { resolveLatest = resolve })
+  local.localAiStatus.mockResolvedValueOnce(null)
+    .mockReturnValueOnce(olderCheck)
+    .mockReturnValueOnce(latestCheck)
+  localStorage.setItem('moonrise:ai-key', 'fictional-anthropic-key')
+  const anthropic = vi.fn().mockResolvedValue([draft])
+  await act(async () => render(<AiPrompts state={state} update={vi.fn()} generatePrompts={anthropic} />))
+  expect(screen.getByRole('button', { name: 'Generate prompts' }).disabled).toBe(false)
+
+  fireEvent.focus(window)
+  expect(screen.getByRole('button', { name: 'Generate prompts' }).disabled).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: 'Generate prompts' }))
+  expect(anthropic).not.toHaveBeenCalled()
+  expect(local.generateLocalPrompts).not.toHaveBeenCalled()
+  fireEvent.focus(window)
+  expect(local.localAiStatus).toHaveBeenCalledTimes(3)
+
+  await act(async () => { resolveLatest({ configured: true }); await latestCheck })
+  expect(screen.getByRole('button', { name: 'Generate prompts' }).disabled).toBe(false)
+  await act(async () => { resolveOlder(null); await olderCheck })
+  expect(screen.getByText('Manage local OpenAI connection')).toBeTruthy()
+  // A late absent-gateway response must not revert to the saved alternate key.
+  expect(anthropic).not.toHaveBeenCalled()
+  expect(local.generateLocalPrompts).not.toHaveBeenCalled()
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Generate prompts' })))
+  expect(local.generateLocalPrompts).toHaveBeenCalledExactlyOnceWith(state.profile, { existing: [] })
+  expect(anthropic).not.toHaveBeenCalled()
+})
+
 it('discarding or leaving local drafts does not approve them', async () => {
   const update = vi.fn()
   await act(async () => render(<AiPrompts state={state} update={update} />))

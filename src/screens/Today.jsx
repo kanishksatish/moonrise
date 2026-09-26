@@ -6,6 +6,7 @@ import { eveningKey } from '../components/eveningLog.js'
 import useNow from '../components/useNow.js'
 import MoonIcon from '../components/MoonIcon.jsx'
 import Constellation from '../components/Constellation.jsx'
+import '../styles/observatory.css'
 
 const HEADS_UP_MINUTES = 10
 const MINUTE = 60000
@@ -73,8 +74,8 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
   return (
     <div className="today">
       <header className="today-head page-heading">
-        <div><p className="eyebrow">An evening, together</p><h1>A softer landing. <br/><em>For both of you.</em></h1></div>
-        <p className="today-date">{eveningDate(now).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        <div><p className="eyebrow"><span aria-hidden="true"/>An evening, together</p><h1>Your evening,<br/><em>at your own pace.</em></h1></div>
+        <p className="today-date"><span>{eveningDate(now).toLocaleDateString(undefined, { weekday: 'long' })}</span>{eveningDate(now).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</p>
       </header>
       {logs.some(log => log.demo) && <p className="demo-flag"><span aria-hidden="true">◌ </span>Demo data is included in the routine suggestions.</p>}
       {alertText && !tonightLog && <div className="alert" role="alert">{alertText}</div>}
@@ -84,7 +85,7 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
           <section className="evening-scene" aria-label={`Tonight for ${profile.name}`}
             style={{ '--sky-top': gradient.top, '--sky-bottom': gradient.bottom }}>
             <div className="scene-landscape" aria-hidden="true"/>
-            <div className="scene-topline"><span>Tonight for {profile.name}</span><span className="scene-mark" aria-hidden="true">✦</span></div>
+            <div className="scene-topline"><span>Tonight for {profile.name}</span><span className="scene-mark" aria-hidden="true"><span/>Your evening sky</span></div>
             <div className="scene-moon" aria-hidden="true">
               <svg className="lunar-orbits" viewBox="0 0 400 400"><circle cx="200" cy="200" r="188"/><circle cx="200" cy="200" r="155"/><path d="M12 200H40M360 200H388M200 12V40M200 360V388"/><circle className="orbit-point" cx="333" cy="67" r="4"/></svg>
               <MoonIcon phase={moon.phase} decorative/>
@@ -94,15 +95,19 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
               <p className={sky ? 'scene-time' : 'scene-loading'}>{sky ? formatTime(schedule.start) : 'Checking the sky…'}</p>
               <p className="scene-countdown">{!sky ? 'You can begin while we check.' : now < schedule.start ? `In ${formatDuration(schedule.start - now)}` : 'Ready whenever you are.'}</p>
               <button className="btn primary start-routine" onClick={onStart}><span>Start Moonrise now</span><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>
+              <p className="scene-reassurance">A familiar song. A little time together.</p>
             </div>
-            <div className="scene-footer"><span>{profile.city || 'Your evening sky'}</span><span className="phase-label"><i aria-hidden="true"/>{moon.name}</span></div>
+            <div className="scene-footer"><span className="scene-location"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M18 10c0 4.5-6 10-6 10S6 14.5 6 10a6 6 0 1 1 12 0Z"/><circle cx="12" cy="10" r="2"/></svg>{profile.city || 'Your evening sky'}</span><span className="phase-label"><i aria-hidden="true"/>{moon.name}</span></div>
           </section>
 
-          <div className="routine-path" aria-label="Your evening routine">
-            <div><span className="step-number">01</span><p>Settle in<span>A little space to slow down.</span></p></div>
-            <div><span className="step-number">02</span><p>Play a memory<span>Music. A story. A moment.</span></p></div>
-            <div><span className="step-number">03</span><p>Keep a little note<span>Every kind of evening counts.</span></p></div>
-          </div>
+          <section className="routine-path" aria-labelledby="routine-path-title">
+            <h2 id="routine-path-title">Keep it simple tonight.</h2>
+            <ol>
+              <li><span className="step-number" aria-hidden="true">01</span><p>Make a little space<span>Sit somewhere familiar and comfortable.</span></p></li>
+              <li><span className="step-number" aria-hidden="true">02</span><p>Follow their lead<span>Choose music, a conversation, or just quiet.</span></p></li>
+              <li><span className="step-number" aria-hidden="true">03</span><p>Leave a short note<span>Record what you noticed, when you’re ready.</span></p></li>
+            </ol>
+          </section>
 
           {sky && <details className="sky-facts">
             <summary><span>Behind tonight’s timing</span><span className="sky-summary-time">Estimated dusk {formatTime(sky.effectiveDusk)}</span></summary>
@@ -120,13 +125,13 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
 
         <aside className="evening-journal" aria-label="Your evening journal">
           <Constellation logs={logs} now={now}/>
-          {tonightLog && <p className="logged"><span className="logged-star" aria-hidden="true">✦</span><span>Tonight is logged: <strong>{tonightLog.outcome}</strong>.<br/>A star for showing up.</span></p>}
+          {tonightLog && <p className="logged"><span className="logged-star" aria-hidden="true">✧</span><span>Tonight’s note is saved.<br/>Recorded as <strong>{tonightLog.outcome}</strong>.</span></p>}
           <section className="personal-note">
             <div className="record-art" aria-hidden="true"><span/></div>
             <p className="eyebrow">The listening library</p>
-            <h2>A little music.<br/><em>A moment together.</em></h2>
+            <h2>Something<br/><em>familiar.</em></h2>
             <p>{includedCatalog.length} included recordings to play here, or choose a music file from your device.</p>
-            <p className="muted">{approvedCount ? `${approvedCount} AI-written prompt${approvedCount === 1 ? '' : 's'}, selected by you.` : 'Built-in conversation starters, ready to go.'}</p>
+            <p className="muted">{approvedCount ? `${approvedCount} conversation starter${approvedCount === 1 ? '' : 's'} selected by you.` : 'Conversation starters are ready whenever you need one.'}</p>
             {onPersonalize && <button className="text-action" onClick={onPersonalize}>Make it personal <span aria-hidden="true">↗</span></button>}
           </section>
         </aside>

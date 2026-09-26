@@ -1,0 +1,70 @@
+@media screen {
+  .settings.settings-experience { max-width: none; display: block; }
+  .settings-heading { max-width: 780px; margin-bottom: 36px; }
+  .settings-heading h1 { margin: 0 0 22px; }
+  .settings-heading > p:last-child { color: var(--muted); max-width: 620px; margin: 0; }
+  .settings-profile { display: flex; align-items: center; gap: 20px; padding: 25px 0; margin-bottom: 36px; border-block: 1px solid var(--hairline); }
+  .settings-initial { display: grid; place-items: center; flex: 0 0 60px; height: 60px; border: 1px solid #efc5a35c; color: var(--accent); font: 32px/1 var(--font-editorial); border-radius: 50%; }
+  .settings-profile > div { min-width: 0; flex: 1; }
+  .settings-profile h2 { margin: 0 0 6px; font: 31px/1.2 var(--font-editorial); }
+  .settings-profile p { color: var(--muted); margin: 0; }
+  .settings-profile .btn { flex-shrink: 0; }
+  .settings-columns { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 30px; align-items: start; }
+  .settings-main, .settings-side { min-width: 0; }
+  .settings-experience .card { padding: 28px; margin: 0; border-radius: 17px; }
+  .settings-experience h2 { font: 33px/1.15 var(--font-editorial); }
+  .settings-experience h3 { font-size: 23px; line-height: 1.3; font-weight: 500; }
+  .settings-experience .eyebrow { color: var(--calm); }
+  .settings-experience .ai-prompts > h2 { margin: 0 0 20px; }
+  .settings-experience .ai-key-details { margin: 26px 0; background: #111c2070; border: 1px solid var(--hairline); padding: 0 18px; border-radius: 10px; }
+  .settings-experience summary { min-height: 52px; padding: 15px 0; cursor: pointer; color: var(--text); }
+  .settings-experience .ai-key-details[open] { padding-bottom: 18px; }
+  .settings-experience .ai-key-details form { margin-top: 20px; }
+  .settings-experience .suggestion-privacy { color: var(--muted); font-size: 20px; line-height: 1.55; margin-bottom: 24px; }
+  .settings-experience .ai-review, .settings-experience .ai-approved { border-top: 1px solid var(--hairline); margin-top: 28px; padding-top: 24px; }
+  .settings-experience .ai-prompt-list { padding: 0; margin-top: 20px; }
+  .settings-experience .ai-prompt-list li { padding: 20px; background: #101a1d; border-color: var(--hairline); border-radius: 11px; }
+  .settings-experience .ai-prompt-list li > p { font: 25px/1.45 var(--font-editorial); }
+  .device-readiness h2 { margin: 0 0 24px; }
+  .device-meter { display: flex; gap: 15px; align-items: center; margin-bottom: 22px; }
+  .device-meter > span { display: grid; place-items: center; flex: 0 0 45px; height: 45px; font-size: 24px; color: var(--accent); background: #efc5a30c; border-radius: 50%; border: 1px solid #efc5a34d; }
+  .device-meter.is-ready > span { color: var(--calm); border-color: #bbcdc24d; background: #bbcdc20c; }
+  .device-meter strong { font-weight: 500; }
+  .device-meter p { color: var(--muted); margin: 6px 0 0; font-size: 20px; }
+  .device-readiness .device-rehearsal { border-top: 1px solid var(--hairline); padding-top: 22px; margin-top: 24px; color: var(--muted); }
+  .settings-disclosure { border-top: 1px solid var(--hairline); }
+  .settings-disclosure p { color: var(--muted); }
+  .settings-care-note { margin: 30px 0 0; padding: 8px 7px 0; }
+  .settings-care-note h2 { margin: 0 0 20px; }
+  .settings-data-section { display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); gap: 36px; padding: 36px 0; margin-top: 36px; border-block: 1px solid var(--hairline); }
+  .settings-data-section h2 { margin: 0; }
+  .settings-data-section p:first-child { margin-top: 0; }
+  .settings-data-section p:last-child { margin-bottom: 0; }
+  .settings-utilities { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 30px; margin: 36px 0; }
+  .settings-utilities .card { background: #151f23; }
+  .settings-utilities .card h2 { font-size: 29px; margin-top: 0; }
+  .settings-utilities .btn { margin: 10px 10px 0 0; }
+  .settings-experience > .small { margin-top: 30px; }
+  @media (max-width: 1000px) {
+    .settings-columns { grid-template-columns: minmax(0, 1fr); }
+    .settings-side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+    .settings-care-note { margin-top: 0; padding-top: 12px; }
+    .settings-data-section { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  }
+  @media (max-width: 600px) {
+    .settings-heading { margin-bottom: 26px; }
+    .settings-profile { flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+    .settings-profile > div { flex-basis: calc(100% - 80px); }
+    .settings-profile .btn { width: 100%; }
+    .settings-columns, .settings-side, .settings-utilities { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+    .settings-experience .card { padding: 23px 20px; }
+    .settings-experience h2 { font-size: 30px; }
+    .settings-experience .ai-key-details { padding-inline: 14px; }
+    .settings-experience .ai-prompt-list li { padding: 18px 15px; }
+    .settings-experience .ai-actions { flex-wrap: wrap; }
+    .settings-experience .btn { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+    .settings-care-note { padding: 5px 0 0; }
+    .settings-data-section { margin-top: 30px; padding-block: 30px; }
+    .settings-utilities { margin-top: 30px; }
+  }
+}

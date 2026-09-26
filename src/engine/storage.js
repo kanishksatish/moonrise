@@ -7,6 +7,8 @@
 //                approvedPrompts?: string[] }   caregiver-approved extra memory prompts (see ai.js)
 // Unknown keys are kept as they are, so the UI can store small extras.
 
+import { cleanCareContext } from './careContext.js'
+
 export const STORAGE_KEY = 'moonrise:v1'
 
 export function emptyState() {
@@ -50,13 +52,17 @@ function cleanSongIds(value) {
 export function cleanLog(log) {
   if (!log || typeof log !== 'object' || Array.isArray(log)) return null
   if (!isCalendarDate(log.date) || !OUTCOMES.has(log.outcome)) return null
-  return {
+  const cleaned = {
     ...log,
     episodeStart: log.outcome === 'episode' && isValidIso(log.episodeStart) ? log.episodeStart : null,
     effectiveDusk: isValidIso(log.effectiveDusk) ? log.effectiveDusk : null,
     cloudCover: Number.isFinite(log.cloudCover) ? log.cloudCover : null,
     songIds: cleanSongIds(log.songIds),
   }
+  const context = cleanCareContext(log.careContext)
+  if (context) cleaned.careContext = context
+  else delete cleaned.careContext
+  return cleaned
 }
 
 // A profile the app can run on: a name, a whole birth year and real coordinates.
@@ -129,15 +135,24 @@ export function saveState(state, storage = defaultStorage()) {
 
 // One log per evening: a new log for the same date replaces the old one. Returns a new state.
 export function addLog(state, log) {
+  const existing = state.logs.find(l => l.date === log.date)
+  const next = { ...log }
+  // Outcome/onset updates from older callers must not erase optional context.
+  // A real observation replacing an example must never inherit example data.
+  const context = cleanCareContext(Object.hasOwn(log, 'careContext') ? log.careContext
+    : Boolean(existing?.demo) === Boolean(log.demo) ? existing?.careContext : undefined)
+  if (context) next.careContext = context
+  else delete next.careContext
   const logs = state.logs.filter((l) => l.date !== log.date)
-  logs.push(log)
+  logs.push(next)
   logs.sort((a, b) => (a.date < b.date ? -1 : 1))
   return { ...state, logs }
 }
 
-// Adds demo logs, replacing any real or demo log on the same dates. Returns a new state.
+// Refresh examples only on dates without a real observation.
 export function addDemoLogs(state, demoLogs) {
-  return demoLogs.reduce(addLog, state)
+  return demoLogs.reduce((current, log) => current.logs.some(saved => saved.date === log.date && !saved.demo)
+    ? current : addLog(current, { ...log, demo: true }), state)
 }
 
 export function clearDemoLogs(state) {

@@ -52,13 +52,14 @@ describe('App midnight integration', () => {
     localStorage.setItem('moonrise:v1', JSON.stringify(initial))
     await act(async () => render(<App />))
     expect(effectiveDusk.mock.calls[0][0].getDate()).toBe(26)
-    expect(screen.getByText('Saturday, September 26')).toBeTruthy()
+    expect(document.querySelector('.today-date').textContent).toContain('September 26')
+    expect(document.querySelector('.today-date').textContent).toContain('Saturday')
     click('Log'); click('Episode')
     fireEvent.change(screen.getByLabelText('Episode started at'), { target: { value: '23:30' } })
     click('Save time')
     expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', episodeStart: '2026-09-27T04:30:00.000Z',
       effectiveDusk: '2026-09-27T00:15:00.000Z', songIds: ['earth-angel-1954'] })
-    expect(screen.getByText(/Tonight is logged:/)).toBeTruthy()
+    expect(screen.getByText(/Tonight’s note is saved/)).toBeTruthy()
   })
   it('blocks a future onset without recording the invalid time', async () => {
     localStorage.setItem('moonrise:v1', JSON.stringify(initial))

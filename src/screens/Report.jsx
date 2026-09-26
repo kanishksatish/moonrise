@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { weeklyReport } from '../engine/index.js'
+import { CARE_PLAN_NOTE, comfortStepsText, handoffCoverage, logsForHandoff } from '../engine/index.js'
 import eraCatalog from '../data/songs.json'
 import includedCatalog from '../assets/audio/catalog.json'
 import { prettyDate } from '../components/format.js'
 import '../styles/report-visual.css'
+import '../styles/care-workflow.css'
 
 const OUTCOME_LABELS = { calm: 'Calm', restless: 'Restless', episode: 'Episode' }
 // Read old era IDs and new recording IDs side by side. Never replace old IDs or
@@ -24,7 +27,7 @@ function EveningMark({ outcome }) {
   )
 }
 
-function WeekRhythm({ report }) {
+function WeekRhythm({ report, example }) {
   const [year, month, day] = report.from.split('-').map(Number)
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(year, month - 1, day + index)
@@ -36,8 +39,8 @@ function WeekRhythm({ report }) {
   return (
     <section className="week-rhythm no-print" aria-labelledby="week-rhythm-title">
       <div className="rhythm-heading">
-        <h2 id="week-rhythm-title">The shape of your week</h2>
-        <p><strong>{report.evenings}</strong> evening{report.evenings === 1 ? '' : 's'} recorded</p>
+        <h2 id="week-rhythm-title">{example ? 'An example week' : 'The shape of your week'}</h2>
+        <p><strong>{report.evenings}</strong> {example ? 'example' : 'recorded'} evening{report.evenings === 1 ? '' : 's'}</p>
       </div>
       <ol className="rhythm-days" aria-label="Evening records by date">
         {days.map((entry) => (
@@ -52,42 +55,64 @@ function WeekRhythm({ report }) {
           <span key={outcome}><EveningMark outcome={outcome} /><strong>{report.counts[outcome]}</strong> {label}</span>
         ))}
       </div>
-      <p className="rhythm-caption">An open circle means an evening wasn’t logged. Every recorded evening adds context.</p>
+      <p className="rhythm-caption">{example ? 'All populated marks are fictional examples. An open circle has no example entry.' : 'An open circle means an evening wasn’t logged. It does not mean nothing happened.'}</p>
     </section>
   )
 }
 
 export default function Report({ state }) {
   const { profile, logs } = state
-  const r = weeklyReport(logs, { songs: REPORT_SONGS })
-  const weekLogs = logs.filter((l) => l.date >= r.from && l.date <= r.to)
-  const hasDemo = weekLogs.some((l) => l.demo)
-  const unknownWeather = weekLogs.filter((l) => !Number.isFinite(l.cloudCover)).length
+  const hasRecorded = logs.some(log => !log.demo)
+  const hasDemo = logs.some(log => log.demo)
+  const [source, setSource] = useState(() => !hasRecorded && hasDemo ? 'example' : 'recorded')
+  const example = source === 'example' && hasDemo
+  const selectedLogs = logsForHandoff(logs, example ? 'example' : 'recorded')
+  const r = weeklyReport(selectedLogs, { songs: REPORT_SONGS })
+  const coverage = handoffCoverage(selectedLogs, r.from, r.to)
+  const sourceName = example ? 'Fictional example preview' : 'Caregiver-recorded evenings'
+  const fullDate = value => new Date(`${value}T12:00:00`).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' })
+  const onsetTime = log => typeof log.episodeStart === 'string' && Number.isFinite(new Date(log.episodeStart).getTime())
+    ? new Date(log.episodeStart).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    : 'Not recorded'
 
   return (
-    <div className="report">
+    <div className={`report care-handoff${example ? ' example-handoff' : ''}`}>
       <header className="report-heading">
         <div className="report-masthead no-print">
-          <p className="report-kicker">{profile.name}’s evening journal</p>
+          <p className="report-kicker">{example ? 'Fictional demonstration' : `${profile.name}’s evening journal`}</p>
           <button className="btn report-print" onClick={() => window.print()}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 16H4V9h16v7h-3M7 13h10v8H7zM17 11h.01" /></svg>
-            Print report
+            {example ? 'Print example' : 'Print care handoff'}
           </button>
         </div>
-        <h1 className="no-print">A week of evenings.</h1>
-        <h1 className="report-print-heading">Evening report for {profile.name}</h1>
+        <h1 className="no-print">An evening record<br />to share.</h1>
+        <h1 className="report-print-heading">{example ? 'EXAMPLE — fictional evening handoff' : `Evening care handoff for ${profile.name}`}</h1>
         <p className="muted report-dates">
-          {prettyDate(r.from)} to {prettyDate(r.to)}<span className="report-print-total"> · {r.evenings} evening{r.evenings === 1 ? '' : 's'} logged</span>
+          {fullDate(r.from)} to {fullDate(r.to)} · Most recent week in this view
         </p>
       </header>
-      {hasDemo && <p className="demo-flag">Includes demo data, not real evenings.</p>}
+      {hasDemo && <div className="handoff-source-switch no-print" role="group" aria-label="Report source">
+        <button className="btn" aria-pressed={!example} onClick={() => setSource('recorded')}>Recorded evenings</button>
+        <button className="btn" aria-pressed={example} onClick={() => setSource('example')}>Fictional example preview</button>
+      </div>}
+      <div className={`handoff-provenance${example ? ' demo-flag' : ''}`}>
+        <strong>{sourceName}</strong>
+        <p>{example ? 'All populated rows are fictional demo data. This is not a care record.' : 'Source: caregiver-selected evening labels and optional comfort steps. This view excludes fictional demo data.'}</p>
+        <p>Prepared {new Date().toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' })} · Local times: {Intl.DateTimeFormat().resolvedOptions().timeZone}.</p>
+      </div>
 
-      <WeekRhythm report={r} />
+      <WeekRhythm report={r} example={example} />
+
+      <section className="handoff-coverage" aria-label="Record completeness">
+        <p><strong>{coverage.recorded} of 7</strong> evenings {example ? 'shown as examples' : 'recorded'} · <strong>{coverage.unrecorded}</strong> {example ? 'without an example' : 'not recorded'}.</p>
+        <p>Comfort steps: {coverage.contextRecorded} entered, {coverage.contextMissing} not recorded among {coverage.recorded} {example ? 'example' : 'recorded'} evenings.</p>
+        <p>Episode onset: {coverage.onsetRecorded} time{coverage.onsetRecorded === 1 ? '' : 's'} entered among {coverage.episodes} episode label{coverage.episodes === 1 ? '' : 's'}; {coverage.onsetMissing} not recorded.</p>
+      </section>
 
       {r.evenings === 0 ? (
         <div className="report-empty">
-          <p className="lead">No evenings logged this week yet.</p>
-          <p className="no-print">After an evening, choose Calm, Restless, or Episode in Log. Your notes will appear here, ready to share.</p>
+          <p className="lead">{example ? 'No example evenings in this view.' : 'No caregiver-recorded evenings yet.'}</p>
+          <p>After an evening, choose Calm, Restless, or Episode in Log. A missing entry does not mean an uneventful evening.</p>
         </div>
       ) : (
         <>
@@ -109,8 +134,9 @@ export default function Report({ state }) {
               <h2>When episodes started</h2>
               <p>
                 {r.onset.minutes.length === 0
-                  ? 'No episode times were logged.'
-                  : `Usually ${r.onset.text} (middle of ${r.onset.minutes.length} logged time${r.onset.minutes.length === 1 ? '' : 's'}).`}
+                  ? 'No onset times with an available dusk estimate.'
+                  : `Median recorded onset: ${r.onset.text}, using ${r.onset.minutes.length} time${r.onset.minutes.length === 1 ? '' : 's'} with a dusk estimate.`}
+                {' '}Dusk is an estimate, not a measured light level. These times do not predict a future episode.
               </p>
             </section>
 
@@ -123,15 +149,16 @@ export default function Report({ state }) {
                 <br />
                 Clear: {r.clear.episodes} episode{r.clear.episodes === 1 ? '' : 's'} in {r.clear.evenings} evening
                 {r.clear.evenings === 1 ? '' : 's'}.
-                {unknownWeather > 0 && <><br />Weather was unavailable for {unknownWeather} evening{unknownWeather === 1 ? '' : 's'}.</>}
+                {coverage.weatherMissing > 0 && <><br />Weather was unavailable for {coverage.weatherMissing} evening{coverage.weatherMissing === 1 ? '' : 's'}.</>}
+                <br />Forecast groups describe the record; they do not establish a cause.
               </p>
             </section>
           </div>
 
           <section className="report-section report-songs">
             <p className="report-section-index no-print">03 / Familiar sounds</p>
-            <h2>Songs from your evenings</h2>
-            <p className="small">Based on recorded song activity and your evening notes; this does not show that a song caused a change.</p>
+            <h2>Recorded music activity</h2>
+            <p className="small">Recorded song activity and evening labels; this does not show that a song caused a change. Older song selections may not represent confirmed playback. Missing activity is not evidence of no music or no listening.</p>
             {r.topSongs.length === 0 ? (
               <p>No song activity recorded this week.</p>
             ) : (
@@ -139,6 +166,7 @@ export default function Report({ state }) {
                 {r.topSongs.map((s) => (
                   <li key={s.id}>
                     <span className="report-song-title">{s.title}</span> <span className="muted report-song-artist">· {s.artist}{s.included ? ` · Included recording${s.recordingYear ? ` (${s.recordingYear})` : ''}` : `, ${s.year}`}</span>
+                    <span className="report-song-count">{s.plays} logged evening{s.plays === 1 ? '' : 's'} · {s.calm} calm, {s.restless} restless, {s.episode} episode{s.episode === 1 ? '' : 's'}</span>
                   </li>
                 ))}
               </ol>
@@ -148,15 +176,16 @@ export default function Report({ state }) {
           <section className="report-section report-records">
             <p className="report-section-index no-print">04 / Your notes</p>
             <h2>Night by night</h2>
+            <p className="handoff-record-key">Labels and comfort steps are caregiver-reported{example ? ' in this fictional example' : ''}. “Not recorded” is different from “none of the listed steps.” No label is a clinical assessment.</p>
             <table className="nights">
-              <thead><tr><th scope="col">Evening</th><th scope="col">Outcome</th><th scope="col">Onset</th><th scope="col">Cloud</th></tr></thead>
+              <thead><tr><th scope="col">Evening / source</th><th scope="col">Observation</th><th scope="col">Onset (local)</th><th scope="col">Comfort steps used</th></tr></thead>
               <tbody>
-                {r.nights.map((n) => (
-                  <tr key={n.date}>
-                    <th scope="row">{prettyDate(n.date)}</th>
-                    <td data-label="Outcome" className={`outcome-cell ${n.outcome}`}>{n.outcome}</td>
-                    <td data-label="Onset">{n.onsetText ?? <span className="no-print">{n.outcome === 'episode' ? 'Not recorded' : '—'}</span>}</td>
-                    <td data-label="Cloud">{Number.isFinite(n.cloudCover) ? `${Math.round(n.cloudCover)}% cloud` : <span className="no-print">Unavailable</span>}</td>
+                {coverage.nights.map(({ date, log }) => (
+                  <tr key={date}>
+                    <th scope="row">{prettyDate(date)}<span className="handoff-row-source">{log ? example ? 'Fictional example' : 'Caregiver record' : example ? 'No example' : 'No entry'}</span></th>
+                    <td data-label="Observation" className={`outcome-cell ${log?.outcome || 'unlogged'}`}>{log ? OUTCOME_LABELS[log.outcome] : 'Not recorded'}</td>
+                    <td data-label="Onset">{!log ? 'Not recorded' : log.outcome === 'episode' ? onsetTime(log) : 'Not entered for this label'}</td>
+                    <td data-label="Comfort">{comfortStepsText(log?.careContext)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -165,8 +194,8 @@ export default function Report({ state }) {
         </>
       )}
 
-      <p className="doctor-note">{r.doctorNote}</p>
-      <p className="muted small">{r.supportNote}</p>
+      <p className="doctor-note">{CARE_PLAN_NOTE}</p>
+      <p className="muted small handoff-limits">Caregiver-support prototype. Not clinically validated; not a diagnosis, treatment recommendation, or monitored alert service. This handoff is prepared on this device; printing does not send it to a care team.</p>
     </div>
   )
 }

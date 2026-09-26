@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import {
   memoryPrompts,
   moonPhase,
@@ -12,6 +12,7 @@ import MoonIcon from '../components/MoonIcon.jsx'
 import Brand from '../components/Brand.jsx'
 import MusicPlayer from '../components/MusicPlayer.jsx'
 import { eveningKey } from '../components/eveningLog.js'
+import '../styles/session-experience.css'
 
 // A stylized, always-visible rise inside the art stage, separate from the controls.
 const MOON_RISE_MINUTES = 60
@@ -39,7 +40,7 @@ async function exitFullscreen() {
   }
 }
 
-export default function Moonrise({ state, onPlayed, onExit }) {
+export default function Moonrise({ state, onPlayed, onExit, saveError = false }) {
   const { profile, logs } = state
   const now = useNow(10000)
   const [startedAt] = useState(() => Date.now())
@@ -49,6 +50,7 @@ export default function Moonrise({ state, onPlayed, onExit }) {
   const [songIndex, setSongIndex] = useState(0)
   const [promptOffset, setPromptOffset] = useState(0)
   const [quiet, setQuiet] = useState(false)
+  const quietHelp = useId()
   const song = songs.length ? songs[songIndex % songs.length] : null
   const video = song ? songVideo(song.id) : null
   const playedSongIds = state.tonight?.date === eveningKey(now) && Array.isArray(state.tonight.songIds) ? state.tonight.songIds : []
@@ -65,19 +67,29 @@ export default function Moonrise({ state, onPlayed, onExit }) {
 
   useEffect(() => {
     let lock = null
-    navigator.wakeLock
-      ?.request('screen')
-      .then((l) => (lock = l))
-      .catch(() => {})
+    let disposed = false
+    async function release(sentinel) {
+      try { await sentinel?.release() } catch { /* Unsupported or already released. */ }
+    }
+    async function keepScreenAwake() {
+      try {
+        const acquired = await navigator.wakeLock?.request?.('screen')
+        // A browser may resolve permission after this routine has already ended.
+        if (disposed) await release(acquired)
+        else lock = acquired
+      } catch { /* The routine remains usable without wake lock. */ }
+    }
+    keepScreenAwake()
     return () => {
-      lock?.release().catch(() => {})
+      disposed = true
+      release(lock)
       exitFullscreen()
     }
   }, [])
 
   return (
     <div
-      className={`moonrise${quiet ? ' quiet-view' : ''}`}
+      className={`moonrise session-experience${quiet ? ' quiet-view' : ''}`}
       style={{ background: `linear-gradient(to bottom, ${sky.gradient.top}, ${sky.gradient.bottom})` }}
     >
       <div className="stars" style={{ opacity: Math.max(0, sky.darkness - 0.3) }} aria-hidden="true">
@@ -98,36 +110,46 @@ export default function Moonrise({ state, onPlayed, onExit }) {
         <Brand />
         <div className="session-tools">
           {document.documentElement.requestFullscreen && <button className="btn fullscreen-toggle" onClick={enterFullscreen}>Full screen</button>}
-          <button className="btn quiet-toggle" autoFocus aria-pressed={quiet} onClick={() => setQuiet(current => !current)}>{quiet ? 'Show conversation' : 'Quiet view'}</button>
+          <button className="btn quiet-toggle" autoFocus aria-describedby={quietHelp} aria-pressed={quiet} onClick={() => setQuiet(current => !current)}>{quiet ? 'Show conversation' : 'Quiet view'}</button>
           <button className="btn finish" onClick={onExit}>Finish <span aria-hidden="true">↗</span></button>
         </div>
+        <p className="sr-only" id={quietHelp}>{quiet ? 'Returns to music and conversation. Music will not restart automatically.' : 'Stops music and hides the conversation for quiet company.'}</p>
       </header>
+      {saveError && <p className="session-save-error" role="alert">This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>}
 
       <div className="moonrise-content">
         <div className="session-scene">
-          <p className="eyebrow">An evening with {profile.name}</p>
-          <h1 className="session-title">A moment,<br/><em>together.</em></h1>
+          <div className="session-intro">
+            <p className="eyebrow">An evening with {profile.name}</p>
+            <h1 className="session-title">A moment,<br/><em>together.</em></h1>
+          </div>
           <div className="session-sky" aria-hidden="true">
             <div className="session-moon" style={{ '--moon-progress': moonProgress }}><MoonIcon phase={moon.phase} decorative/></div>
             <div className="session-orbit"/>
+            <div className="session-reflection"/>
           </div>
-          <p className="session-caption">No rush. Just be here.</p>
+          <p className="session-caption">Follow their lead.{' '}<br/>Quiet company is welcome.</p>
+          {quiet && <p className="session-quiet-note" role="status">Music is stopped. Stay as long as you like.</p>}
         </div>
         {!quiet && <div className="session-cards">
-        {prompt && (
-          <div className="prompt">
-            <span className="prompt-quote" aria-hidden="true">“</span>
-            <p className="prompt-label">{state.approvedPrompts?.includes(prompt) ? 'Read aloud · AI-written, reviewed by you' : 'Read aloud'}</p>
-            <div aria-live="polite" aria-atomic="true"><p className="prompt-text" key={prompt}>{prompt}</p></div>
-            <button className="text-action" onClick={() => setPromptOffset(index => index + 1)}>Next prompt <span aria-hidden="true">→</span></button>
-          </div>
-        )}
-
-        <MusicPlayer
-          song={song} youtubeId={video?.youtubeId} onPlayed={onPlayed}
-          onNext={songs.length > 1 ? () => setSongIndex(i => i + 1) : undefined}
-          sessionId={startedAt} playedSongIds={playedSongIds}
-        />
+          <MusicPlayer
+            song={song} youtubeId={video?.youtubeId} onPlayed={onPlayed}
+            onNext={songs.length > 1 ? () => setSongIndex(i => i + 1) : undefined}
+            sessionId={startedAt} playedSongIds={playedSongIds}
+          />
+          {prompt && (
+            <section className="prompt" aria-label="Conversation starter">
+              <div className="session-prompt-heading">
+                <span className="prompt-quote" aria-hidden="true">“</span>
+                <p className="prompt-label">Conversation starter</p>
+              </div>
+              <div aria-live="polite" aria-atomic="true"><p className="prompt-text" key={prompt}>{prompt}</p></div>
+              <div className="session-prompt-footer">
+                <p>Share a little. Listen a little.</p>
+                <button className="text-action" onClick={() => setPromptOffset(index => index + 1)}>Next prompt <span aria-hidden="true">→</span></button>
+              </div>
+            </section>
+          )}
         </div>}
       </div>
     </div>

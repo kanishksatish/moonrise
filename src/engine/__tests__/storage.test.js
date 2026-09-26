@@ -76,6 +76,50 @@ describe('log helpers', () => {
     expect(withDemo.logs).toHaveLength(3)
     expect(clearDemoLogs(withDemo).logs).toEqual(base.logs)
   })
+
+  it('does not overwrite a real observation when loading a demo week', () => {
+    const real = { date: '2026-09-25', outcome: 'episode', careContext: { source: 'caregiver', comfortSteps: ['quiet-company'] } }
+    const state = { profile: null, logs: [real] }
+    const loaded = addDemoLogs(state, [
+      { date: real.date, outcome: 'calm', demo: true },
+      { date: '2026-09-24', outcome: 'restless' },
+    ])
+    expect(loaded.logs.find(log => log.date === real.date)).toEqual(real)
+    expect(loaded.logs[0].demo).toBe(true)
+    expect(clearDemoLogs(loaded).logs).toEqual([real])
+  })
+
+  it('preserves optional context on older outcome-only updates and never imports it from a demo', () => {
+    const careContext = { source: 'caregiver', comfortSteps: ['conversation'] }
+    const state = { profile: null, logs: [{ ...base.logs[0], careContext }] }
+    expect(addLog(state, { date: '2026-09-25', outcome: 'episode' }).logs[0].careContext).toEqual(careContext)
+    const example = { ...state, logs: [{ ...state.logs[0], demo: true }] }
+    expect(addLog(example, { date: '2026-09-25', outcome: 'calm' }).logs[0].careContext).toBeUndefined()
+    expect(addLog(state, { date: '2026-09-25', outcome: 'calm', careContext: { source: 'caregiver', comfortSteps: [] } }).logs[0].careContext.comfortSteps).toEqual([])
+  })
+})
+
+describe('optional caregiver context compatibility', () => {
+  const baseLog = { date: '2026-09-26', outcome: 'calm', episodeStart: null, effectiveDusk: null, cloudCover: null, songIds: [] }
+  const roundTrip = log => {
+    const storage = memoryStorage()
+    saveState({ profile: null, logs: [log] }, storage)
+    return loadState(storage).logs[0]
+  }
+
+  it('keeps legacy unrecorded context absent and round-trips an explicit report of none', () => {
+    expect(roundTrip(baseLog)).toEqual(baseLog)
+    const none = { ...baseLog, careContext: { source: 'caregiver', comfortSteps: [] } }
+    expect(roundTrip(none)).toEqual(none)
+  })
+
+  it('keeps only the bounded known context shape and never turns invalid entries into none', () => {
+    const careContext = { source: 'caregiver', comfortSteps: ['quiet-company', 'quiet-company', 'stopped-session'], extra: 'not stored' }
+    expect(roundTrip({ ...baseLog, careContext }).careContext).toEqual({ source: 'caregiver', comfortSteps: ['quiet-company', 'stopped-session'] })
+    for (const value of [null, 'music', [], { source: 'app', comfortSteps: [] }, { source: 'caregiver', comfortSteps: ['unknown'] }, { source: 'caregiver', comfortSteps: ['conversation', 2] }, { source: 'caregiver', comfortSteps: [Infinity] }]) {
+      expect(roundTrip({ ...baseLog, careContext: value })).toEqual(baseLog)
+    }
+  })
 })
 
 describe('extra keys', () => {

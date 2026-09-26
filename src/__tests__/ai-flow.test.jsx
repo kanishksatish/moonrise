@@ -31,7 +31,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers() })
 async function openSettings(withKey = false) {
   if (withKey) localStorage.setItem('moonrise:ai-key', 'fictional-test-key')
   await act(async () => render(<App />))
-  click('Settings')
+  await act(async () => click('Settings'))
 }
 
 it('does not contact AI until Generate, and saves the key separately with the input cleared', async () => {
@@ -68,7 +68,7 @@ it('keeps only approved drafts, survives reload, and shows an approved prompt in
   // Conversation is independent of the recording, so the approved prompt comes
   // first instead of naming an unrelated era song.
   expect(screen.getByText(first)).toBeTruthy()
-  expect(screen.getByText('Read aloud · AI-written, reviewed by you')).toBeTruthy()
+  expect(screen.getByText('Conversation starter')).toBeTruthy()
   expect(screen.queryByText(second)).toBeNull()
 })
 
@@ -91,7 +91,7 @@ it('shows a safe actionable error and leaves the built-in routine usable', async
   expect(screen.getByRole('alert').textContent).toMatch(/not accepted/)
   expect(saved().approvedPrompts).toBeUndefined()
   click('Today'); click('Start Moonrise now'); click('Skip launch')
-  expect(screen.getByText('Read aloud')).toBeTruthy()
+  expect(screen.getByText('Conversation starter')).toBeTruthy()
 })
 
 it('prevents duplicate requests and ignores a late reply after leaving Settings', async () => {
@@ -125,6 +125,17 @@ it('Delete all data also removes the separately stored API key', async () => {
   expect(localStorage.getItem('moonrise:ai-key')).toBeNull()
   expect(saved()).toEqual({ profile: null, logs: [] })
   expect(screen.getByRole('button', { name: 'Start' })).toBeTruthy()
+})
+
+it('keeps Settings and existing records visible when deletion cannot be saved', async () => {
+  await openSettings(true)
+  const before = saved()
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('storage unavailable') })
+  click('Delete all data'); click('Yes, delete everything')
+  expect(saved()).toEqual(before)
+  expect(screen.getByRole('heading', { name: 'Make it personal.' })).toBeTruthy()
+  expect(screen.getByText(/profile and logs could not be deleted/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Start', exact: true })).toBeNull()
 })
 
 it('handles empty output without entering any prompt into a routine', async () => {

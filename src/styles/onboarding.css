@@ -209,3 +209,94 @@
     .evening-journal .journal-outcomes .btn.outcome:hover { transform: none; }
   }
 }
+
+/* The welcome uses the same quiet observatory identity as Today. */
+@media screen {
+  .onboarding-app { background: radial-gradient(ellipse at 5% 30%, #b7c6aa0c, transparent 45%), var(--bg); }
+  .onboarding-page.screen { max-width: 1320px; column-gap: clamp(50px, 6vw, 100px); row-gap: 55px; padding-bottom: 66px; }
+  .onboarding-brand { border-color: var(--hairline); }
+  .onboarding-note { color: var(--muted); }
+  .onboarding-intro { top: 32px; }
+  .onboarding-intro .eyebrow { display: flex; align-items: center; gap: 13px; color: #bbcdc2; margin-bottom: 20px; }
+  .onboarding-intro .eyebrow::before { content: ''; width: 22px; height: 1px; background: #bbcdc2; }
+  .onboarding-intro h1 { font-size: clamp(44px, 4.3vw, 62px); line-height: 1.1; letter-spacing: -2px; margin-bottom: 26px; }
+  .onboarding-intro h1 em { color: var(--accent); }
+  .onboarding-intro .lead { color: var(--muted); line-height: 1.55; max-width: 470px; }
+  .onboarding-sky { height: 325px; margin: 32px 0 24px; border-color: #d1ddc937; border-radius: 190px 190px 14px 14px; background: linear-gradient(180deg, #121e2245, #13212525 55%, #10171980), url('../assets/night-lake.webp') center bottom / cover; }
+  .onboarding-sky .moon-icon { width: 147px; height: 147px; top: 43%; filter: drop-shadow(0 0 35px #e7d8b026); }
+  .onboarding-orbit { top: 43%; border-color: #efc5a332; }
+  .onboarding-orbit-inner { border-style: dashed; border-color: #efc5a328; }
+  .onboarding-horizon { bottom: -135px; height: 166px; border-color: #cad9c445; background: #132023b3; }
+  .onboarding-star { background: #d6dcc6; }
+  .onboarding-footer { color: #bbcdc2; border-left-color: #bbcdc266; }
+  .onboarding-form { gap: 31px; }
+  .onboarding-section { border-color: var(--hairline); padding-top: 29px; gap: 22px; }
+  .onboarding-section-heading { gap: 17px; }
+  .onboarding-section-heading > span { color: #bbcdc2; }
+  .onboarding-section-heading h2 { font-size: 32px; line-height: 1.17; }
+  .onboarding-section-note { color: var(--muted); }
+  .onboarding-page input { background: #162125; border-color: #8d9e976d; border-radius: 9px; min-height: 62px; }
+  .onboarding-page input::placeholder { color: #aebcb5; }
+  .onboarding-page input[aria-invalid='true'] { border-color: #efc5a3; }
+  .onboarding-page .btn { min-height: 58px; background: #1a292d; border-color: #8d9e976d; }
+  .onboarding-page .btn:hover { background: #2b3b3d; }
+  .onboarding-page .btn.primary { color: var(--accent-text); background: var(--accent); border-color: var(--accent); }
+  .onboarding-page .btn.primary:hover { background: #f8d7b7; }
+  .onboarding-era { padding: 4px 0 4px 17px; border-color: #bbcdc28c; }
+  .onboarding-era .era-title { color: #bbcdc2; margin-bottom: 8px; }
+  .onboarding-era p:last-child { color: var(--muted); margin-bottom: 0; }
+  .onboarding-place { border-color: var(--hairline); }
+  .onboarding-optional { display: block; }
+  .onboarding-optional summary { min-height: 66px; cursor: pointer; list-style: none; align-items: flex-start; position: relative; padding-right: 33px; margin: 0; }
+  .onboarding-optional summary::-webkit-details-marker { display: none; }
+  .onboarding-optional .onboarding-optional-title { font: 30px/1.2 var(--font-editorial); letter-spacing: -.5px; color: var(--text); }
+  .onboarding-optional-title .muted { display: block; margin-top: 9px; font: 20px/1.5 system-ui, sans-serif; color: var(--muted); letter-spacing: 0; }
+  .onboarding-expand { position: absolute; top: 14px; right: 0; width: 17px; height: 17px; }
+  .onboarding-expand::before, .onboarding-expand::after { content: ''; position: absolute; background: var(--accent); }
+  .onboarding-expand::before { top: 7px; left: 0; width: 17px; height: 1px; }
+  .onboarding-expand::after { top: 0; left: 8px; width: 1px; height: 17px; }
+  .onboarding-optional[open] .onboarding-expand::after { display: none; }
+  .onboarding-anchor-fields { display: flex; flex-direction: column; gap: 22px; padding-top: 26px; }
+  .onboarding-actions { border-top: 1px solid var(--hairline); padding-top: 27px; margin-top: 0; gap: 13px; }
+  .onboarding-ready-note { font-size: 20px; color: var(--muted); margin: 0 0 1px; }
+  .onboarding-support-note { font-size: 20px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+  .onboarding-actions .btn.primary { min-height: 67px; font-size: 23px; }
+  @media (max-width: 1050px) {
+    .onboarding-page.screen { padding-left: 35px; padding-right: 35px; column-gap: 40px; }
+    .onboarding-intro h1 { font-size: 47px; }
+    .onboarding-sky { height: 276px; }
+    .onboarding-sky .moon-icon { width: 126px; height: 126px; }
+    .onboarding-section-heading h2 { font-size: 30px; }
+  }
+  @media (max-width: 760px) {
+    .onboarding-page.screen { padding: 26px 24px 46px; row-gap: 30px; max-width: 660px; }
+    .onboarding-intro { padding-bottom: 29px; position: relative; top: auto; border-color: var(--hairline); }
+    .onboarding-intro h1 { font-size: clamp(43px, 7.5vw, 55px); margin-bottom: 22px; }
+    .onboarding-intro .lead { font-size: 20px; max-width: none; }
+    .onboarding-sky { height: 175px; margin-top: 25px; margin-bottom: 0; border-radius: 100px 100px 10px 10px; }
+    .onboarding-sky .moon-icon { width: 95px; height: 95px; top: 45%; }
+    .onboarding-orbit { top: 45%; }
+    .onboarding-orbit-outer { width: 205px; height: 205px; }
+    .onboarding-orbit-inner { width: 153px; height: 153px; }
+    .onboarding-section-heading h2 { font-size: 30px; }
+    .onboarding-section-heading { gap: 15px; }
+    .onboarding-optional .onboarding-optional-title { font-size: 30px; }
+  }
+  @media (max-width: 430px) {
+    .onboarding-page.screen { padding: 23px 20px 40px; }
+    .onboarding-brand { padding-bottom: 24px; }
+    .onboarding-intro h1 { font-size: 44px; letter-spacing: -1.6px; }
+    .onboarding-section-heading h2, .onboarding-optional .onboarding-optional-title { font-size: 29px; }
+    .onboarding-sky { height: 155px; }
+    .onboarding-page .city-row .btn { padding-left: 18px; padding-right: 18px; }
+  }
+  @media (max-width: 350px) {
+    .onboarding-page.screen { padding-left: 18px; padding-right: 18px; }
+    .onboarding-intro h1 { font-size: 39px; }
+    .onboarding-section-heading { gap: 13px; }
+    .onboarding-section-heading h2, .onboarding-optional .onboarding-optional-title { font-size: 28px; }
+    .onboarding-place { gap: 10px; }
+    .onboarding-place strong { font-size: 20px; }
+    .onboarding-page .city-row .btn { padding-left: 15px; padding-right: 15px; }
+  }
+}

@@ -120,6 +120,7 @@ it('requests a background retry online and never treats native playback as a cac
   const audio = document.querySelector('audio')
   fireEvent.playing(audio)
   expect(screen.getAllByRole('option')[1].textContent).toContain('Not downloaded')
+  screen.getByText('Offline downloads').closest('details').open = true
   fireEvent.click(screen.getByRole('button', { name: 'Download for offline use' }))
   expect(controller.postMessage).toHaveBeenCalledWith({ type: 'MOONRISE_DOWNLOAD_AUDIO' })
   expect(document.querySelector('audio')).toBe(audio)

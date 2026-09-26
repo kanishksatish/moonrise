@@ -31,8 +31,12 @@ function App() {
 
   // Every change to state is saved right away.
   function update(next) {
-    setState(next)
-    setStorageError(!saveState(next))
+    const saved = saveState(next)
+    setStorageError(!saved)
+    // Keep usable edits in memory if storage fails, but never show a completed
+    // reset while the prior browser record is still present on disk.
+    if (saved || next.profile) setState(next)
+    return saved
   }
 
   // Tonight's effective dusk, refreshed every 30 minutes (weather changes, and the day rolls over).
@@ -83,6 +87,7 @@ function App() {
     return (
       <Moonrise
         state={state}
+        saveError={storageError}
         onPlayed={(songId) => {
           const today = eveningKey()
           const tonight = state.tonight?.date === today ? state.tonight : { date: today, songIds: [] }

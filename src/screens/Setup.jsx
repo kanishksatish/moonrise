@@ -84,9 +84,9 @@ export default function Setup({ profile, onDone, onCancel }) {
       <form className="screen setup onboarding-page" onSubmit={save}>
         <div className="onboarding-brand"><Brand /><span className="onboarding-note">A little light. A familiar song.</span></div>
         <header className="onboarding-intro">
-          <p className="eyebrow">The evening starts here</p>
-          <h1>Make room for<br/><em>a gentler evening.</em></h1>
-          <p className="lead">A personal evening routine, timed to the real sky. Let’s start with the person you care for.</p>
+          <p className="eyebrow">A place to begin</p>
+          <h1>A familiar rhythm.<br/><em>A little time together.</em></h1>
+          <p className="lead">Music, conversation, and a moment to sit together. Let’s shape the evening around the person you care for.</p>
           <div className="onboarding-sky" aria-hidden="true">
             <div className="onboarding-orbit onboarding-orbit-outer" />
             <div className="onboarding-orbit onboarding-orbit-inner" />
@@ -96,16 +96,16 @@ export default function Setup({ profile, onDone, onCancel }) {
             <MoonIcon phase={0.43} decorative />
             <div className="onboarding-horizon" />
           </div>
-          <p className="onboarding-footer">Real sky. Familiar music.<br/>A moment together.</p>
+          <p className="onboarding-footer">The sky suggests a time.<br/>You decide what feels right.</p>
         </header>
 
         <div className="onboarding-form">
           <section className="onboarding-section" aria-labelledby="setup-person-title">
-            <div className="onboarding-section-heading"><span aria-hidden="true">01</span><h2 id="setup-person-title">Their story.</h2></div>
+            <div className="onboarding-section-heading"><span aria-hidden="true">01</span><h2 id="setup-person-title">Who’s this evening for?</h2></div>
             <div className="onboarding-person-fields">
               <label className="field">
                 <span>Their first name</span>
-                <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
+                <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" placeholder="e.g. Rose" required />
               </label>
               <label className="field">
                 <span>Year they were born</span>
@@ -114,19 +114,24 @@ export default function Setup({ profile, onDone, onCancel }) {
                   onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   inputMode="numeric"
                   placeholder="e.g. 1942"
+                  required
+                  aria-describedby="setup-year-note"
+                  aria-invalid={birthYear.length === 4 && !yearValid ? true : undefined}
                 />
               </label>
             </div>
+            <p id="setup-year-note" className="onboarding-section-note">{birthYear.length === 4 && !yearValid ? `Use a birth year between 1900 and ${THIS_YEAR - 30}.` : 'Their birth year helps us choose conversation starters.'}</p>
             {yearValid && (
               <div className="onboarding-era">
-                <p className="era-title">A little context for their stories.</p>
-                <p>Their birth year helps choose conversation starters. Everyone can choose from {includedCatalog.length} included recordings or play a music file of their own.</p>
+                <p className="era-title">There’s room for their favorites.</p>
+                <p>Choose from {includedCatalog.length} included recordings or bring a music file of your own.</p>
               </div>
             )}
           </section>
 
           <section className="onboarding-section" aria-labelledby="setup-location-title">
             <div className="onboarding-section-heading"><span aria-hidden="true">02</span><h2 id="setup-location-title">Under your sky.</h2></div>
+            <p className="onboarding-section-note">Local sunset and cloud cover help suggest when to begin.</p>
             <div className="field">
               <span>Where you are (for tonight’s sky)</span>
               {place ? (
@@ -158,16 +163,20 @@ export default function Setup({ profile, onDone, onCancel }) {
             </div>
           </section>
 
-          <section className="onboarding-section" aria-labelledby="setup-anchors-title">
-            <div className="onboarding-section-heading"><span aria-hidden="true">03</span><h2 id="setup-anchors-title">Memory anchors <span className="muted">(optional)</span></h2></div>
-            <p className="onboarding-section-note">Familiar places and people to begin a conversation.</p>
-            <label className="field"><span>Hometown</span><input value={anchors.hometown} onChange={setAnchor('hometown')} placeholder="e.g. Dayton" /></label>
-            <label className="field"><span>Husband or wife’s name</span><input value={anchors.spouse} onChange={setAnchor('spouse')} placeholder="e.g. Frank" /></label>
-            <label className="field"><span>Their job</span><input value={anchors.job} onChange={setAnchor('job')} placeholder="e.g. school teacher" /></label>
-          </section>
+          <details className="onboarding-section onboarding-optional">
+            <summary className="onboarding-section-heading"><span aria-hidden="true">03</span><span className="onboarding-optional-title">A few familiar details<span className="muted">Optional · you can add these later</span></span><span className="onboarding-expand" aria-hidden="true"/></summary>
+            <div className="onboarding-anchor-fields">
+              <p className="onboarding-section-note">Choose people and places they enjoy talking about. It’s fine to leave anything blank.</p>
+              <label className="field"><span>Hometown</span><input value={anchors.hometown} onChange={setAnchor('hometown')} placeholder="e.g. Dayton" /></label>
+              <label className="field"><span>Husband or wife’s name</span><input value={anchors.spouse} onChange={setAnchor('spouse')} placeholder="e.g. Frank" /></label>
+              <label className="field"><span>Their job</span><input value={anchors.job} onChange={setAnchor('job')} placeholder="e.g. school teacher" /></label>
+            </div>
+          </details>
           <div className="onboarding-actions">
+            {!canSave && <p className="onboarding-ready-note">Add their name, birth year, and location to begin.</p>}
             <button type="submit" className="btn primary big" disabled={!canSave}><span>{profile ? 'Save' : 'Start'}</span><span aria-hidden="true">↗</span></button>
             {onCancel && <button type="button" className="btn" onClick={onCancel}>Cancel</button>}
+            <p className="onboarding-support-note">Caregiver support, not a medical treatment.</p>
           </div>
         </div>
       </form>

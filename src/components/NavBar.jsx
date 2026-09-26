@@ -8,16 +8,16 @@ const TABS = [
 export default function NavBar({ current, onChange }) {
   return (
     <nav className="navbar no-print" aria-label="Main navigation">
-      <div className="nav-brand"><Brand /><p>A gentler way<br/>through the evening.</p></div>
+      <div className="nav-brand"><Brand /><p>A little space<br/>for the evening.</p></div>
       <div className="nav-tabs">
       {TABS.map((t) => (
         <button key={t.id} className={t.id === current ? 'nav-btn active' : 'nav-btn'} onClick={() => onChange(t.id)} aria-current={t.id === current ? 'page' : undefined}>
           <svg className="nav-icon" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={t.path}/></svg>
-          {t.label}
+          <span>{t.label}</span>
         </button>
       ))}
       </div>
-      <div className="nav-foot" aria-hidden="true"><span>☾</span><p>One evening<br/>at a time.</p><i/></div>
+      <div className="nav-foot" aria-hidden="true"><div className="nav-horizon"><i/><span/></div><p>One evening<br/>at a time.</p></div>
     </nav>
   )
 }

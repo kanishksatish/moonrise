@@ -6,6 +6,7 @@ import { generateLocalPrompts, localAiStatus } from './localAi.js'
 export default function AiPrompts({ state, update, generatePrompts = generateMemoryPrompts }) {
   const [savedKey, setSavedKey] = useState(loadAiKey)
   const [local, setLocal] = useState(null)
+  const [connectionChecked, setConnectionChecked] = useState(false)
   const [keyDraft, setKeyDraft] = useState('')
   const [drafts, setDrafts] = useState([])
   const [busy, setBusy] = useState(false)
@@ -17,12 +18,19 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
 
   useEffect(() => {
     let live = true
-    const refresh = () => localAiStatus().then(status => { if (live) setLocal(status) })
+    let check = 0
+    const refresh = () => {
+      const id = ++check
+      setConnectionChecked(false)
+      return localAiStatus().then(status => {
+        if (live && id === check) { setLocal(status); setConnectionChecked(true) }
+      })
+    }
     refresh()
     window.addEventListener('focus', refresh)
     return () => { live = false; request.current += 1; window.removeEventListener('focus', refresh) }
   }, [])
-  const canGenerate = local ? local.configured : Boolean(savedKey)
+  const canGenerate = connectionChecked && (local ? local.configured : Boolean(savedKey))
 
   function saveKey(event) {
     event.preventDefault()
@@ -68,7 +76,7 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     } catch (err) {
       if (id !== request.current) return
       setMessage('')
-      setError(err instanceof AiPromptError ? err.message : 'Could not reach the AI service. Your built-in prompts still work; try again when connected.')
+      setError(err instanceof AiPromptError ? err.message.replace('the AI service', 'the suggestion service') : 'Could not create suggestions right now. Your saved conversation starters still work; try again when connected.')
     } finally {
       if (id === request.current) {
         inFlight.current = false
@@ -85,18 +93,19 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
 
   return (
     <section className="card ai-prompts" aria-labelledby="ai-heading">
-      <p className="eyebrow">A little more personal</p>
-      <h2 id="ai-heading">AI memory prompts <span className="muted">(optional)</span></h2>
-      <p>Let {local ? 'OpenAI' : 'Claude'} draft gentle conversation starters. You choose which ones belong in your routine.</p>
-      <p className="muted">Built-in prompts always work without AI. Nothing new enters Moonrise mode until you approve it.</p>
+      <p className="eyebrow">Words worth sharing</p>
+      <h2 id="ai-heading">Conversation starters</h2>
+      <p>A familiar place. A favorite sound. Choose the invitations that feel right for your person.</p>
+      <p className="muted">Optional suggestions, always reviewed by you. Built-in starters are ready without a connection.</p>
 
-      {local ? <div className="ai-key-details">
-        <p>{local.configured ? 'OpenAI key configured for this local session.' : 'Connect OpenAI for this local session.'}</p>
-        <p className="muted">The key stays in this laptop’s local server memory. API access is checked when you generate. Disconnect on the connection page or stop the server to remove it; clearing browser data does not disconnect this local key.</p>
+      {local ? <details className="ai-key-details">
+        <summary>{local.configured ? 'Suggestion connection · manage' : 'Connect optional suggestions'}</summary>
+        <p>Drafts are generated with OpenAI and may contain mistakes. A connected key is checked when you generate, not when it is saved.</p>
+        <p className="muted">The key stays in this laptop’s local server memory. Disconnect on the connection page or stop the server to remove it; clearing browser data does not disconnect this local key.</p>
         <a className="btn" href="/connect">{local.configured ? 'Manage local OpenAI connection' : 'Connect OpenAI on this laptop'}</a>
-      </div> : <details className="ai-key-details">
+      </details> : <details className="ai-key-details">
         <summary>{savedKey ? 'API key saved · manage key' : 'Set up your API key'}</summary>
-        <p className="muted">Uses your own Anthropic API credits. The key is saved in this browser. Remove it after using a shared device.</p>
+        <p className="muted">Suggestions are generated with Anthropic and may contain mistakes. This optional connection uses your API credits. The key is saved in this browser. Remove it after using a shared device.</p>
         <form onSubmit={saveKey}>
           <label className="field">
             <span>{savedKey ? 'Replace Anthropic API key' : 'Anthropic API key'}</span>
@@ -110,16 +119,16 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
         </form>
       </details>}
 
-      <p id="ai-privacy" className="muted">When you tap Generate, your birth year and any hometown, spouse and job answers go to {local ? 'OpenAI through this laptop’s local server' : 'Anthropic'}. Your profile name, coordinates and evening logs are not sent.</p>
+      <p id="ai-privacy" className="suggestion-privacy">When you tap Generate, your birth year and any hometown, spouse and job answers go to {local ? 'OpenAI through this laptop’s local server' : 'Anthropic'} to generate drafts. Those answers can identify someone. Your profile name, coordinates and evening logs are not sent.</p>
       <button className="btn primary" onClick={generate} disabled={!canGenerate || busy || drafts.length > 0}
         aria-describedby="ai-privacy">{busy ? 'Writing prompts…' : 'Generate prompts'}</button>
-      {!canGenerate && <p className="muted">{local ? 'Connect a key above to generate prompts.' : 'Add a key above to generate prompts.'}</p>}
+      {!canGenerate && <p className="muted">{!connectionChecked ? 'Checking the optional connection…' : local ? 'Connect a key above to generate prompts.' : 'Add a key above to generate prompts.'}</p>}
       {message && <p className="status" role="status">{message}</p>}
       {error && <p className="status" role="alert">{error}</p>}
 
       {drafts.length > 0 && <div className="ai-review">
         <h3>Review before sharing</h3>
-        <p className="muted">AI can get things wrong. Skip anything inaccurate, uncomfortable or likely to feel like a memory test.</p>
+        <p className="muted">These generated drafts can get things wrong. Skip anything inaccurate, uncomfortable or likely to feel like a memory test. Only your selections enter the routine.</p>
         <ul className="ai-prompt-list">
           {drafts.map((text, index) => <li key={text}>
             <p>{text}</p>
@@ -132,8 +141,8 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
       </div>}
 
       {approved.length > 0 && <div className="ai-approved">
-        <h3>Approved for your routine ({approved.length})</h3>
-        <p className="muted">AI-written, reviewed by you. Saved on this device and available offline.</p>
+        <h3>Your selected starters ({approved.length})</h3>
+        <p className="muted">Reviewed by you, saved on this device and available offline.</p>
         <ul className="ai-prompt-list">
           {approved.map((text, index) => <li key={`${index}-${text}`}>
             <p>{text}</p>

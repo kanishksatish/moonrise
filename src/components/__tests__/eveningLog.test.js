@@ -28,4 +28,23 @@ describe('saving an evening from the UI', () => {
     const edited = { ...state, logs: [{ date: sky.date, songIds: ['saved-song'] }], tonight: { date: '2026-09-25', songIds: ['wrong-evening'] } }
     expect(makeEveningLog(edited, sky, 'restless', undefined, midnight).songIds).toEqual(['saved-song'])
   })
+
+  it('retains caregiver context and a saved onset unless explicitly changed', () => {
+    const careContext = { source: 'caregiver', comfortSteps: ['familiar-music', 'lowered-stimulation'] }
+    const existing = { date: sky.date, outcome: 'episode', episodeStart: '2026-09-27T04:30:00.000Z', careContext, songIds: [] }
+    const edited = { ...state, logs: [existing] }
+    expect(makeEveningLog(edited, sky, 'episode', undefined, midnight)).toMatchObject({ careContext, episodeStart: existing.episodeStart })
+    expect(makeEveningLog(edited, sky, 'episode', '00:15', midnight)).toMatchObject({ careContext, episodeStart: '2026-09-27T05:15:00.000Z' })
+    expect(makeEveningLog(edited, sky, 'calm', undefined, midnight)).toMatchObject({ careContext, episodeStart: null })
+    expect(makeEveningLog(edited, sky, 'episode', null, midnight)).toMatchObject({ careContext, episodeStart: null })
+    expect(makeEveningLog(edited, sky, 'episode', undefined, midnight, { source: 'caregiver', comfortSteps: [] })).toMatchObject({ episodeStart: existing.episodeStart, careContext: { source: 'caregiver', comfortSteps: [] } })
+  })
+
+  it('never infers comfort steps from playback or inherits fictional observations', () => {
+    expect(makeEveningLog(state, sky, 'calm', undefined, midnight)).not.toHaveProperty('careContext')
+    const demo = { date: sky.date, outcome: 'episode', episodeStart: '2026-09-27T04:30:00.000Z', demo: true,
+      careContext: { source: 'caregiver', comfortSteps: ['conversation'] }, songIds: ['example-song'] }
+    expect(makeEveningLog({ ...state, tonight: null, logs: [demo] }, sky, 'episode', undefined, midnight)).toMatchObject({ episodeStart: null, songIds: [] })
+    expect(makeEveningLog({ ...state, logs: [demo] }, sky, 'calm', undefined, midnight)).not.toHaveProperty('careContext')
+  })
 })

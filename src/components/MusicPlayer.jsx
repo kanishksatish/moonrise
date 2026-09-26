@@ -143,12 +143,14 @@ function YouTubePlayer({ song, youtubeId, onPlaying }) {
 function NativeAudio({ src, label, onPlaying, onError, errorMessage = 'This audio couldn’t load. Try again when connected.' }) {
   const audio = useRef(null)
   const [status, setStatus] = useState('Use the player to begin.')
+  const [canStop, setCanStop] = useState(false)
   useEffect(() => {
     const element = audio.current
     // StrictMode replays effects in development; restore the source after its
     // cleanup as well as when a different local recording is selected.
     element.src = src
     setStatus('Use the player to begin.')
+    setCanStop(false)
     return () => {
       element.pause()
       element.removeAttribute('src')
@@ -160,12 +162,21 @@ function NativeAudio({ src, label, onPlaying, onError, errorMessage = 'This audi
       <audio
         ref={audio} src={src} controls preload="none" crossOrigin="anonymous"
         aria-label={label}
-        onPlaying={() => { setStatus('Playing here'); onPlaying?.() }}
-        onPause={() => setStatus(current => current === errorMessage ? current : 'Paused')}
-        onEnded={() => setStatus('The piece has ended.')}
-        onError={() => { setStatus(errorMessage); onError?.() }}
+        onPlay={() => { setStatus('Starting playback…'); setCanStop(true) }}
+        onPlaying={() => { setStatus('Playing here'); setCanStop(true); onPlaying?.() }}
+        onPause={() => setStatus(current => [errorMessage, 'Stopped', 'The piece has ended.'].includes(current) ? current : 'Paused')}
+        onEnded={() => { setStatus('The piece has ended.'); setCanStop(false) }}
+        onError={() => { setStatus(errorMessage); setCanStop(false); onError?.() }}
       />
-      <p className="music-player-status" role="status">{status}</p>
+      <div className="music-player-transport">
+        <p className="music-player-status" role="status">{status}</p>
+        <button className="music-player-button music-player-stop" type="button" disabled={!canStop} onClick={() => {
+          audio.current.pause()
+          try { audio.current.currentTime = 0 } catch { /* Unseekable files can still pause. */ }
+          setStatus('Stopped')
+          setCanStop(false)
+        }}><span aria-hidden="true">■</span> Stop music</button>
+      </div>
     </div>
   )
 }
@@ -191,6 +202,13 @@ function IncludedPlayer({ recording, onPlaying, availability, online, fallback, 
         {!online && <p className="music-player-note">Reconnect to finish downloading more recordings.</p>}
         {online && failed && <button type="button" className="music-player-button" onClick={() => { onRetry(); setFailed(false); setRetry(value => value + 1) }}>Retry this recording</button>}
       </div>}
+
+    </div>
+  )
+}
+
+function RecordingDetails({ recording }) {
+  return (
       <details className="music-player-details">
         <summary>About this recording</summary>
         <p>This included collection is available to everyone; it is not personalized to a birth year or music history. Playback is recorded under this recording’s own title.</p>
@@ -199,7 +217,6 @@ function IncludedPlayer({ recording, onPlaying, availability, online, fallback, 
         <p>{recording.recordingYear ? `Recorded in ${recording.recordingYear}. ` : ''}{recording.licenseName}.</p>
         <p><a href={recording.sourceUrl} target="_blank" rel="noreferrer">Recording source</a> · <a href={recording.licenseUrl} target="_blank" rel="noreferrer">Use and license details</a></p>
       </details>
-    </div>
   )
 }
 
@@ -262,21 +279,20 @@ function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext,
   return (
     <section className="music-player" aria-labelledby={titleId}>
       <div className="music-player-heading">
+        <p className="music-player-eyebrow">{local ? 'Music from your device' : included ? 'The listening room' : 'A song to share'}</p>
+        <p className="music-player-collection">{local ? 'Private file' : included ? `${recordings.length} recordings` : 'YouTube'}</p>
+      </div>
+      <div className="music-player-selected">
         <span className="music-player-record" aria-hidden="true"><i /></span>
-        <p className="music-player-eyebrow">{local ? 'Music from your device' : included ? 'The listening library' : 'A song to share'}<span>{local ? 'Stays on this device' : included ? `${recordings.length} included recording${recordings.length === 1 ? '' : 's'}` : 'Listen together, right here'}</span></p>
+        <div className="music-player-selection-copy">
+          <h2 className="music-player-title" id={titleId}>{title}</h2>
+          <p className="music-player-artist">{artist}</p>
+          <p className={`music-player-availability ${included ? offline.statusFor(recording.src) : ''}`}>
+            <span aria-hidden="true">{included && offline.statusFor(recording.src) === 'ready' ? '✓' : '—'}</span>
+            {included ? availabilityText[offline.statusFor(recording.src)] : local ? 'Stays on this device' : 'Internet connection needed'}
+          </p>
+        </div>
       </div>
-      <div className="music-player-picker">
-        <label htmlFor={pickerId}>Choose an included recording</label>
-        <select id={pickerId} value={included ? recording.id : ''} onChange={event => chooseRecording(event.target.value)}>
-          {!included && <option value="" disabled>Choose from the listening library</option>}
-          {recordings.map(item => <option key={item.id} value={item.id}>{item.title} — {item.artist} · {availabilityText[offline.statusFor(item.src)]}</option>)}
-        </select>
-        <p className="music-player-note">Choose a track, then press Play.</p>
-        <p className="music-player-note" aria-live="polite">{offlineSummary}</p>
-        {offline.online && (!offline.known || offline.readyCount < recordings.length) && !offline.downloading && <button type="button" className="music-player-button" onClick={offline.requestDownload}>Download for offline use</button>}
-      </div>
-      <h2 className="music-player-title" id={titleId}>{title}</h2>
-      <p className="music-player-artist">{artist}</p>
 
       {source === 'youtube' && canEmbed && <YouTubePlayer key={`${song.id}:${youtubeId}`} song={song} youtubeId={youtubeId} onPlaying={onPlaying} />}
       {included && <IncludedPlayer
@@ -289,13 +305,27 @@ function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext,
         <NativeAudio key={localFile.url} src={localFile.url} label={`Your audio file: ${localFile.name}`} errorMessage="This file couldn’t play. Choose another recording, such as an MP3." />
         <p className="music-player-note">No upload. This recording stays separate from the songs in your evening log.</p>
       </>}
+      <div className="music-player-picker">
+        <label htmlFor={pickerId}>Choose an included recording</label>
+        <select id={pickerId} value={included ? recording.id : ''} onChange={event => chooseRecording(event.target.value)}>
+          {!included && <option value="" disabled>Choose from the listening library</option>}
+          {recordings.map(item => <option key={item.id} value={item.id}>{item.title} — {item.artist} · {availabilityText[offline.statusFor(item.src)]}</option>)}
+        </select>
+        <p className="music-player-note">Choose a track, then press Play.</p>
+      </div>
       <div className="music-player-actions">
         {!included && <button type="button" className="music-player-button music-player-primary" onClick={() => chooseSource('included')}>Back to included recordings</button>}
-        {included && recordings.length > 1 && <button type="button" className="music-player-button" onClick={() => chooseRecording(recordings[(recordings.indexOf(recording) + 1) % recordings.length].id)}>Next included recording <span aria-hidden="true">→</span></button>}
+        {included && recordings.length > 1 && <button type="button" className="music-player-button" onClick={() => chooseRecording(recordings[(recordings.indexOf(recording) + 1) % recordings.length].id)} aria-label="Next included recording">Next recording <span aria-hidden="true">→</span></button>}
         <button type="button" className="music-player-button" onClick={() => fileInput.current?.click()}>{local ? 'Choose another file' : 'Play a music file'}</button>
         <input ref={fileInput} hidden type="file" accept="audio/*,.mp3,.m4a,.m4b,.aac,.wav,.ogg,.oga,.opus,.flac" aria-label="Choose an audio file from your device" onChange={chooseFile} />
       </div>
       {fileError && <p className="music-player-error music-player-status" role="alert">{fileError}</p>}
+      <details className="music-player-details music-player-downloads">
+        <summary>Offline downloads <span>{offline.known ? `${offline.readyCount}/${recordings.length} ready` : 'Check availability'}</span></summary>
+        <p className="music-player-note" aria-live="polite">{offlineSummary}</p>
+        {offline.online && (!offline.known || offline.readyCount < recordings.length) && !offline.downloading && <button type="button" className="music-player-button" onClick={offline.requestDownload}>Download for offline use</button>}
+      </details>
+      {included && <RecordingDetails recording={recording} />}
       {canEmbed && (
         <details className="music-player-details">
           <summary>Optional YouTube song</summary>

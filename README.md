@@ -24,8 +24,8 @@ The hosted app needs no hardware, account or backend. It is a web app (PWA) that
 | Setup | Name, birth year, location (browser location or city search) and up to three optional memory anchors: hometown, spouse, job. |
 | Today | The suggested **start time** with a countdown, the moon phase, and an **estimated dusk** (tap to see sunset and cloud details). A heads-up appears 10 minutes before the start while the app is open. A small "constellation" shows one star per logged evening in the last week. Every outcome counts the same, and there are no streaks or scores. |
 | Moonrise mode | A full-screen sky, a slowly rising moon, warm light, a visible picker of included licensed recordings, native playback controls or a caregiver-selected local audio file, and one memory prompt at a time. Verified YouTube recordings remain optional when available. |
-| Log | Three big buttons: **Calm**, **Restless**, **Episode**, plus an optional "episode started at" time. |
-| Report | A one-page printable weekly summary to share with family or a doctor, including "songs from your evenings" (logged associations, not proven benefit). |
+| Log | Three large observation buttons: **Calm**, **Restless**, **Episode**; optional onset time and explicitly recorded comfort steps. Unknown is distinct from a reported “none.” |
+| Report | A printable weekly care handoff with recorded observations, missingness, onset times and optional comfort steps. Recorded evenings and fictional examples are separate views. Song activity describes logged associations, not benefit or verified historical listening. |
 
 ### The formulas
 
