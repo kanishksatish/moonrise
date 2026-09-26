@@ -3,7 +3,8 @@
 //
 // State shape: { profile: { name, birthYear, lat, lon, city, anchors: { hometown, spouse, job } } | null,
 //                logs: Log[],   (Log shape is documented in schedule.js)
-//                tonight?: { date: 'YYYY-MM-DD', songIds: string[] } }   songs played in tonight's session
+//                tonight?: { date: 'YYYY-MM-DD', songIds: string[] },   songs played in tonight's session
+//                approvedPrompts?: string[] }   caregiver-approved extra memory prompts (see ai.js)
 // Unknown keys are kept as they are, so the UI can store small extras.
 
 export const STORAGE_KEY = 'moonrise:v1'
@@ -102,6 +103,11 @@ export function loadState(storage = defaultStorage()) {
       profile: cleanProfile(parsed.profile),
       logs: [...byDate.values()].sort((a, b) => (a.date < b.date ? -1 : 1)),
     }
+    if ('approvedPrompts' in parsed) {
+      state.approvedPrompts = Array.isArray(parsed.approvedPrompts)
+        ? parsed.approvedPrompts.filter((t) => typeof t === 'string' && t.trim())
+        : []
+    }
     const tonight = cleanTonight(parsed.tonight)
     if (tonight) state.tonight = tonight
     else delete state.tonight
@@ -136,4 +142,32 @@ export function addDemoLogs(state, demoLogs) {
 
 export function clearDemoLogs(state) {
   return { ...state, logs: state.logs.filter((l) => !l.demo) }
+}
+
+// The optional Anthropic API key for AI prompts lives under its own key, never inside the
+// app state, so it can't end up in a saved report, an export or a demo reset by accident.
+export const AI_KEY_STORAGE_KEY = 'moonrise:ai-key'
+
+export function loadAiKey(storage = defaultStorage()) {
+  try {
+    const key = storage?.getItem(AI_KEY_STORAGE_KEY)
+    return typeof key === 'string' ? key : ''
+  } catch {
+    return ''
+  }
+}
+
+export function saveAiKey(key, storage = defaultStorage()) {
+  try {
+    const clean = typeof key === 'string' ? key.trim() : ''
+    if (clean) storage.setItem(AI_KEY_STORAGE_KEY, clean)
+    else storage.removeItem(AI_KEY_STORAGE_KEY)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function clearAiKey(storage = defaultStorage()) {
+  return saveAiKey('', storage)
 }
