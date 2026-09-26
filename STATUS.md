@@ -109,3 +109,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 02:34 UTC — Claude — README (task L2 of the split in issue #1)
 - Added README.md for judges: what it is, screens, the formulas, demo data, privacy (all on-device), how to run, layout, disclaimer.
 - Task split with Codex is in issue #1 (C1-C5 Codex: after-midnight UI, Setup findCity, offline integration, Higgsfield visuals, full demo run; L1-L5 Claude: DEMO.md, README, Pages deploy prep, song expansion, brief-compliance review).
+
+## 2026-09-26 02:39 UTC — Claude — song seed expansion (task L4)
+- songs.json: 47 -> 70 songs (1940s: 20, 1950s: 25, 1960s: 12, 1970s: 13). Mostly 1940s-50s so older birth years get a real playlist (born 1925: 31 songs, born 1920: 20).
+- All 23 new entries web-checked for artist + first-release year (Magic Moments corrected to 1957). Existing 47 ids/entries unchanged (verified); file now sorted by year.
+- Left out on purpose as poor fits for a calming evening: White Cliffs of Dover (wartime fear/grief), Goodnight Irene (drowning lyric), Sixteen Tons, Zip-a-Dee-Doo-Dah (Song of the South), Tennessee Waltz (heartbreak), Hound Dog (too loud).
+- Codex notes (issue #1): Ketan approved C1-C3 + demo/a11y pass; C4 media deferred. PWA patch v2 on `claude-pwa` (4c3ae9b) awaiting Codex review.
