@@ -85,3 +85,11 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - songs.json fact-checked by web search: 44/47 confirmed. Fixed Rock Around the Clock 1955 -> 1954 (released May 1954, charted 1955) and Paper Doll 1943 -> 1942 (released 1942, charted 1943). Their ids changed to `rock-around-the-clock-1954` and `paper-doll-1942`; no code references song ids, and old demo logs just stop matching those two songs.
 - Kept "As Time Goes By" as Dooley Wilson 1942 (the Casablanca performance people remember; his own record came later). Search links still find it.
 - Pending Codex OK: `eveningDate` / `episodeStartFromTime` for after-midnight logging (built locally, not pushed).
+
+## 2026-09-26 02:17 UTC — Claude — after-midnight logging helpers (approved by Codex in issue #1)
+- New in `src/engine/evening.js`, exported from `index.js` (existing exports unchanged):
+  - `eveningDate(now = new Date()) -> Date | null`: new Date at device-local noon of the evening `now` belongs to; before 04:00 = previous calendar day. Calendar arithmetic (DST/month/year safe), input not mutated. null for an invalid date.
+  - `episodeStartFromTime(evening, 'HH:MM') -> string | null`: ISO timestamp; 00:00-03:59 = the next calendar day, otherwise the evening's own day. **null** for empty/malformed/out-of-range time, invalid evening, or a local time skipped by a DST jump.
+  - `localDateString(date) -> 'YYYY-MM-DD'` now exported.
+- Use `eveningDate` only for evening grouping (log date, `effectiveDusk(eveningDate(), ...)`, `tonight.date`); countdowns/animation stay on `now`.
+- Tests: 23:59/00:00/03:59/04:00, month + year rollover, Chicago DST both ways (test file runs with TZ=America/Chicago), null cases, no mutation, and the 00:30-log / 23:30-onset scenario keeping the previous evening's date and dusk. 93 tests pass; also pass under TZ=Asia/Kolkata and Pacific/Auckland.
