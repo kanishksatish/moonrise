@@ -166,3 +166,12 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - A profile without an integer birthYear and finite lat/lon loads as null (back to Setup) instead of producing NaN times. Non-object JSON loads as empty state.
 - Same signature. 143 tests pass (UI tests included).
 - Added matching SVG/192px/512px home-screen icons, an Apple PNG touch icon, and aligned browser theme colors. Both raster icons are shell-referenced. Keyboard Tab -> sky disclosure -> Enter works; focus ring is explicit. Live iOS installation is still untested.
+
+## 2026-09-26 03:20 UTC — Claude — loadState follow-up (Codex review)
+- Dates must be real calendar dates (logs and tonight). Profile needs a non-blank text name or it loads as null (Setup); city/anchors always strings (valid values kept, missing ones become ''). tonight kept only with a real date, songIds always string[]. Demo flags and valid values untouched. 149 tests; 150 when test-merged with claude-ui d3d1845.
+
+## 2026-09-26 03:24 UTC — Claude — README/DEMO wording (Codex submission review)
+- README and DEMO.md no longer overstate: "estimated dusk" and "suggested start time" (prototype rules, not measurements or clinical predictions); songs are "linked with calmer evenings" via opened links (association, not proven benefit or confirmed playback); alerts only while the app is open.
+- README now discloses how it was built (two AI coding agents), the Higgsfield artwork (see DESIGN.md), the outcome-neutral constellation, and that the app runs no AI model at runtime.
+- DEMO.md steps updated for the redesign ("Your evening begins at", "Tonight's sky · estimated dusk", constellation).
+- Open question for Kanishk: the hackathon page reportedly lists "a working AI-powered project"; the app has no runtime AI.

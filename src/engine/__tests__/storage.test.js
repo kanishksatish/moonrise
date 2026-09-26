@@ -30,7 +30,11 @@ describe('loadState / saveState', () => {
       ],
     }
     expect(saveState(state, s)).toBe(true)
-    expect(loadState(s)).toEqual(state)
+    // Missing optional profile text comes back as empty strings; everything saved is kept.
+    expect(loadState(s)).toEqual({
+      ...state,
+      profile: { ...state.profile, city: '', anchors: { hometown: '', spouse: '', job: '' } },
+    })
   })
   it('returns empty state when nothing is stored', () => {
     expect(loadState(memoryStorage())).toEqual(emptyState())
@@ -120,11 +124,63 @@ describe('loading damaged or old data', () => {
   it('sends an unusable profile back to Setup', () => {
     expect(load({ profile: { ...profile, lat: 'x' }, logs: [] }).profile).toBeNull()
     expect(load({ profile: { ...profile, birthYear: '1942' }, logs: [] }).profile).toBeNull()
-    expect(load({ profile, logs: [] }).profile).toEqual(profile)
+    expect(load({ profile, logs: [] }).profile).toMatchObject(profile)
   })
   it('treats non-object JSON as empty state', () => {
     expect(load('[1,2]')).toEqual(emptyState())
     expect(load('5')).toEqual(emptyState())
     expect(load('null')).toEqual(emptyState())
+  })
+})
+
+describe('loading damaged data: dates, profile text and tonight', () => {
+  const profile = { name: 'Rose', birthYear: 1942, lat: 51.5, lon: -0.12, city: 'London', anchors: { hometown: 'Dayton', spouse: 'Frank', job: 'nurse' } }
+  const log = (date) => ({ date, outcome: 'calm', episodeStart: null, effectiveDusk: null, cloudCover: null, songIds: [] })
+  const load = (value) => {
+    const s = memoryStorage()
+    s.setItem(STORAGE_KEY, JSON.stringify(value))
+    return loadState(s)
+  }
+
+  it('rejects dates that are not on the calendar', () => {
+    const logs = ['2026-99-99', '2026-02-30', '2026-13-01', '2026-00-10', '2026-09-26', '2028-02-29'].map(log)
+    expect(load({ profile, logs }).logs.map((l) => l.date)).toEqual(['2026-09-26', '2028-02-29'])
+  })
+
+  it('keeps a valid profile exactly as it was', () => {
+    expect(load({ profile, logs: [] }).profile).toEqual(profile)
+  })
+
+  it('sends a profile with a missing, blank or non-text name back to Setup', () => {
+    for (const name of [undefined, '', '   ', { bad: true }, 42, ['Rose']]) {
+      expect(load({ profile: { ...profile, name }, logs: [] }).profile).toBeNull()
+    }
+  })
+
+  it('turns non-text city and anchors into empty strings, keeping valid ones', () => {
+    const p = load({ profile: { ...profile, city: { x: 1 }, anchors: { hometown: 'Dayton', spouse: null, job: 7 } }, logs: [] }).profile
+    expect(p.city).toBe('')
+    expect(p.anchors).toEqual({ hometown: 'Dayton', spouse: '', job: '' })
+    expect(load({ profile: { ...profile, anchors: 'nope' }, logs: [] }).profile.anchors).toEqual({ hometown: '', spouse: '', job: '' })
+    const noAnchors = { ...profile }
+    delete noAnchors.anchors
+    delete noAnchors.city
+    expect(load({ profile: noAnchors, logs: [] }).profile).toMatchObject({ city: '', anchors: { hometown: '', spouse: '', job: '' } })
+  })
+
+  it('repairs tonight.songIds and drops a tonight record without a real date', () => {
+    expect(load({ profile, logs: [], tonight: { date: '2026-09-26', songIds: null } }).tonight).toEqual({ date: '2026-09-26', songIds: [] })
+    expect(load({ profile, logs: [], tonight: { date: '2026-09-26', songIds: ['a', 3] } }).tonight).toEqual({ date: '2026-09-26', songIds: ['a'] })
+    for (const tonight of [null, 'x', [], { songIds: ['a'] }, { date: '2026-99-99', songIds: [] }]) {
+      expect('tonight' in load({ profile, logs: [], tonight })).toBe(false)
+    }
+  })
+
+  it('keeps a valid tonight and demo flags untouched', () => {
+    const tonight = { date: '2026-09-26', songIds: ['my-girl-1964'] }
+    const demo = { ...log('2026-09-25'), demo: true }
+    const state = load({ profile, logs: [demo], tonight })
+    expect(state.tonight).toEqual(tonight)
+    expect(state.logs).toEqual([demo])
   })
 })
