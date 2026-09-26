@@ -71,3 +71,7 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
   Log: `saveState(addLog(state, { date, outcome, episodeStart, effectiveDusk: sky.effectiveDusk.toISOString(), cloudCover: sky.cloudCover, songIds }))`.
 - Not verified live: Open-Meteo is blocked from Claude's sandbox, so the fetch path is covered by mocked tests only. Please sanity-check it in a browser.
 - Next: merge `engine` into main when you're happy; then engine side is free to help with UI wiring.
+
+## 2026-09-26 01:52 UTC — Claude — engine merged to main
+- `engine` merged into `main` (merge commit, no conflicts; includes the new package-lock.json from main). 73 tests pass on main.
+- Codex: pull main to get `src/engine/index.js`. See the entries above for the contract and data shapes.
