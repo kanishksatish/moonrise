@@ -4,11 +4,11 @@
 
 Latest update: a broader, fixed **200-fit comparison** also failed to find a supported high-precision alert policy. The earlier feature improvement is retained below, alongside the less favorable later result. More tuning did not establish clinical reliability.
 
-The source is the [official TIHM dataset](https://zenodo.org/records/7622128), with 1,030,559 household activity-sensor records from 56 participants. These are sensor records, not a million patients. The latest experiment required additional earlier history, retaining 50 participants and 8,918 six-hour windows, including 128 windows with a recorded agitation label. Participants were separated between training and evaluation; model and cutoff selection used only inner training folds.
+The source is the [official TIHM dataset](https://zenodo.org/records/7622128), with 1,030,559 household activity-sensor records from 56 participants. These are sensor records, not a million patients. The personal-baseline and broader experiments required additional earlier history, retaining 50 participants and 8,918 six-hour windows, including 128 windows with a recorded agitation label. Participants were separated between training and evaluation; model and cutoff selection used only inner training folds.
 
 ## What improved
 
-The latest experiment completed 60 model fits across three fixed candidates and nested validation. It compared the same eligible cohort throughout:
+The earlier personal-baseline experiment completed 60 model fits across three fixed candidates and nested validation. It compared the same eligible cohort throughout:
 
 | Candidate | Average precision | Descriptive 95% interval |
 |---|---:|---:|

@@ -1,142 +1,141 @@
 # Devpost submission draft: Moonrise
 
-Draft text for each Devpost section. Before submitting, confirm the live AI check,
-hosting status and final video link. Don't add claims about patients, clinical results
-or AI prediction.
-
----
+Draft reflects source `ec2fcce`. Confirm the submitted deployment and final video before
+publishing; the latest source is not claimed to be deployed. The laptop's optional OpenAI
+connection currently needs reconnection and a fresh generation check.
 
 ## Tagline
 
-A calm evening routine for people living with dementia, timed to the real sky.
+An evening routine for dementia caregivers, guided by the real sky.
 
 ## Inspiration
 
-In 2025, more than 12 million family members and other unpaid caregivers in the US gave an
-estimated 19.6 billion hours of care to people living with Alzheimer's or other dementias
-(Alzheimer's Association, *2026 Alzheimer's Disease Facts and Figures*, p. 52). For many
-families the hardest part of the day comes as daylight fades. Late-afternoon and evening
-confusion and agitation is often called *sundowning*. We wanted to help the caregiver get a
-step ahead of the evening, with nothing but a tablet they already own. The hackathon theme,
-"Fly me to the moon", gave us the image: every evening, a gentle moonrise.
+We wanted to simplify a caregiver's evening: a time to begin, music to choose together,
+an invitation to talk, and somewhere to note what happened. “Fly me to the moon” became
+a quiet observatory on a tablet. The moon rises, the screen grows warm, and the caregiver
+can follow their person's lead—even when that means stopping the music and sitting together.
 
 ## What it does
 
-- **Estimates tonight's dusk** from local sunset and forecast cloud cover (a transparent
-  prototype rule), and **suggests when to start** a calming routine, with a heads-up while
-  the app is open.
-- **Moonrise mode** is a full-screen, quiet routine with a decorative moonrise, today's
-  calculated lunar phase, and screen colors that follow calculated sun position. It offers
-  music and one memory prompt at a time for the caregiver to read aloud. It does not sense
-  room lighting. The person with dementia does not have to read or press anything.
-- **Song suggestions from the person's youth** (ages 10–30), plus direct playback of an
-  included CC0 piano recording or an audio file the caregiver selects on the device.
-  The piano works offline after it has been cached; a local file must be selected again
-  after leaving the routine. No YouTube catalog recording is currently enabled.
-- **Optional AI memory prompts.** With their own Anthropic API key, a caregiver can have
-  Claude (Haiku 4.5) draft personal prompts from a few memory answers. **Nothing is used
-  until the caregiver approves it.** The review flow is tested with simulated responses
-  and live invalid-key handling; a successful real-key generation is still awaiting
-  verification. Built-in prompts remain available without AI.
-- **One-tap evening log** (Calm / Restless / Episode). The suggested start time then adapts to
-  the family's own logs. After three logged evenings and at least one timed episode, it
-  uses median onset relative to each evening's estimated dusk, with a 20-minute buffer
-  and a limit of 15–90 minutes before tonight's estimated dusk. Otherwise it starts
-  45 minutes before estimated dusk.
-- **One-page printable weekly report** to share with family or a doctor. It includes a
-  reminder that sudden changes can have medical causes (pain, infection, medication).
-- **A gentle "constellation"**: one star per logged evening. Every kind of evening counts,
-  with no streaks and no scores for the person.
-- **Local storage with explicit online features.** No Moonrise account or backend. The
-  profile, evening logs and approved prompts stay in this browser. Open-Meteo receives
-  coordinates for weather or city text for lookup. Optional AI sends birth year/era and
-  the memory answers as typed to Anthropic, using the caregiver's key; those answers
-  can contain personal details. Profile name, coordinates and logs are not included in
-  the AI request. The core routine and bundled piano work offline after a successful
-  online production load, while cached data is retained. New AI prompts and weather
-  updates require a connection.
+- **Plan the evening.** Moonrise estimates dusk from sunset and forecast cloud cover. Its
+  default start is 45 minutes before estimated dusk. After three logged evenings with at
+  least one timed episode, it uses median onset relative to dusk minus 20 minutes, bounded
+  to 15–90 minutes before dusk. These are documented prototype rules, not predictions.
+  Routine reminders work across caregiver screens while the app is open; browser and
+  device availability still control delivery.
+- **Share a quiet routine.** A full-screen sky, calculated moon phase, warm colors and one
+  conversation starter at a time. The caregiver reads aloud. Stop music, Quiet view and
+  Finish remain easy to reach. The artwork is decorative; the app does not sense room light.
+- **Play real music.** Eleven included recordings have native playback controls and visible
+  source and license credits. The shared library is not matched to birth year. A caregiver
+  can also select a personal audio file without uploading it. Nothing autoplays.
+- **Keep useful notes.** Calm, Restless or Episode records the evening, with optional onset
+  time and caregiver-reported comfort steps. Unrecorded details stay distinct from “none.”
+  A printable weekly handoff shows observations, missing evenings and music activity;
+  fictional examples have a separate view. Song associations do not establish benefit.
+- **Count evenings without grading them.** One constellation star represents a logged
+  evening. Every outcome counts equally, with no streaks or patient scores.
+- **Review optional suggestions.** Built-in starters work without AI. Optional Anthropic
+  or laptop-only OpenAI generation produces drafts; only explicit caregiver approval adds
+  them to the routine. Suggestions can be wrong and are not care recommendations.
 
 ## How we built it
 
-- Vite + React + plain CSS, SunCalc and the Open-Meteo forecast and geocoding APIs (free,
-  no key), Vitest (245 tests), Playwright browser checks, a service worker for offline use,
-  and the Anthropic SDK for the optional prompts.
-- **Two humans and two AI coding agents.** Claude Code built the engine and integrations,
-  and Codex built the UI. The agents coordinated through a GitHub issue, reviewed each
-  other's work, and verified tests, builds, print, offline and accessibility behavior.
-  The final integrated app passed 245 automated tests and 26 offline checks, plus browser
-  reviews at widths from 320 to 1280 pixels.
-- Accessibility rules from day one: 20px minimum text, 48px minimum tap targets, contrast
-  for dark rooms, reduced-motion support, and a report that fits on one printed page.
+Two people worked with Claude Code and Codex, coordinating through a GitHub issue. We used
+React, Vite, plain CSS, SunCalc, Open-Meteo and a service worker, designing around 20px body
+text, 48px controls, visible keyboard focus and reduced motion.
+
+The offline app and Für Elise install first. Ten additional recordings download
+independently, so a failed extra download cannot block the core app. Each track shows its
+actual offline availability; missing tracks offer the saved piano fallback. Complete
+cached recordings support seeking. Browser storage eviction can remove downloads.
+
+At source `ec2fcce`, **410 automated tests across 31 files passed** in
+[CI run 36233256716](https://github.com/kanishksatish/moonrise/actions/runs/36233256716).
+Developer browser checks covered responsive layouts, keyboard navigation, reduced motion,
+print, playback and offline use—including missing extra music and playback after physically
+stopping the local server. These are software checks, not representative caregiver
+usability testing or clinical validation.
 
 ## Challenges we ran into
 
-- **Honest learning with tiny data.** We compared Bayesian alternatives and simple rules
-  using 1,000 simulated families with known synthetic answers. The simple rules performed
-  better under the tested assumptions, so we retained them. `METHODOLOGY.md` records the
-  method and limitations; these simulations do not establish clinical benefit or general
-  superiority over other models.
-- **Music availability.** Three tested YouTube candidates failed embedding (error 150),
-  and all catalog candidates remain disabled until verified. The app instead bundles a
-  CC0 piano recording and lets the caregiver select their own audio locally. No commercial
-  recording is bundled in the app or repository.
-- **Offline audio.** Seeking in a cached MP3 needed byte-range responses in the service
-  worker.
+**Dependable offline audio.** We separated core installation from music downloads and
+added byte-range seeking. Only actual playback records a track; selecting or unsuccessfully
+loading it does not. Historical records are not reinterpreted as verified listening.
+
+**Visible save failures.** Profile edits, evening notes and selected starters retain pending
+changes, explain failed device saves and offer a retry. Optional details preserve the
+difference between unknown and none.
+
+**Research that did not support alerts.** A separate public TIHM sensor-data experiment
+improved logistic event-ranking average precision from 0.0504 to 0.0640 using personal
+baselines on the same participant-separated cohort. Average precision is not alert
+accuracy. A further fixed 200-fit comparison also failed the precision and support
+requirements. We reported the unsuccessful results and kept every research predictor
+outside the app. [RESEARCH_RESULTS.md](RESEARCH_RESULTS.md) gives the full findings.
 
 ## Accomplishments we're proud of
 
-- A complete, tested app: offline, installable, accessible, with one-page print.
-- Keeping the report descriptive: evening outcomes and song history, with no claim that a
-  song caused an improvement. Per-song outcome counts exist in the engine but are not yet
-  displayed. The app labels dusk and start times as estimates and suggestions.
+A routine that carries through preparation, listening, stopping and recording the evening.
+The music plays, offline status is specific, and the handoff separates observations from
+missing information. Quiet company remains a valid choice.
+
+We verified the local OpenAI path with a fictional profile: one real request returned six
+drafts, and exactly one approved starter was saved and displayed. That earlier success
+is documented. The memory-only key was subsequently lost when its process ended; the
+current connection is unconfigured and needs reconnection and a fresh check. Saved
+approved starters remain available.
 
 ## What we learned
 
-For this prototype, transparent rules made small-sample behavior easier to inspect and
-test. The simulation results depend on their assumptions; real caregiver usability and
-clinical benefit still need separate evaluation.
+Canceling buffered playback, keeping keyboard focus and protecting an unsaved note matter
+as much as the main screen. Transparent rules made small-data behavior inspectable.
+Neither our software checks nor the separate research establishes clinical benefit.
 
 ## What's next
 
-- Usability sessions with family caregivers.
-- Clinical, ethics and privacy review with a care partner before any patient-facing pilot.
-- Background reminders.
-- A small server so AI prompts don't need a caregiver's own key.
+- Representative caregiver usability sessions using fictional scenarios.
+- Clinical, ethics, privacy and consent review before any patient-facing pilot.
+- More dependable background reminders and appropriate public-release key management.
+- Independent participants and app-relevant inputs before any further predictive evaluation.
 
 ## Built with
 
-vite, react, css, javascript, suncalc, open-meteo, anthropic-claude, vitest, playwright,
-service-worker, pwa, github-actions
+React, Vite, JavaScript, CSS, SunCalc, Open-Meteo, Vitest, service workers, GitHub Actions,
+Anthropic, OpenAI Responses API, Claude Code, Codex, Higgsfield.
 
----
+## Required disclosures
 
-## Required disclosures (keep these in the submission)
+- **Caregiver-support prototype.** Moonrise does not diagnose, treat or prevent a condition.
+  No patient testing, clinical validation or hospice validation has been done. The handoff
+  reminds caregivers to discuss sudden changes with a clinician. Representative caregiver
+  usability testing is still a separate next step.
+- **Data and providers.** Profiles, logs and approved starters live in browser storage;
+  no Moonrise account is needed. Open-Meteo receives coordinates or city-search text.
+  Generate sends birth year and optional hometown, spouse and job answers to the selected
+  provider. Those answers may identify someone; profile name, coordinates and logs are
+  excluded. The Anthropic path uses a caregiver-supplied browser-stored key. The separate
+  loopback-only OpenAI gateway keeps its key in server memory and is not a public backend.
+- **AI and generated media.** Claude Code and Codex assisted development. Two decorative
+  app illustrations were generated with Higgsfield; see [DESIGN.md](DESIGN.md). The promo
+  uses generated fictional people/scenes and an illustrated interface. It is not footage
+  of patients or evidence of real-world use.
+- **Music and promo rights.** The eleven app recordings retain individual licenses,
+  performance/restoration credits and modification notes in the app and
+  [audio credits](src/assets/audio/LICENSES.md). The separate promo uses a user-supplied
+  Frank Sinatra recording, which is not bundled in the app or repository. Its public
+  distribution rights have not been documented. Resolve those rights or replace the
+  soundtrack before public release.
+- **Research boundary.** TIHM findings are exploratory, with repeated development on the
+  same cohort and incomplete clinical labels. Sensor records are not counts of patients;
+  unlabelled windows are not confirmed clinical negatives. No tested alert policy met
+  its fixed requirements. The app neither collects those sensors nor runs a trained
+  predictor; participant records and fitted models are outside this repository.
+  Hospice applicability and research-data deployment rights remain unresolved.
 
-- **Caregiver-support prototype.** Moonrise is not intended to diagnose, treat or prevent
-  a condition. **No patient testing and no clinical validation have been done.**
-- **Estimates are rules, not predictions.** Dusk, start time and song ordering are simple,
-  documented rules (`METHODOLOGY.md`). The only runtime AI is the optional,
-  caregiver-approved memory prompts.
-- **How AI was used to build it.** The code was written with AI coding agents (Claude Code
-  and Codex). The two app illustrations were generated with Higgsfield (`DESIGN.md`).
-- **Promo video.** The video is a **generated, fictional demonstration** with AI-generated
-  people and scenes. It isn't real patients or real usage. Say so when presenting it.
-  Its separate soundtrack uses a user-supplied Frank Sinatra recording; that recording
-  is not included in the app or repository. Public soundtrack distribution rights have
-  not been documented in this project.
-- **Public data.** A separate research benchmark on the public TIHM dataset was completed with
-  participant-separated testing. A later same-cohort experiment improved event-ranking average
-  precision from 0.0504 to 0.0640 by adding personal baselines; this is not alert accuracy.
-  A broader 200-fit comparison also failed the fixed precision and support requirements.
-  All candidate results are retained in `RESEARCH_BROADER.md`. These exploratory results do
-  not support predictive care alerts, so no research model or participant data is connected to
-  the app or included in this repository (`RESEARCH_RESULTS.md`, `METHODOLOGY.md`). No patient
-  testing or hospice validation is established.
-- **Music.** The included piano is a CC0 recording (provenance in `src/assets/audio/`).
-  Catalog songs are suggestions; no commercial recordings are distributed with the app.
+## Submission links to confirm
 
-## Links to add
-
-- Code: https://github.com/kanishksatish/moonrise
-- Live app: https://kanishksatish.github.io/moonrise/
-- Video: add the final demonstration link after resolving the public soundtrack rights.
+- Code: [Moonrise repository](https://github.com/kanishksatish/moonrise)
+- App candidate: [Moonrise on GitHub Pages](https://kanishksatish.github.io/moonrise/) — verify the submitted version;
+  this draft does not establish that the latest source is deployed.
+- Video: add the final demonstration link after resolving the soundtrack rights.
