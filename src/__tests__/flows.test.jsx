@@ -222,7 +222,7 @@ it('does not remind during or after an already-started routine, then allows the 
   vi.setSystemTime(new Date(2026, 8, 26, 18, 10))
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))
-  click('Start Moonrise now'); click('Skip launch')
+  click('A little music'); click('Start Moonrise now')
   vi.setSystemTime(new Date(2026, 8, 26, 18, 21))
   await act(async () => vi.advanceTimersByTime(15000))
   expect(delivered).not.toHaveBeenCalled()
@@ -349,7 +349,7 @@ it('offers included audio and generic conversation instead of unavailable era-so
   expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
 })
 
-it('counts all logged outcomes equally in the constellation and labels demo stars', async () => {
+it('counts recorded outcomes equally and excludes examples from real progress', async () => {
   const logs = [
     { date: '2026-09-24', outcome: 'calm' },
     { date: '2026-09-25', outcome: 'restless', demo: true },
@@ -359,10 +359,10 @@ it('counts all logged outcomes equally in the constellation and labels demo star
   localStorage.setItem('moonrise:v1', JSON.stringify({ ...initial, logs }))
   await act(async () => render(<App />))
   const constellation = screen.getByRole('region', { name: 'Your seven evening constellation' })
-  expect(constellation.textContent).toContain('3 of 7 logged')
-  expect(constellation.textContent).toContain('Includes demo evenings.')
+  expect(constellation.textContent).toContain('2 of 7 logged')
+  expect(constellation.textContent).not.toContain('Includes demo evenings.')
   expect(constellation.textContent).toContain('Every kind of evening counts.')
-  expect(constellation.querySelectorAll('.star-filled')).toHaveLength(3)
+  expect(constellation.querySelectorAll('.star-filled')).toHaveLength(2)
 })
 
 it('recovers a damaged stored session through a complete song-and-log flow', async () => {
@@ -372,10 +372,10 @@ it('recovers a damaged stored session through a complete song-and-log flow', asy
     tonight: { date: '2026-09-26', songIds: null },
   }))
   await act(async () => render(<App />))
-  click('Start Moonrise now'); click('Skip launch')
+  click('A little music'); click('Start Moonrise now')
   await act(async () => chooseYouTube())
   act(() => players[0].events.onStateChange({ data: 1 }))
-  click('Finish'); click('Calm')
+  click('Finish'); click('Log'); click('Calm')
   expect(players[0].destroy).toHaveBeenCalledOnce()
   expect(saved().logs).toHaveLength(1)
   expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', outcome: 'calm' })
@@ -385,11 +385,11 @@ it('recovers a damaged stored session through a complete song-and-log flow', asy
 it('preserves actual bundled IDs alongside old era IDs through playback, storage, and the report', async () => {
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))
-  click('Start Moonrise now'); click('Skip launch')
+  click('A little music'); click('Start Moonrise now')
   fireEvent.playing(document.querySelector('audio'))
   fireEvent.pause(document.querySelector('audio'))
   fireEvent.playing(document.querySelector('audio'))
-  click('Finish'); click('Calm')
+  click('Finish'); click('Log'); click('Calm')
   expect(saved().logs[0].songIds).toEqual(['earth-angel-1954', includedCatalog[0].id])
   cleanup()
   await act(async () => render(<App />))
@@ -410,20 +410,18 @@ it('shows bundled tracks with an unknown recording year without inventing a year
 })
 
 
-it('launches only on request and automatically enters a usable routine', async () => {
+it('starts directly on request without a launch delay, then opens the handoff', async () => {
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))
   expect(screen.queryByRole('dialog')).toBeNull()
   document.documentElement.scrollTop = 500
   click('Start Moonrise now')
   expect(document.documentElement.scrollTop).toBe(0)
-  expect(screen.getByRole('dialog')).toBeTruthy()
-  expect(screen.queryByRole('button', { name: 'Next prompt' })).toBeNull()
-  await act(async () => vi.advanceTimersByTime(2400))
+  expect(screen.getByRole('region', { name: 'Shared activity' })).toBeTruthy()
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(screen.getByRole('button', { name: 'Quiet view' })).toBe(document.activeElement)
   click('Finish')
-  expect(screen.getByRole('button', { name: 'Calm' })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'Session handoff' })).toBeTruthy()
 })
 
 it('lets the caregiver change the prompt and hide conversation without losing the session', () => {
@@ -437,8 +435,8 @@ it('lets the caregiver change the prompt and hide conversation without losing th
   click('Quiet view')
   expect(screen.queryByText(prompt)).toBeNull()
   expect(screen.queryByRole('combobox', { name: 'Choose an included recording' })).toBeNull()
-  expect(screen.getByRole('button', { name: 'Show conversation' }).getAttribute('aria-pressed')).toBe('true')
-  click('Show conversation')
+  expect(screen.getByRole('button', { name: 'Return to music' }).getAttribute('aria-pressed')).toBe('true')
+  click('Return to music')
   expect(screen.getByText(prompt)).toBeTruthy()
   expect(document.querySelector('.music-player-title').textContent).toBe(song)
   click('Finish')

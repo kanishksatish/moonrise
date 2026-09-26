@@ -6,6 +6,7 @@ import includedCatalog from '../assets/audio/catalog.json'
 import { prettyDate } from '../components/format.js'
 import '../styles/report-visual.css'
 import '../styles/care-workflow.css'
+import SessionHandoff from '../components/SessionHandoff.jsx'
 
 const OUTCOME_LABELS = { calm: 'Calm', restless: 'Restless', episode: 'Episode' }
 // Read old era IDs and new recording IDs side by side. Never replace old IDs or
@@ -60,7 +61,7 @@ function WeekRhythm({ report, example }) {
   )
 }
 
-export default function Report({ state }) {
+export default function Report({ state, onReviewSession, saveError = false, initialSessionId = null }) {
   const { profile, logs } = state
   const hasRecorded = logs.some(log => !log.demo)
   const hasDemo = logs.some(log => log.demo)
@@ -77,6 +78,7 @@ export default function Report({ state }) {
 
   return (
     <div className={`report care-handoff${example ? ' example-handoff' : ''}`}>
+      <SessionHandoff sessions={state.sessions} onReview={onReviewSession} saveError={saveError} initialSessionId={initialSessionId}/>
       <header className="report-heading">
         <div className="report-masthead no-print">
           <p className="report-kicker">{example ? 'Fictional demonstration' : `${profile.name}’s evening journal`}</p>

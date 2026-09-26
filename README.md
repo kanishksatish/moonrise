@@ -1,15 +1,17 @@
 # Moonrise
 
-**A calm evening routine for people with dementia, timed to the real sky.**
+**Prepare a familiar evening. Follow their lead. Carry the details forward.**
 
-Many people living with dementia become more confused or agitated as daylight fades, often
-called *sundowning*. Moonrise helps family caregivers plan ahead for it. It **estimates** this
-evening's dusk from local sunset and cloud cover, suggests a time to start a calming routine,
-and reminds the caregiver while the app is open. The routine is gentle and full-screen:
-warm light that brightens as the sky darkens, an included listening library, in-app audio controls, and simple
-memory prompts. After each evening, one tap records how it went. Moonrise then adjusts its
-suggested start time from the logged evenings, and summarizes recorded song activity.
-Song rankings reflect associations in the caregiver's own logs, not proof a song helps.
+Moonrise is a caregiver-support prototype for evenings with a person living with dementia.
+Its connected workflow starts with a personal plan: a familiar story or photo, preferences,
+and topics to avoid. The caregiver offers story, music or quiet company, records choices
+and observations, then reviews a source-linked session handoff. The person can decline or
+stop at any point. The handoff distinguishes caregiver entries from player events and
+leaves missing observations unknown; it does not infer that an activity improved symptoms.
+
+Sunset and weather provide an optional planning cue, not a clinical prediction. The separate
+weekly journal retains the existing Calm, Restless and Episode observations. Music rankings
+reflect associations in those logs, not proof that a song helps. No clinical predictor is deployed.
 
 > Moonrise supports caregivers. It is **not** a medical treatment and does not diagnose,
 > treat or prevent anything. Sudden changes in evening behaviour can have medical causes
@@ -22,10 +24,11 @@ The hosted app needs no hardware, account or backend. It is a web app (PWA) that
 | Step | What Moonrise does |
 | --- | --- |
 | Setup | Name, birth year, location (browser location or city search) and up to three optional memory anchors: hometown, spouse, job. |
-| Today | The suggested **start time** with a countdown, the moon phase, and an **estimated dusk** (tap to see sunset and cloud details). A heads-up appears 10 minutes before the start while the app is open. A small "constellation" shows one star per logged evening in the last week. Every outcome counts the same, and there are no streaks or scores. |
-| Moonrise mode | A full-screen sky, a slowly rising moon, warm light, a visible picker of included licensed recordings, native playback controls or a caregiver-selected local audio file, and one memory prompt at a time. Verified YouTube recordings remain optional when available. |
+| Today | A warm evening workspace with a personal plan, first-activity choices, immediate Start, optional moonflight, and a clearly fictional walkthrough. Sunset timing remains a secondary planning cue. |
+| Shared session | A large story/photo, music or quiet view. The caregiver controls progression, can record started/declined actions, and can add an observation. Quiet and Finish stop playback. Draft observations must be added or cleared before Finish. |
+| Session handoff | Timestamped actions, original source records, the preferences captured at session start, explicit missing observations, and a caregiver review tied to the exact record. This is a factual on-device summary, not an AI-generated clinical note. |
 | Log | Three large observation buttons: **Calm**, **Restless**, **Episode**; optional onset time and explicitly recorded comfort steps. Unknown is distinct from a reported “none.” |
-| Report | A printable weekly care handoff with recorded observations, missingness, onset times and optional comfort steps. Recorded evenings and fictional examples are separate views. Song activity describes logged associations, not benefit or verified historical listening. |
+| Report | The session handoff followed by the separate printable weekly record. Recorded sessions and fictional examples have separate views. Song activity describes logged associations, not benefit or verified historical listening. |
 
 Routine reminders remain active across caregiver screens while the app is open. Each stage is delivered at most once during that open app session, and reminders stop for an evening after the routine begins or a real observation is recorded. Browser notifications require permission; an on-screen reminder also offers a route back to Today. Delivery depends on the browser and device staying available; reloading starts a new reminder session.
 
@@ -92,12 +95,17 @@ the optional demo week is explicitly labelled.
 ### Demo data
 
 Settings has a **Load demo week** button. It generates a realistic week of evening logs
-from a seeded random function, so the learning and the report can be shown live. Demo
+from a seeded random function, so the weekly report can be shown live. Demo logs are excluded from real routine timing. Demo
 logs are clearly labelled and can be removed in one tap. Real evenings are never replaced.
 
 ## Privacy
 
-Profiles, evening logs and approved prompts are saved in the browser's local storage.
+Profiles, evening plans, session records, evening logs and approved prompts are saved in the browser's local storage.
+Optional photos are resized to a maximum 960px JPEG and stored only in this browser's IndexedDB,
+with a 20-photo limit. Original file names and metadata are not retained. Past sessions keep
+references to their original photos and plans. Browser storage can be cleared or evicted; this
+is not a clinical record system or a backup. Photos, prepared stories, caregiver preferences
+and session events are excluded from generation requests.
 The hosted app has no Moonrise account or backend. Its network calls are weather and city lookups (Open-Meteo, which receives
 coordinates or a city name), YouTube when the caregiver explicitly loads an available player, and,
 only if the caregiver sets up AI prompts and taps Generate, one request to the Anthropic

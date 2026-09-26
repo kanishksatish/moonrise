@@ -8,6 +8,7 @@
 // Unknown keys are kept as they are, so the UI can store small extras.
 
 import { cleanCareContext } from './careContext.js'
+import { cleanSession, normalizeEveningPlan } from './eveningSession.js'
 
 export const STORAGE_KEY = 'moonrise:v1'
 
@@ -109,6 +110,8 @@ export function loadState(storage = defaultStorage()) {
       profile: cleanProfile(parsed.profile),
       logs: [...byDate.values()].sort((a, b) => (a.date < b.date ? -1 : 1)),
     }
+    if ('eveningPlan' in parsed) state.eveningPlan = normalizeEveningPlan(parsed.eveningPlan)
+    if ('sessions' in parsed) state.sessions = (Array.isArray(parsed.sessions) ? parsed.sessions : []).map(cleanSession).filter(Boolean)
     if ('approvedPrompts' in parsed) {
       state.approvedPrompts = Array.isArray(parsed.approvedPrompts)
         ? parsed.approvedPrompts.filter((t) => typeof t === 'string' && t.trim())
@@ -156,7 +159,7 @@ export function addDemoLogs(state, demoLogs) {
 }
 
 export function clearDemoLogs(state) {
-  return { ...state, logs: state.logs.filter((l) => !l.demo) }
+  return { ...state, logs: state.logs.filter((l) => !l.demo), ...(Array.isArray(state.sessions) ? { sessions: state.sessions.filter(session => !session.isDemo) } : {}) }
 }
 
 // The optional Anthropic API key for AI prompts lives under its own key, never inside the

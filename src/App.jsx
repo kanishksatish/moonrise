@@ -12,12 +12,16 @@ import Moonrise from './screens/Moonrise.jsx'
 import Log from './screens/Log.jsx'
 import Report from './screens/Report.jsx'
 import Settings from './screens/Settings.jsx'
+import { createSession, appendSessionEvent, normalizeEveningPlan } from './engine/eveningSession.js'
+import { EXAMPLE_PLAN } from './components/EveningWorkspace.jsx'
 
 const SKY_REFRESH_MS = 30 * 60 * 1000
 const SCREEN_NAMES = { today: 'Today', log: 'Evening log', report: 'Evening report', settings: 'Caregiver settings' }
 
 function App() {
   const [state, setState] = useState(loadState)
+  const stateRef = useRef(state)
+  const [activeSessionId, setActiveSessionId] = useState(null)
   const [screen, setScreen] = useState('today')
   const [sky, setSky] = useState(null)
   const [storageError, setStorageError] = useState(false)
@@ -30,7 +34,7 @@ function App() {
   const screenContent = useRef(null)
   const visibleScreen = !profile || screen === 'setup' ? 'setup' : screen
   const reminders = useRoutineReminders({
-    now, sky: visibleSky, logs: state.logs,
+    now, sky: visibleSky, logs: state.logs.filter(log => !log.demo),
     suppressed: visibleScreen === 'setup' || visibleScreen === 'launch' || visibleScreen === 'moonrise' || startedEvening === evening,
   })
 
@@ -42,14 +46,33 @@ function App() {
   }, [visibleScreen])
 
   // Every change to state is saved right away.
-  function update(next) {
+  function update(value) {
+    const next = typeof value === 'function' ? value(stateRef.current) : value
     const saved = saveState(next)
     setStorageError(!saved)
     setStorageRetryAvailable(!saved && Boolean(next.profile))
     // Keep usable edits in memory if storage fails, but never show a completed
     // reset while the prior browser record is still present on disk.
-    if (saved || next.profile) setState(next)
+    if (saved || next.profile) { stateRef.current = next; setState(next) }
     return saved
+  }
+
+  function recordEvent(event) {
+    if (!activeSessionId) return
+    update(current => ({ ...current, sessions: (current.sessions || []).map(session => session.id === activeSessionId
+      ? appendSessionEvent(session, { id: crypto.randomUUID(), at: new Date().toISOString(), ...event }) : session) }))
+  }
+
+  function beginSession(activity = 'quiet', isDemo = false, withLaunch = false) {
+    const plan = isDemo ? normalizeEveningPlan(EXAMPLE_PLAN) : normalizeEveningPlan(stateRef.current.eveningPlan)
+    let session = createSession(isDemo ? { name: 'Avery (fictional)' } : profile, plan, {
+      id: crypto.randomUUID(), now: new Date(), date: eveningKey(), isDemo,
+    })
+    session = appendSessionEvent(session, { id: crypto.randomUUID(), type: 'offered', activity, at: new Date().toISOString() })
+    update(current => ({ ...current, sessions: [...(current.sessions || []), session] }))
+    setActiveSessionId(session.id)
+    if (!isDemo) setStartedEvening(eveningKey())
+    setScreen(withLaunch ? 'launch' : 'moonrise')
   }
 
   // Tonight's effective dusk, refreshed every 30 minutes (weather changes, and the day rolls over).
@@ -105,14 +128,19 @@ function App() {
     return (
       <Moonrise
         state={state}
+        session={(state.sessions || []).find(session => session.id === activeSessionId)}
+        onSessionEvent={recordEvent}
         saveError={storageError}
         onPlayed={(songId) => {
+          const session = (stateRef.current.sessions || []).find(item => item.id === activeSessionId)
+          if (session?.isDemo) return
           const today = eveningKey()
-          const tonight = state.tonight?.date === today ? state.tonight : { date: today, songIds: [] }
+          const current = stateRef.current
+          const tonight = current.tonight?.date === today ? current.tonight : { date: today, songIds: [] }
           if (tonight.songIds.includes(songId)) return
-          update({ ...state, tonight: { ...tonight, songIds: [...tonight.songIds, songId] } })
+          update({ ...current, tonight: { ...tonight, songIds: [...tonight.songIds, songId] } })
         }}
-        onExit={() => setScreen('log')}
+        onExit={() => { recordEvent({ type: 'finished' }); setScreen('report') }}
       />
     )
   }
@@ -131,12 +159,10 @@ function App() {
         </div>}
         {storageError && <div className="status" role="alert"><p>This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>{storageRetryAvailable && screen !== 'log' && <button className="btn" onClick={() => update(state)}>Retry saving changes</button>}</div>}
         <main ref={screenContent} tabIndex={-1} aria-label={SCREEN_NAMES[screen]}>
-        {screen === 'today' && <Today state={state} sky={visibleSky} saveError={storageError} reminders={reminders} onStart={() => {
-          setStartedEvening(eveningKey())
-          setScreen('launch')
-        }} onPersonalize={() => setScreen('settings')} />}
+        {screen === 'today' && <Today state={state} sky={visibleSky} saveError={storageError} reminders={reminders} onStart={beginSession}
+          onSavePlan={plan => update(current => ({ ...current, eveningPlan: plan }))} onPersonalize={() => setScreen('settings')} />}
         {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
-        {screen === 'report' && <Report state={state} />}
+        {screen === 'report' && <Report state={state} saveError={storageError} initialSessionId={activeSessionId} onReviewSession={(id, revision) => update(current => ({ ...current, sessions: (current.sessions || []).map(session => session.id === id ? { ...session, reviewedRevision: revision } : session) }))} />}
         {screen === 'settings' && (
           <Settings state={state} update={update} saveError={storageRetryAvailable} onEditProfile={() => setScreen('setup')} />
         )}

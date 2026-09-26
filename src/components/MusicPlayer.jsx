@@ -50,12 +50,14 @@ function loadYouTubeApi() {
   return apiRequest
 }
 
-function YouTubePlayer({ song, youtubeId, onPlaying }) {
+function YouTubePlayer({ song, youtubeId, onPlaying, onStopped }) {
   const host = useRef(null)
   const callback = useRef(onPlaying)
+  const stoppedCallback = useRef(onStopped)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   useEffect(() => { callback.current = onPlaying }, [onPlaying])
+  useEffect(() => { stoppedCallback.current = onStopped }, [onStopped])
 
   useEffect(() => {
     const container = host.current
@@ -63,6 +65,12 @@ function YouTubePlayer({ song, youtubeId, onPlaying }) {
     let failed = false
     let player
     let readyTimer
+    let wasPlaying = false
+    function reportStopped() {
+      if (!wasPlaying) return
+      wasPlaying = false
+      stoppedCallback.current?.()
+    }
     function release() {
       clearTimeout(readyTimer)
       try { player?.pauseVideo?.() } catch { /* A failed player may already be gone. */ }
@@ -73,6 +81,7 @@ function YouTubePlayer({ song, youtubeId, onPlaying }) {
     function fail(message) {
       if (cancelled || failed) return
       failed = true
+      reportStopped()
       release()
       setError(message)
       setStatus('error')
@@ -104,11 +113,12 @@ function YouTubePlayer({ song, youtubeId, onPlaying }) {
           onStateChange: ({ data }) => {
             if (cancelled || failed) return
             if (data === 1) {
+              wasPlaying = true
               clearTimeout(readyTimer)
               setStatus('playing')
               callback.current()
-            } else if (data === 2) setStatus('paused')
-            else if (data === 0) setStatus('ended')
+            } else if (data === 2) { reportStopped(); setStatus('paused') }
+            else if (data === 0) { reportStopped(); setStatus('ended') }
             else if (data === 3) setStatus('buffering')
           },
           onAutoplayBlocked: () => {
@@ -140,8 +150,14 @@ function YouTubePlayer({ song, youtubeId, onPlaying }) {
   )
 }
 
-function NativeAudio({ src, label, onPlaying, onError, errorMessage = 'This audio couldn’t load. Try again when connected.' }) {
+function NativeAudio({ src, label, onPlaying, onStopped, onError, errorMessage = 'This audio couldn’t load. Try again when connected.' }) {
   const audio = useRef(null)
+  const playing = useRef(false)
+  function stopped() {
+    if (!playing.current) return
+    playing.current = false
+    onStopped?.()
+  }
   const [status, setStatus] = useState('Use the player to begin.')
   const [canStop, setCanStop] = useState(false)
   useEffect(() => {
@@ -160,13 +176,13 @@ function NativeAudio({ src, label, onPlaying, onError, errorMessage = 'This audi
   return (
     <div className="music-player-native">
       <audio
-        ref={audio} src={src} controls preload="none" crossOrigin="anonymous"
+        ref={audio} src={src} controls preload="metadata" crossOrigin="anonymous"
         aria-label={label}
         onPlay={() => { setStatus('Starting playback…'); setCanStop(true) }}
-        onPlaying={() => { setStatus('Playing here'); setCanStop(true); onPlaying?.() }}
-        onPause={() => setStatus(current => [errorMessage, 'Stopped', 'The piece has ended.'].includes(current) ? current : 'Paused')}
-        onEnded={() => { setStatus('The piece has ended.'); setCanStop(false) }}
-        onError={() => { setStatus(errorMessage); setCanStop(false); onError?.() }}
+        onPlaying={() => { playing.current = true; setStatus('Playing here'); setCanStop(true); onPlaying?.() }}
+        onPause={() => { stopped(); setStatus(current => [errorMessage, 'Stopped', 'The piece has ended.'].includes(current) ? current : 'Paused') }}
+        onEnded={() => { stopped(); setStatus('The piece has ended.'); setCanStop(false) }}
+        onError={() => { stopped(); setStatus(errorMessage); setCanStop(false); onError?.() }}
       />
       <div className="music-player-transport">
         <p className="music-player-status" role="status">{status}</p>
@@ -175,13 +191,14 @@ function NativeAudio({ src, label, onPlaying, onError, errorMessage = 'This audi
           try { audio.current.currentTime = 0 } catch { /* Unseekable files can still pause. */ }
           setStatus('Stopped')
           setCanStop(false)
+          stopped()
         }}><span aria-hidden="true">■</span> Stop music</button>
       </div>
     </div>
   )
 }
 
-function IncludedPlayer({ recording, onPlaying, availability, online, fallback, fallbackStatus, onFallback, onRetry }) {
+function IncludedPlayer({ recording, onPlaying, onStopped, availability, online, fallback, fallbackStatus, onFallback, onRetry }) {
   const [failed, setFailed] = useState(false)
   const [retry, setRetry] = useState(0)
   const missingOffline = !online && availability === 'missing'
@@ -189,7 +206,7 @@ function IncludedPlayer({ recording, onPlaying, availability, online, fallback, 
     <div className="music-player-included">
       <NativeAudio
         key={`${recording.id}:${retry}`} src={recording.src} label={`${recording.title} — ${recording.artist}`}
-        onPlaying={() => { setFailed(false); onPlaying(recording.id) }} onError={() => setFailed(true)}
+        onStopped={onStopped} onPlaying={() => { setFailed(false); onPlaying(recording.id) }} onError={() => setFailed(true)}
       />
       {(missingOffline || failed) && <div className="music-player-recovery">
         {missingOffline && <p className="music-player-note music-player-error" role="alert">You’re offline. This recording has not been saved for offline use.</p>}
@@ -220,7 +237,7 @@ function RecordingDetails({ recording }) {
   )
 }
 
-function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext, recordings }) {
+function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onLocalPlaying, onStopped, onNext, recordings }) {
   const offline = useOfflineAudioStatus(recordings)
   const [source, setSource] = useState('included')
   const [recordingId, setRecordingId] = useState(recordings[0].id)
@@ -294,15 +311,15 @@ function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext,
         </div>
       </div>
 
-      {source === 'youtube' && canEmbed && <YouTubePlayer key={`${song.id}:${youtubeId}`} song={song} youtubeId={youtubeId} onPlaying={onPlaying} />}
+      {source === 'youtube' && canEmbed && <YouTubePlayer key={`${song.id}:${youtubeId}`} song={song} youtubeId={youtubeId} onPlaying={onPlaying} onStopped={onStopped} />}
       {included && <IncludedPlayer
-        key={recording.id} recording={recording} onPlaying={onIncludedPlaying}
+        key={recording.id} recording={recording} onPlaying={onIncludedPlaying} onStopped={onStopped}
         availability={offline.statusFor(recording.src)} online={offline.online}
         fallback={fallback} fallbackStatus={fallback ? offline.statusFor(fallback.src) : 'unknown'}
         onFallback={() => chooseRecording(fallback.id)} onRetry={offline.requestDownload}
       />}
       {local && <>
-        <NativeAudio key={localFile.url} src={localFile.url} label={`Your audio file: ${localFile.name}`} errorMessage="This file couldn’t play. Choose another recording, such as an MP3." />
+        <NativeAudio onPlaying={onLocalPlaying} onStopped={onStopped} key={localFile.url} src={localFile.url} label={`Your audio file: ${localFile.name}`} errorMessage="This file couldn’t play. Choose another recording, such as an MP3." />
         <p className="music-player-note">No upload. This recording stays separate from the songs in your evening log.</p>
       </>}
       <div className="music-player-picker">
@@ -347,10 +364,11 @@ function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext,
  * Bundled IDs are separate from era-song IDs. Personal files are never assigned
  * a catalog ID, and historical piano/file activity is never reconstructed.
  */
-export default function MusicPlayer({ song, youtubeId, onPlayed, onNext, sessionId = 'current', playedSongIds = [], active = true, recordings = bundledMusic }) {
+export default function MusicPlayer({ song, youtubeId, onPlayed, onPlayback, onStopped, onNext, sessionId = 'current', playedSongIds = [], active = true, recordings = bundledMusic }) {
   const played = useRef({ sessionId, ids: new Set() })
   if (played.current.sessionId !== sessionId) played.current = { sessionId, ids: new Set() }
   function observedPlaying(id) {
+    onPlayback?.(id)
     if (!id || played.current.ids.has(id) || playedSongIds.includes(id)) return
     played.current.ids.add(id)
     onPlayed?.(id)
@@ -359,7 +377,7 @@ export default function MusicPlayer({ song, youtubeId, onPlayed, onNext, session
     <MusicSelection
       key={sessionId}
       song={song} youtubeId={youtubeId} onPlaying={() => observedPlaying(song?.id)}
-      onIncludedPlaying={observedPlaying} onNext={onNext} recordings={recordings}
+      onIncludedPlaying={observedPlaying} onLocalPlaying={() => onPlayback?.(null)} onStopped={onStopped} onNext={onNext} recordings={recordings}
     />
   ) : null
 }

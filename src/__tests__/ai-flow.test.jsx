@@ -64,7 +64,7 @@ it('keeps only approved drafts, survives reload, and shows an approved prompt in
   expect(screen.queryByText(second)).toBeNull()
   cleanup()
   await act(async () => render(<App />))
-  click('Start Moonrise now'); click('Skip launch')
+  click('Start Moonrise now')
   // Conversation is independent of the recording, so the approved prompt comes
   // first instead of naming an unrelated era song.
   expect(screen.getByText(first)).toBeTruthy()
@@ -90,7 +90,7 @@ it('shows a safe actionable error and leaves the built-in routine usable', async
   await act(async () => click('Generate prompts'))
   expect(screen.getByRole('alert').textContent).toMatch(/not accepted/)
   expect(saved().approvedPrompts).toBeUndefined()
-  click('Today'); click('Start Moonrise now'); click('Skip launch')
+  click('Today'); click('Start Moonrise now')
   expect(screen.getByText('Conversation starter')).toBeTruthy()
 })
 
@@ -152,7 +152,7 @@ it('keeps approved drafts usable without promising offline persistence until ret
   expect(screen.queryByText('Reviewed by you, saved on this device and available offline.')).toBeNull()
   // Explicit approval still makes this selected draft usable for the open session;
   // unapproved drafts must never enter that routine, even during storage failure.
-  click('Today'); click('Start Moonrise now'); click('Skip launch')
+  click('Today'); click('Start Moonrise now')
   expect(screen.getByText(first)).toBeTruthy()
   expect(screen.queryByText(second)).toBeNull()
   click('Finish'); click('Settings')

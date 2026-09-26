@@ -1,12 +1,12 @@
 # Devpost submission draft: Moonrise
 
-Draft reflects source `ec2fcce`. Confirm the submitted deployment and final video before
+Draft reflects the connected evening workflow on the `claude-ui` review branch. Confirm the submitted deployment and final video before
 publishing; the latest source is not claimed to be deployed. The laptop's optional OpenAI
 connection currently needs reconnection and a fresh generation check.
 
 ## Tagline
 
-An evening routine for dementia caregivers, guided by the real sky.
+Prepare familiar company. Follow their lead. Carry the evening forward.
 
 ## Inspiration
 
@@ -17,14 +17,23 @@ can follow their person's lead—even when that means stopping the music and sit
 
 ## What it does
 
+- **Know the person.** Prepare a familiar story, optional on-device photo, caregiver cues,
+  topics to avoid, and the activities to offer. Each session captures its own plan so later
+  edits do not rewrite what was prepared for an earlier evening.
+- **Follow their lead.** Offer a story, music or quiet company. Record a decline without
+  treating it as failure. Add an observation in the caregiver's own words. Nothing advances
+  automatically and an unfinished note is protected when Finish is pressed.
+- **Carry the details forward.** A timestamped session handoff links each action to its
+  original source. Player-reported playback stays distinct from caregiver entries. A review
+  applies to the exact record and becomes pending after a change. Missing observations
+  remain unknown. This is a factual on-device summary, not an AI clinical note.
 - **Plan the evening.** Moonrise estimates dusk from sunset and forecast cloud cover. Its
   default start is 45 minutes before estimated dusk. After three logged evenings with at
   least one timed episode, it uses median onset relative to dusk minus 20 minutes, bounded
   to 15–90 minutes before dusk. These are documented prototype rules, not predictions.
   Routine reminders work across caregiver screens while the app is open; browser and
   device availability still control delivery.
-- **Share a quiet routine.** A full-screen sky, calculated moon phase, warm colors and one
-  conversation starter at a time. The caregiver reads aloud. Stop music, Quiet view and
+- **Share a quiet routine.** A large, calm shared view centers the selected story, photo, music or quiet company. The caregiver reads aloud. Stop music, Quiet view and
   Finish remain easy to reach. The artwork is decorative; the app does not sense room light.
 - **Play real music.** Eleven included recordings have native playback controls and visible
   source and license credits. The shared library is not matched to birth year. A caregiver
@@ -50,11 +59,15 @@ independently, so a failed extra download cannot block the core app. Each track 
 actual offline availability; missing tracks offer the saved piano fallback. Complete
 cached recordings support seeking. Browser storage eviction can remove downloads.
 
-At source `ec2fcce`, **410 automated tests across 31 files passed** in
-[CI run 36233256716](https://github.com/kanishksatish/moonrise/actions/runs/36233256716).
-Developer browser checks covered responsive layouts, keyboard navigation, reduced motion,
-print, playback and offline use—including missing extra music and playback after physically
-stopping the local server. These are software checks, not representative caregiver
+The redesigned app has **498 automated checks across 37 files**. Local verification passed
+495 checks in the full run; three old button-label expectations were then updated, and
+all 28 checks in those two files passed. The production build passed. Exact-commit CI is
+recorded in the current handoff once complete.
+Developer browser checks of the redesign covered phone/desktop layouts, local photo
+persistence, explicit choices, source inspection, caregiver review and demo separation.
+Earlier checks covered native/offline playback, missing extra music, keyboard navigation
+and reduced motion. The expanded report print layout still needs a fresh rehearsal.
+These are software checks, not representative caregiver
 usability testing or clinical validation.
 
 ## Challenges we ran into
@@ -110,7 +123,8 @@ Anthropic, OpenAI Responses API, Claude Code, Codex, Higgsfield.
   No patient testing, clinical validation or hospice validation has been done. The handoff
   reminds caregivers to discuss sudden changes with a clinician. Representative caregiver
   usability testing is still a separate next step.
-- **Data and providers.** Profiles, logs and approved starters live in browser storage;
+- **Data and providers.** Profiles, plans, session records, logs and approved starters live in browser storage;
+  resized photos stay in local IndexedDB and are excluded from generation;
   no Moonrise account is needed. Open-Meteo receives coordinates or city-search text.
   Generate sends birth year and optional hometown, spouse and job answers to the selected
   provider. Those answers may identify someone; profile name, coordinates and logs are

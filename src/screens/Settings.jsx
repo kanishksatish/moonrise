@@ -4,13 +4,16 @@ import { prettyDate } from '../components/format.js'
 import AiPrompts from '../components/AiPrompts.jsx'
 import DeviceReadiness from '../components/DeviceReadiness.jsx'
 import '../styles/settings-experience.css'
+import { clearComfortPhotos } from '../engine/comfortPhoto.js'
 
 export default function Settings({ state, update, saveError = false, onEditProfile }) {
   const { profile, logs } = state
   const [message, setMessage] = useState('')
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetError, setResetError] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const demoCount = logs.filter((l) => l.demo).length
+  const demoSessionCount = (state.sessions || []).filter(session => session.isDemo).length
   const realCount = logs.length - demoCount
 
   function loadDemo() {
@@ -20,7 +23,8 @@ export default function Settings({ state, update, saveError = false, onEditProfi
     const week = generateDemoWeek({ birthYear: profile.birthYear, lat: profile.lat, lon: profile.lon, endDate: yesterday })
     const realDates = new Set(logs.filter((l) => !l.demo).map((l) => l.date))
     // Never overwrite a real evening with demo data.
-    update(addDemoLogs(clearDemoLogs(state), week.filter((l) => !realDates.has(l.date))))
+    const withoutExampleLogs = { ...clearDemoLogs(state), ...(Array.isArray(state.sessions) ? { sessions: state.sessions } : {}) }
+    update(addDemoLogs(withoutExampleLogs, week.filter((l) => !realDates.has(l.date))))
     setMessage(`Loaded demo week: ${prettyDate(week[0].date)} to ${prettyDate(week.at(-1).date)}.`)
   }
 
@@ -29,14 +33,24 @@ export default function Settings({ state, update, saveError = false, onEditProfi
     setMessage('Demo data removed.')
   }
 
-  function resetAll() {
+  async function resetAll() {
+    if (deleting) return
+    setDeleting(true)
+    try {
+      if (typeof indexedDB !== 'undefined') await clearComfortPhotos()
+    } catch {
+      setResetError('Saved photos could not be removed. Your profile and records remain here. Retry, or clear Moonrise site data in your browser settings.')
+      setDeleting(false)
+      return
+    }
     if (!clearAiKey()) {
       setResetError('Could not remove the browser-saved API key. Clear Moonrise site data in your browser settings. A local server key must be disconnected separately.')
-      return
+      setDeleting(false); return
     }
     if (update(emptyState()) === false) {
       setResetError('Your profile and logs could not be deleted from this browser. They remain available here. Retry, or clear Moonrise site data in your browser settings. Disconnect any local server key separately.')
     }
+    setDeleting(false)
   }
 
   return (
@@ -70,7 +84,7 @@ export default function Settings({ state, update, saveError = false, onEditProfi
 
       <section className="settings-data-section" aria-labelledby="device-data-heading">
         <div><p className="eyebrow">Your information</p><h2 id="device-data-heading">{saveError ? 'Changes need saving.' : 'Saved in this browser.'}</h2></div>
-        <div><p>Your profile, evening logs and selected starters stay in this browser. Anyone with access to this browser profile can view them. Moonrise has no account lock or automatic care-team sharing.</p>
+        <div><p>Your profile, photos, session records, evening logs and selected starters stay in this browser. Anyone with access to this browser profile can view them. Moonrise has no account lock or automatic care-team sharing.</p>
           <p className="muted">Optional generated suggestions send the details listed above to the connected provider. A hospice pilot needs the organization’s approval of its devices, data handling and clinical workflow.</p>
         </div>
       </section>
@@ -84,9 +98,9 @@ export default function Settings({ state, update, saveError = false, onEditProfi
         <button className="btn primary" onClick={loadDemo}>
           Load demo week
         </button>
-        {demoCount > 0 && (
+        {(demoCount > 0 || demoSessionCount > 0) && (
           <button className="btn" onClick={clearDemo}>
-            Remove demo data ({demoCount} evenings)
+            Remove demo data ({demoCount} evenings{demoSessionCount ? `, ${demoSessionCount} sessions` : ''})
           </button>
         )}
         {message && (
@@ -103,11 +117,11 @@ export default function Settings({ state, update, saveError = false, onEditProfi
         </p>
         {confirmReset ? (
           <>
-            <p>This deletes your profile, logs, approved prompts and browser-saved API key. A key connected through the local server must be disconnected on its connection page separately. Are you sure?</p>
-            <button className="btn danger" onClick={resetAll}>
-              Yes, delete everything
+            <p>This deletes your profile, photos, sessions, logs, approved prompts and browser-saved API key. A key connected through the local server must be disconnected on its connection page separately. Are you sure?</p>
+            <button className="btn danger" disabled={deleting} onClick={resetAll}>
+              {deleting ? 'Deleting…' : 'Yes, delete everything'}
             </button>
-            <button className="btn" onClick={() => setConfirmReset(false)}>
+            <button className="btn" disabled={deleting} onClick={() => setConfirmReset(false)}>
               Keep my data
             </button>
           </>
