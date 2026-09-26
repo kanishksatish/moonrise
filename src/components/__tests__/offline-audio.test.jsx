@@ -128,6 +128,20 @@ it('requests a background retry online and never treats native playback as a cac
   expect(screen.queryByRole('button', { name: 'Download for offline use' })).toBeNull()
 })
 
+it('preserves the load error when the browser pauses failed media and offers the saved piano', () => {
+  response = packet([recordings[0]])
+  const onPlayed = vi.fn()
+  render(<MusicPlayer recordings={recordings} onPlayed={onPlayed} />)
+  fireEvent.change(screen.getByRole('combobox', { name: 'Choose an included recording' }), { target: { value: recordings[1].id } })
+  const audio = document.querySelector('audio')
+  fireEvent.error(audio)
+  fireEvent.pause(audio)
+  expect(screen.getByText('This audio couldn’t load. Try again when connected.')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Choose Für Elise' })).toBeTruthy()
+  expect(screen.queryByText('Paused')).toBeNull()
+  expect(onPlayed).not.toHaveBeenCalled()
+})
+
 it('updates failed-download status and keeps unknown availability honest when disconnected', () => {
   response = packet([recordings[0]], true)
   render(<MusicPlayer recordings={recordings} />)

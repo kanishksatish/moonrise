@@ -161,7 +161,7 @@ function NativeAudio({ src, label, onPlaying, onError, errorMessage = 'This audi
         ref={audio} src={src} controls preload="none" crossOrigin="anonymous"
         aria-label={label}
         onPlaying={() => { setStatus('Playing here'); onPlaying?.() }}
-        onPause={() => setStatus('Paused')}
+        onPause={() => setStatus(current => current === errorMessage ? current : 'Paused')}
         onEnded={() => setStatus('The piece has ended.')}
         onError={() => { setStatus(errorMessage); onError?.() }}
       />
