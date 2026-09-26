@@ -68,8 +68,9 @@ Everything stays on the device, in the browser's local storage. There is no serv
 no login. The network calls are the weather and city lookups (Open-Meteo, which receives
 coordinates or a city name), the song search links the caregiver chooses to open, and,
 only if the caregiver sets up AI prompts and taps Generate, one request to the Anthropic
-API with the birth year and the three optional anchors (never the person's name, location
-or logs). The API key is stored only on that device, separately from the app data.
+API with the birth year and the three optional memory answers as typed (hometown, spouse's
+first name, job). The profile name, saved location and evening logs are never sent; an
+answer can itself include a name or place, which is the caregiver's choice. The API key is stored only on that device, separately from the app data.
 Because the browser calls the API directly, this is a prototype setup; a public release
 would route the request through a small server that holds the key.
 

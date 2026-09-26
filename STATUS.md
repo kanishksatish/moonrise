@@ -171,3 +171,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 
 ## 2026-09-26 03:32 UTC — Claude — AI prompts switched to Haiku 4.5
 - Kanishk chose Claude Haiku 4.5 (`claude-haiku-4-5`) over Opus 5 for cost/speed (~0.3¢ vs ~1-2¢ per Generate). Now `client.messages.parse` with `zodOutputFormat`; no effort, thinking, fallbacks or betas (Haiku 4.5 rejects effort; tests pin their absence). Interface unchanged. 163 tests; live fake-key call still maps to bad_key.
+
+## 2026-09-26 03:41 UTC — Claude — AI prompts: Codex review fixes
+- max_tokens bounded to 2048 (`AI_MAX_TOKENS`).
+- SDK chunk load failure (e.g. first use while offline) now rejects with `AiPromptError` code `offline`; error mapping no longer re-imports the SDK (uses the already-loaded classes / HTTP status), so nothing escapes the documented contract. Timeouts map to `offline`.
+- Privacy wording corrected everywhere: we send birth year/era and the three anchor answers as typed; never the profile name, saved location or logs (an answer can itself contain a name or place).
+- 164 tests; live fake-key call still maps to bad_key.
