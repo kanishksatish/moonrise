@@ -18,7 +18,7 @@
   .btn:active { transform: translateY(1px); }
   .btn.primary, .btn.play { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
   .btn.primary:hover, .btn.play:hover { background: #ffe7b9; box-shadow: 0 6px 35px #c39b4520; }
-  .btn:focus-visible, .nav-btn:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+  .btn:focus-visible, .nav-btn:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
   .sky-card { position: relative; isolation: isolate; border-radius: 28px 28px 0 0; border: 1px solid #7f96b23b; border-bottom: 0; padding: 32px 36px 28px; overflow: hidden; }
   .sky-card::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(#07111a55, #07111a55), url('../assets/night-lake.webp') center / cover; }
   .sky-row { align-items: center; min-height: 250px; gap: 30px; }

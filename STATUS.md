@@ -165,3 +165,4 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - loadState now cleans stored data instead of passing it through: logs without a valid 'YYYY-MM-DD' date or known outcome are dropped; optional fields are repaired (bad episodeStart/effectiveDusk -> null, non-numeric cloudCover -> null, songIds filtered to strings, episodeStart cleared on non-episode evenings); one log per date (later wins), sorted; extra fields (demo) kept.
 - A profile without an integer birthYear and finite lat/lon loads as null (back to Setup) instead of producing NaN times. Non-object JSON loads as empty state.
 - Same signature. 143 tests pass (UI tests included).
+- Added matching SVG/192px/512px home-screen icons, an Apple PNG touch icon, and aligned browser theme colors. Both raster icons are shell-referenced. Keyboard Tab -> sky disclosure -> Enter works; focus ring is explicit. Live iOS installation is still untested.
