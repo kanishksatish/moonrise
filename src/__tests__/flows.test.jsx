@@ -33,6 +33,7 @@ describe('App midnight integration', () => {
     localStorage.setItem('moonrise:v1', JSON.stringify(initial))
     await act(async () => render(<App />))
     expect(effectiveDusk.mock.calls[0][0].getDate()).toBe(26)
+    expect(screen.getByText('Saturday, September 26')).toBeTruthy()
     click('Log'); click('Episode')
     fireEvent.change(screen.getByLabelText('Episode started at'), { target: { value: '23:30' } })
     click('Save time')
@@ -120,7 +121,7 @@ it('recovers a damaged stored session through a complete song-and-log flow', asy
     tonight: { date: '2026-09-26', songIds: null },
   }))
   await act(async () => render(<App />))
-  click('Start Moonrise now')
+  click('Start Moonrise now'); click('Skip launch')
   const link = screen.getByRole('link', { name: /Spotify/ })
   link.addEventListener('click', event => event.preventDefault())
   fireEvent.click(link)
@@ -128,4 +129,44 @@ it('recovers a damaged stored session through a complete song-and-log flow', asy
   expect(saved().logs).toHaveLength(1)
   expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', outcome: 'calm' })
   expect(saved().logs[0].songIds).toHaveLength(1)
+})
+
+
+it('launches only on request and automatically enters a usable routine', async () => {
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  document.documentElement.scrollTop = 500
+  click('Start Moonrise now')
+  expect(document.documentElement.scrollTop).toBe(0)
+  expect(screen.getByRole('dialog')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Next prompt' })).toBeNull()
+  await act(async () => vi.advanceTimersByTime(2400))
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(screen.getByRole('button', { name: 'Quiet view' })).toBe(document.activeElement)
+  click('Finish')
+  expect(screen.getByRole('button', { name: 'Calm' })).toBeTruthy()
+})
+
+it('lets the caregiver change the prompt and hide conversation without losing the session', () => {
+  const onExit = vi.fn()
+  render(<Moonrise state={{ ...initial, approvedPrompts: ['An approved memory question.'] }} onPlayed={() => {}} onExit={onExit} />)
+  click('Next prompt')
+  expect(screen.getByText('An approved memory question.')).toBeTruthy()
+  const song = document.querySelector('.song-title').textContent
+  click('Quiet view')
+  expect(screen.queryByText('An approved memory question.')).toBeNull()
+  expect(screen.queryByRole('link', { name: /Spotify/ })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Show conversation' }).getAttribute('aria-pressed')).toBe('true')
+  click('Show conversation')
+  expect(screen.getByText('An approved memory question.')).toBeTruthy()
+  expect(document.querySelector('.song-title').textContent).toBe(song)
+  click('Finish')
+  expect(onExit).toHaveBeenCalledOnce()
+})
+
+it('does not promise era music when the collection has no matching songs', async () => {
+  localStorage.setItem('moonrise:v1', JSON.stringify({ ...initial, profile: { ...profile, birthYear: 1900 } }))
+  await act(async () => render(<App />))
+  expect(screen.getByText(/Their era is not in our song collection yet/)).toBeTruthy()
 })

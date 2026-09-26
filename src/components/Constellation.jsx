@@ -11,7 +11,8 @@ export default function Constellation({ logs, now }) {
   const count = nights.filter(night => night.log).length
   return (
     <section className="constellation" aria-label="Your seven evening constellation">
-      <div className="section-heading"><h2>Your little constellation</h2><span>{count} of 7 logged</span></div>
+      <p className="eyebrow">The little things add up</p>
+      <div className="section-heading"><h2>Your little<br/><em>constellation.</em></h2><span className="constellation-count"><span aria-hidden="true">{count} / 7</span><span className="sr-only">{count} of 7 logged</span></span></div>
       <p>One star for each evening you record. Every kind of evening counts.</p>
       {nights.some(night => night.log?.demo) && <p className="constellation-demo">Includes demo evenings.</p>}
       <svg viewBox="0 0 600 74" aria-hidden="true">

@@ -1,134 +1,67 @@
-# Moonrise demo runbook (3 minutes)
+# Moonrise · v2 demo runbook
 
-Times and lunar phase come from the real sky, forecast and stored logs. The lake and lunar
-texture are decorative AI artwork; the visible rise is an illustration, not the moon's
-astronomical path. The optional sample week is always labelled demo data.
-This runbook shows what to tap and what to say, and what to do when the real world doesn't cooperate.
+A three-minute walkthrough of the working caregiver prototype. Use fictional details throughout. The illustrated rocket, lake and lunar texture create atmosphere; times and lunar phase use real inputs. Sample logs are explicitly labeled demo data and demonstrate software behavior, not clinical evidence.
 
-## The night before
+## Before presenting
 
-- [ ] **Record a real evening run** (screen recording, about 60 s): Today screen with the
-      countdown near zero and the heads-up alert, then Moonrise mode at actual dusk with the
-      sky gradient darkening and the moon rising. A morning demo can't show dusk live
-      (see "Why it looks like daytime" below). This clip is the honest backup.
-- [ ] Deploy or run the build you'll demo, open it **online once** on the demo tablet
-      (and again after any redeploy, so the offline copy is current).
-- [ ] Settings → **Delete all data** so Setup starts fresh.
-- [ ] Tablet: charged, auto-lock off, brightness high, Do Not Disturb on, browser notifications
-      for Moonrise allowed (tap "Turn on alerts" once on Today).
-- [ ] Have a backup city ready to type in case location permission is slow (e.g. the
-      venue's city).
+- Open the exact build online on the presentation device. Reopen after any update so its cached version is current; confirm which build you are showing.
+- Prepare a fictional profile such as Rose, born in 1942, with invented anchors. For the fastest demo, begin in **Settings → Edit details** rather than deleting the prepared profile.
+- If showing live AI, save a dedicated Anthropic key privately, complete a successful real-key request beforehand, and remove it after using a shared device. Do not put a key in slides, recordings or GitHub. A mock response or invalid-key error is not a successful live test.
+- Prepare the optional demo week and a recorded backup of the actual build. Label any recording and any saved AI response as such. Keep a screenshot of the printable report only after checking its pagination on the presentation device.
+- A morning presentation will not reproduce dusk live. If useful, record a real evening session ahead of time; do not accelerate the clock and call the result live astronomy.
 
-## Script
+## The three-minute story
 
-### 1. The problem in one sentence, one stat (≈20 s)
+**0:00–0:20 · The person behind the routine**
 
-> "In 2025, 12.7 million unpaid US caregivers gave 19.6 billion hours of care to
-> people with dementia, and for many of them evening is the hardest part of the day.
-> It's called sundowning."
+“An evening can mean music, a familiar story, and a little more support for the person caring for someone. Moonrise brings those steps into one simple routine.”
 
-Source: Alzheimer's Association, *2026 Alzheimer's Disease Facts and Figures* (hours and
-caregivers are 2025 data). Verified in the primary report, printed page 52; see Sources.
+Optional sourced context: in 2025, 12.7 million unpaid US caregivers provided 19.6 billion hours of care to people with Alzheimer’s or other dementias. These figures do not measure Moonrise’s benefit. The original handoff verified them in the [2026 Alzheimer’s Association Facts and Figures report](https://www.alz.org/getmedia/ef8f48f9-ad36-48ea-87f9-b74034635c1e/alzheimers-facts-and-figures.pdf), printed page 52, DOI 10.1002/alz.71345.
 
-### 2. Setup for a person born in 1942 (≈30 s)
+**0:20–0:45 · Personal setup**
 
-1. Name: a fictional first name (e.g. "Rose"). **Never a real patient's name or details.**
-2. Birth year: **1942**. The "Their songs: 1952 to 1972" card appears with era songs.
-   *Say:* "We start with music from ages 10 to 30; the caregiver decides what feels familiar."
-3. **Use my location** (or type the backup city → Find).
-4. Anchors (optional): hometown, spouse's name, job. These become memory prompts.
-5. **Start**.
+Show **Their story.**, **Under your sky.**, and **Memory anchors**. Enter or point to 1942: the actual catalog filters to 1952–1972. Say, “That is a starting collection; the caregiver decides what feels familiar.” Use **Find** for a city if geolocation is unavailable. Finish with **Save** for an existing profile, or **Start** for a new one.
 
-### 3. Today: the real sky (≈30 s)
+**0:45–1:10 · The evening dashboard**
 
-Point at the sky card:
-- **Your evening begins at** with the countdown, which defaults to 45 min before estimated dusk.
-- The moon, drawn in tonight's real phase.
-- Tap **Tonight's sky · estimated dusk** to open the details: sunset, cloud %, and how many
-  minutes Moonrise's prototype rule moves the estimate earlier (`cloud % / 100 × 30 min`).
+Show **Your suggested start**, the calculated moon phase, and **Behind tonight’s timing**. Say, “This is a prototype timing rule using sunset, cloud cover and the evenings we log.” The default is 45 minutes before estimated dusk; cloud cover can move that dusk estimate up to 30 minutes earlier. If weather is unavailable, name the visible fallback. The artwork is not a live view of the location.
 
-*If today is clear:* "Clear sky today, so the estimate is right at sunset. On a fully overcast
-evening, our rule moves it up to 30 minutes earlier." (Then show the cloudy-vs-clear split
-in the report, step 5.)
-*If the weather service is down:* the card says so and uses the plain sunset. Say that; it
-is the designed fallback.
+**1:10–1:40 · AI the caregiver chooses**
 
-*The alert:* it fires 10 minutes before the start time, so it won't happen live in a morning
-demo. Show the recorded clip, or point at "Turn on alerts".
+Tap **Make it personal** to open Settings. With the prepared fictional profile and key, tap **Generate prompts**. Read a draft, **Approve** one and **Skip** another. Say, “Claude drafts conversation starters. The caregiver chooses what belongs in the routine.” This is the runtime AI; timing and song ordering use rules. If generation fails, show the error honestly and continue with built-in or previously approved prompts. Do not call saved text a new live generation.
 
-### 4. Moonrise mode (≈40 s)
+**1:40–2:15 · A little space for calm**
 
-Tap **Start Moonrise now**. The routine fills the browser; native **Full screen** is optional:
-- The surrounding gradient follows the real sun position; the lake remains a decorative
-  night scene. *Say:* "The background and warm glow follow sunset. This illustrated moon
-  rises slowly through the routine." Reduced-motion settings keep it still. Use the
-  recorded evening clip to show the change over time.
-- Big song title with Spotify / YouTube links (Moonrise doesn't host audio). **Open one of the
-  links**: only songs whose link was opened are recorded for tonight's log, and so only those
-  count toward "Songs from your evenings".
-- A memory prompt in large text for the caregiver to read aloud, e.g. "Where were you when
-  they landed on the moon in 1969?" (only for people born before about 1962).
-- The person with dementia never has to read or press anything.
+Return to Today and tap **Start Moonrise now**. The silent rocket flight lasts 2.4 seconds and can be bypassed with **Skip launch**, Escape, or reduced-motion settings. It occurs only after an explicit start.
 
-Tap **Finish** → Log.
+In the routine, show the music title and **Next prompt**. A newly approved AI prompt follows the initial song prompt, so one tap can reveal it when a song is present. Only approved AI text enters this view; its label identifies it. Open **Spotify** or **YouTube** if demonstrating music: the app opens a search and records the link opening, not confirmed listening. **Next song** alone does not log a play.
 
-### 5. The pattern: demo week and the report (≈40 s)
+Tap **Quiet view**, then **Show conversation**. Say, “The caregiver can put the controls aside for a moment.” Quiet view hides the cards; it does not pause audio in another app. **Full screen** is optional on supported desktop layouts. Tap **Finish** to reach Log.
 
-1. On Log, tap **Episode** (one tap), then optionally set a time (a time in the future is
-   refused). Or skip logging and go on.
-2. Settings → **Load demo week**. It's clearly labelled demo data, generated from a seeded
-   random function. It never overwrites a real logged evening, and "Remove demo data"
-   clears it in one tap.
-3. Today: the suggested start time has **moved earlier**, and the card says it was adjusted
-   from logged episodes. The constellation now has a star for each logged evening (demo
-   stars are labelled). *Say:* "It adjusts the suggestion from the evenings you log: the
-   median episode time minus a 20-minute buffer."
-4. Report: the episode count, when episodes started relative to dusk, cloudy vs clear
-   evenings, "Songs from your evenings" (an association, not proof a song caused
-   anything), and the note to mention sudden changes to a doctor. Tap **Print** to show
-   it's one page.
+**2:15–2:45 · Every evening counts**
 
-### Optional AI demonstration (≈30 s; shorten other steps to fit)
+Choose **Calm**, **Restless**, or **Episode**. Episode offers an optional onset time; future times are rejected. After midnight, the evening stays grouped with the prior day until 04:00. Each logged evening adds one constellation star regardless of outcome.
 
-Before presenting, enter a dedicated API key privately in Settings. Never show or paste
-a real key in a recording, repository or GitHub issue. With the fictional profile, tap
-**Generate prompts**, wait for the live reply, then **Approve** one and **Skip** another.
-Show the "Approved for your routine" list. Only approved text enters Moonrise mode; it
-follows the first song prompt at the next three-minute rotation.
+In Settings, **Load demo week** adds seeded, made-up observations without replacing real logged dates. Explicitly say “demo data.” Show the resulting suggestion rather than promising it always moves a particular direction. The demo generator deliberately includes patterns to exercise the app; these are not findings from patients.
 
-Say: "Claude drafts these conversation starters; the caregiver reviews each one before
-using it. The dusk estimate and song ranking are simple rules." If the request fails, show
-the error honestly and continue with built-in prompts. Previously approved text is saved,
-but must not be presented as a new live generation. A successful real-key request is a
-required pre-demo check; mocked tests and an invalid-key response do not establish it.
+**2:45–3:00 · A record worth sharing**
 
-### 6. Close (≈10 s)
+Open Report: **A week of evenings.** Show the daily marks, timing and weather context, **Songs from your evenings**, and **Print report**. Missing weather and unlogged dates remain visible. The report describes observations; it does not prove that music or the app caused a change. Close: “A familiar song. A moment together. A small note for tomorrow.”
 
-> "Every evening, we fly them back to the moon."
+## Honest fallback and wording
 
-## Why it looks like daytime
+If live weather, AI or external music is unavailable, explain the visible limitation and continue with the supported offline or built-in flow. After an online visit, the app is designed to retain its shell, artwork, saved profile, logs and approved prompts. Fresh AI generation and external music still require connectivity. Alerts require the app to remain open; do not promise background notifications.
 
-The surrounding gradient in Moonrise mode uses the real sun position. Today's time and
-lunar phase also use real inputs. The lake artwork stays moonlit and is not a live image
-of the user's location. Use a recording of a real evening to demonstrate the dusk change.
+Use “caregiver support,” “suggested routine,” “prototype rule,” and “recorded evenings.” Avoid “treats,” “prevents,” “reduces agitation,” “predicts sundowning,” “learned the best treatment,” “clinically proven,” or “hospice-ready.” A good-looking demo and public-data evaluation do not establish clinical effectiveness.
 
-## Say / don't say
+Profiles and logs are stored in this browser. Weather requests use location; chosen music links open their providers. Optional AI sends birth year and hometown/spouse/job answers to Anthropic after Generate; those free-text answers can identify a person. A future hospice partner must review clinical oversight, ethics, consent, privacy, security and usability before a patient-facing pilot.
 
-- ✅ "Helps caregivers plan ahead for evening agitation." "Caregiver support." "Estimated
-  dusk", "suggested start time", "songs from your evenings".
-- ❌ "Knows when it gets dark", "learns which songs help", or calling the dusk estimate or
-  song ranking "AI" (they're rules). The AI part is the optional caregiver-reviewed memory
-  prompts written by Claude.
-- ❌ "Treats", "prevents", "reduces sundowning", or any clinical outcome claim. Moonrise
-  makes no medical claims.
-- ✅ "Profiles and logs are stored on this device. Weather lookups send a location;
-  chosen music links open their provider. Optional AI generation sends birth year and
-  memory answers to Anthropic after the caregiver taps Generate."
+## Public-data evidence, accurately stated
 
-## Sources
+“We audited an existing public TIHM clinical-research label file containing 135 agitation records from 27 participants. These are historical observations from another study, not people who tested Moonrise. No model was trained or evaluated. The source’s six-hour agitation labels cannot validate our minute-level routine timing.” [Official TIHM dataset](https://zenodo.org/records/7622128), [original label definition](https://www.nature.com/articles/s41597-023-02519-y/tables/5).
 
-The opening numbers were verified directly on September 25, 2026 in the Alzheimer's
-Association's [2026 Facts and Figures report](https://www.alz.org/getmedia/ef8f48f9-ad36-48ea-87f9-b74034635c1e/alzheimers-facts-and-figures.pdf),
-printed page 52 (PDF page 54), "Hours of Unpaid Care and Economic Value of Caregiving".
-They describe 2025, not a forecast. DOI: 10.1002/alz.71345. Avoid adding a sundowning
-prevalence percentage to the stage pitch: estimates depend heavily on definitions and setting.
+Do not describe this as “trained on real patients,” “clinically validated” or “tested in hospice.” The source record includes restrictions on commercial use; a future derived product needs permissions clarified. Acknowledge the TIHM creators and Surrey and Borders Partnership NHS Foundation Trust. No patient-level data is bundled in the app.
+
+## Final validation
+
+See [STATUS.md](STATUS.md) for recorded project checks. Before presenting, verify the exact demo build, live-key AI request, browser/device behavior, offline operation and print pagination. This runbook does not certify those checks.

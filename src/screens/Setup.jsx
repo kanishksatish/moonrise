@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { eraSongs, eraYears, findCity } from '../engine/index.js'
 import Brand from '../components/Brand.jsx'
 import MoonIcon from '../components/MoonIcon.jsx'
+import '../styles/onboarding.css'
 
 const THIS_YEAR = new Date().getFullYear()
 
@@ -80,99 +81,101 @@ export default function Setup({ profile, onDone, onCancel }) {
   const setAnchor = (key) => (e) => setAnchors({ ...anchors, [key]: e.target.value })
 
   return (
-    <div className="app">
-      <form className="screen setup" onSubmit={save}>
-        <Brand />
-        <header className="setup-intro">
-          <div><p className="eyebrow">A little light. A familiar song.</p><h1>Make room for<br/><em>a gentler evening.</em></h1><p className="lead">A personal evening routine, timed to the real sky. Let’s start with the person you care for.</p></div>
-          <div className="setup-moon" aria-hidden="true"><MoonIcon phase={0.43} decorative/></div>
+    <div className="app onboarding-app">
+      <form className="screen setup onboarding-page" onSubmit={save}>
+        <div className="onboarding-brand"><Brand /><span className="onboarding-note">A little light. A familiar song.</span></div>
+        <header className="onboarding-intro">
+          <p className="eyebrow">The evening starts here</p>
+          <h1>Make room for<br/><em>a gentler evening.</em></h1>
+          <p className="lead">A personal evening routine, timed to the real sky. Let’s start with the person you care for.</p>
+          <div className="onboarding-sky" aria-hidden="true">
+            <div className="onboarding-orbit onboarding-orbit-outer" />
+            <div className="onboarding-orbit onboarding-orbit-inner" />
+            <span className="onboarding-star onboarding-star-one" />
+            <span className="onboarding-star onboarding-star-two" />
+            <span className="onboarding-star onboarding-star-three" />
+            <MoonIcon phase={0.43} decorative />
+            <div className="onboarding-horizon" />
+          </div>
+          <p className="onboarding-footer">Real sky. Familiar music.<br/>A moment together.</p>
         </header>
 
-        <label className="field">
-          <span>Their first name</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
-        </label>
-
-        <label className="field">
-          <span>Year they were born</span>
-          <input
-            value={birthYear}
-            onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            inputMode="numeric"
-            placeholder="e.g. 1942"
-          />
-        </label>
-
-        {era && (
-          <div className="card era">
-            <p className="era-title">
-              Their songs: {era.from} to {era.to} · {songs.length} found
-            </p>
-            <ul className="era-list">
-              {songs.slice(0, 5).map((s) => (
-                <li key={s.id}>
-                  {s.title} <span className="muted">· {s.artist}, {s.year}</span>
-                </li>
-              ))}
-              {songs.length > 5 && <li className="muted">and {songs.length - 5} more</li>}
-            </ul>
-          </div>
-        )}
-
-        <div className="field">
-          <span>Where you are (for tonight’s sky)</span>
-          {place ? (
-            <div className="place-row">
-              <strong>{place.city}</strong>
-              <button type="button" className="btn small" onClick={() => setPlace(null)}>
-                Change
-              </button>
-            </div>
-          ) : (
-            <>
-              <button type="button" className="btn primary" onClick={useMyLocation} disabled={locating}>
-                Use my location
-              </button>
-              <div className="city-row">
+        <div className="onboarding-form">
+          <section className="onboarding-section" aria-labelledby="setup-person-title">
+            <div className="onboarding-section-heading"><span aria-hidden="true">01</span><h2 id="setup-person-title">Their story.</h2></div>
+            <div className="onboarding-person-fields">
+              <label className="field">
+                <span>Their first name</span>
+                <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" />
+              </label>
+              <label className="field">
+                <span>Year they were born</span>
                 <input
-                  value={cityText}
-                  aria-label="City"
-                  disabled={locating}
-                  onChange={(e) => { setCityText(e.target.value); setLocStatus('') }}
-                  placeholder="or type a city"
-                  onKeyDown={(e) => e.key === 'Enter' && lookUpCity(e)}
+                  value={birthYear}
+                  onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  inputMode="numeric"
+                  placeholder="e.g. 1942"
                 />
-                <button type="button" className="btn" onClick={lookUpCity} disabled={locating || !cityText.trim()}>
-                  Find
-                </button>
+              </label>
+            </div>
+            {era && (
+              <div className="onboarding-era">
+                <p className="era-title">Their songs: {era.from} to {era.to} · {songs.length} found</p>
+                <ul className="era-list">
+                  {songs.slice(0, 5).map((s) => (
+                    <li key={s.id}>{s.title} <span className="muted">· {s.artist}, {s.year}</span></li>
+                  ))}
+                  {songs.length > 5 && <li className="muted">and {songs.length - 5} more</li>}
+                </ul>
               </div>
-            </>
-          )}
-          {locStatus && <p className="status" role="status">{locStatus}</p>}
+            )}
+          </section>
+
+          <section className="onboarding-section" aria-labelledby="setup-location-title">
+            <div className="onboarding-section-heading"><span aria-hidden="true">02</span><h2 id="setup-location-title">Under your sky.</h2></div>
+            <div className="field">
+              <span>Where you are (for tonight’s sky)</span>
+              {place ? (
+                <div className="place-row onboarding-place">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                  <strong>{place.city}</strong>
+                  <button type="button" className="btn small" onClick={() => setPlace(null)}>Change</button>
+                </div>
+              ) : (
+                <>
+                  <button type="button" className="btn location-button" onClick={useMyLocation} disabled={locating}>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
+                    Use my location
+                  </button>
+                  <div className="city-row">
+                    <input
+                      value={cityText}
+                      aria-label="City"
+                      disabled={locating}
+                      onChange={(e) => { setCityText(e.target.value); setLocStatus('') }}
+                      placeholder="or type a city"
+                      onKeyDown={(e) => e.key === 'Enter' && lookUpCity(e)}
+                    />
+                    <button type="button" className="btn" onClick={lookUpCity} disabled={locating || !cityText.trim()}>Find</button>
+                  </div>
+                </>
+              )}
+              {locStatus && <p className="status" role="status">{locStatus}</p>}
+            </div>
+          </section>
+
+          <section className="onboarding-section" aria-labelledby="setup-anchors-title">
+            <div className="onboarding-section-heading"><span aria-hidden="true">03</span><h2 id="setup-anchors-title">Memory anchors <span className="muted">(optional)</span></h2></div>
+            <p className="onboarding-section-note">Familiar places and people to begin a conversation.</p>
+            <label className="field"><span>Hometown</span><input value={anchors.hometown} onChange={setAnchor('hometown')} placeholder="e.g. Dayton" /></label>
+            <label className="field"><span>Husband or wife’s name</span><input value={anchors.spouse} onChange={setAnchor('spouse')} placeholder="e.g. Frank" /></label>
+            <label className="field"><span>Their job</span><input value={anchors.job} onChange={setAnchor('job')} placeholder="e.g. school teacher" /></label>
+          </section>
+          <div className="onboarding-actions">
+            <button type="submit" className="btn primary big" disabled={!canSave}><span>{profile ? 'Save' : 'Start'}</span><span aria-hidden="true">↗</span></button>
+            {onCancel && <button type="button" className="btn" onClick={onCancel}>Cancel</button>}
+          </div>
         </div>
-
-        <h2>Memory anchors <span className="muted">(optional)</span></h2>
-        <label className="field">
-          <span>Hometown</span>
-          <input value={anchors.hometown} onChange={setAnchor('hometown')} placeholder="e.g. Dayton" />
-        </label>
-        <label className="field">
-          <span>Husband or wife’s name</span>
-          <input value={anchors.spouse} onChange={setAnchor('spouse')} placeholder="e.g. Frank" />
-        </label>
-        <label className="field">
-          <span>Their job</span>
-          <input value={anchors.job} onChange={setAnchor('job')} placeholder="e.g. school teacher" />
-        </label>
-
-        <button type="submit" className="btn primary big" disabled={!canSave}>
-          {profile ? 'Save' : 'Start'}
-        </button>
-        {onCancel && (
-          <button type="button" className="btn" onClick={onCancel}>
-            Cancel
-          </button>
-        )}
       </form>
     </div>
   )

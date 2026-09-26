@@ -62,7 +62,7 @@ it('keeps only approved drafts, survives reload, and shows an approved prompt in
   expect(screen.queryByText(second)).toBeNull()
   cleanup()
   await act(async () => render(<App />))
-  click('Start Moonrise now')
+  click('Start Moonrise now'); click('Skip launch')
   // The first prompt is about the song; the reviewed prompt follows after three minutes.
   await act(async () => vi.advanceTimersByTime(3 * 60 * 1000))
   expect(screen.getByText(first)).toBeTruthy()
@@ -88,7 +88,7 @@ it('shows a safe actionable error and leaves the built-in routine usable', async
   await act(async () => click('Generate prompts'))
   expect(screen.getByRole('alert').textContent).toMatch(/not accepted/)
   expect(saved().approvedPrompts).toBeUndefined()
-  click('Today'); click('Start Moonrise now')
+  click('Today'); click('Start Moonrise now'); click('Skip launch')
   expect(screen.getByText('Read aloud')).toBeTruthy()
 })
 
