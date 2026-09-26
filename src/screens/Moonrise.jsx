@@ -63,12 +63,6 @@ export default function Moonrise({ state, onPlayed, onExit }) {
     }
   }, [])
 
-  useEffect(() => {
-    if (song) onPlayed(song.id)
-    // Only when the song changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [song?.id])
-
   return (
     <div
       className="moonrise"
@@ -112,10 +106,10 @@ export default function Moonrise({ state, onPlayed, onExit }) {
               {song.artist}, {song.year}
             </p>
             <div className="song-actions">
-              <a className="btn play" href={spotifySearchUrl(song)} target="_blank" rel="noreferrer">
+              <a className="btn play" href={spotifySearchUrl(song)} onClick={() => onPlayed(song.id)} target="_blank" rel="noreferrer">
                 ▶ Spotify
               </a>
-              <a className="btn play" href={youtubeSearchUrl(song)} target="_blank" rel="noreferrer">
+              <a className="btn play" href={youtubeSearchUrl(song)} onClick={() => onPlayed(song.id)} target="_blank" rel="noreferrer">
                 ▶ YouTube
               </a>
               <button className="btn" onClick={() => setSongIndex((i) => i + 1)}>

@@ -1,0 +1,214 @@
+// Moonrise service worker: makes the app open with no signal after one online visit.
+//
+// WHAT IS CACHED (positive list only):
+//   - The "shell" of the current build: the start page plus every same-origin file its HTML
+//     references (Vite's hashed JS/CSS, the manifest, the icon).
+//   - Files under the build's assets/ folder that are only reached from JS/CSS (e.g. lazy
+//     chunks), and only for script/style/image/font requests.
+// NEVER CACHED: fetch()/XHR requests (API calls, same-origin or not), cross-origin requests,
+// non-GET requests, and anything outside the app's scope. fetch()/XHR requests are not
+// intercepted at all.
+//
+// HOW A BUILD'S SHELL IS SAVED (commit protocol):
+//   1. Fetch the start page. The shell cache is named after a hash of its HTML, so every
+//      Vite build (new hashed file names -> new HTML) gets its own cache.
+//   2. Download the HTML and every referenced file into that cache.
+//   3. Check every file is really there.
+//   4. Only then write the "committed shell" pointer (in moonrise-meta). This is the LAST write.
+//   5. Delete the other shell caches.
+// Pages are only ever served from the committed shell. A half-downloaded build (network drop,
+// failed write, worker stopped mid-way) is never used and is rebuilt from scratch next time.
+// Shell builds run one at a time.
+//
+// UPDATES:
+//   - Start page: network first (4 s timeout); the committed shell's copy when offline.
+//   - A new build replaces the committed shell only after it is complete (steps 1-5).
+//   - Worker logic changes (bump SW_VERSION): the new worker's install must commit a complete
+//     shell first. If it can't (e.g. offline), install fails, the browser keeps the old worker,
+//     and the old committed shell is untouched. Old caches are removed only on activate,
+//     which only happens after a successful install.
+//   - No committed shell (first visit was offline, or site data was cleared): the start page
+//     is a short "connect once" page (HTTP 503) instead of a browser error.
+
+const SW_VERSION = 'v2'
+const SHELL_PREFIX = 'moonrise-shell-' // not versioned: a committed shell survives worker updates
+const META_CACHE = 'moonrise-meta'
+const RUNTIME_CACHE = `moonrise-assets-${SW_VERSION}`
+const NAV_TIMEOUT_MS = 4000
+const STATIC_DESTINATIONS = new Set(['script', 'style', 'image', 'font', 'manifest'])
+
+const SCOPE = self.registration.scope // e.g. https://host/ or https://host/moonrise/
+const START_URL = new URL('./', SCOPE).href
+const SELF_URL = new URL('sw.js', SCOPE).href
+const ASSET_DIR = new URL('assets/', SCOPE).href
+const POINTER_URL = new URL('__moonrise_committed_shell__', SCOPE).href
+
+self.addEventListener('install', (event) => {
+  // Must succeed; otherwise the browser keeps the previous worker and its shell.
+  event.waitUntil(cacheShell().then(() => self.skipWaiting()))
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      const committed = await readPointer()
+      const keep = new Set([META_CACHE, RUNTIME_CACHE, committed?.name])
+      const keys = await caches.keys()
+      await Promise.all(keys.filter((k) => k.startsWith('moonrise-') && !keep.has(k)).map((k) => caches.delete(k)))
+      await self.clients.claim()
+    })()
+  )
+})
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request
+  if (req.method !== 'GET') return
+  if (!req.url.startsWith(SCOPE) || new URL(req.url).origin !== self.location.origin) return
+  if (req.url === SELF_URL || req.url === POINTER_URL) return
+
+  if (req.mode === 'navigate') {
+    event.respondWith(navigate(event))
+    return
+  }
+  // fetch()/XHR (destination '') and anything that isn't a static file: not intercepted.
+  if (!STATIC_DESTINATIONS.has(req.destination)) return
+  event.respondWith(staticFile(req))
+})
+
+async function navigate(event) {
+  try {
+    const res = await withTimeout(fetch(event.request), NAV_TIMEOUT_MS)
+    if (res.ok) event.waitUntil(cacheShell().catch(() => {}))
+    return res
+  } catch {
+    return (await matchShell(START_URL)) ?? offlinePage()
+  }
+}
+
+async function staticFile(req) {
+  const fromShell = await matchShell(req.url)
+  if (fromShell) return fromShell
+  if (!req.url.startsWith(ASSET_DIR)) return fetch(req) // passed through, never cached
+
+  const hit = await caches.match(req.url, { cacheName: RUNTIME_CACHE })
+  if (hit) return hit
+  const res = await fetch(req)
+  if (res.ok && res.type === 'basic') {
+    const cache = await caches.open(RUNTIME_CACHE)
+    await cache.put(req.url, res.clone())
+  }
+  return res
+}
+
+// ---- Committed shell -------------------------------------------------------------------
+
+async function readPointer() {
+  const res = await caches.match(POINTER_URL, { cacheName: META_CACHE })
+  if (!res) return null
+  try {
+    const pointer = await res.json()
+    return typeof pointer?.name === 'string' && Array.isArray(pointer.urls) ? pointer : null
+  } catch {
+    return null
+  }
+}
+
+async function writePointer(pointer) {
+  const meta = await caches.open(META_CACHE)
+  await meta.put(POINTER_URL, new Response(JSON.stringify(pointer), { headers: { 'Content-Type': 'application/json' } }))
+}
+
+async function isComplete(pointer) {
+  if (!pointer || !(await caches.has(pointer.name))) return false
+  for (const url of pointer.urls) {
+    if (!(await caches.match(url, { cacheName: pointer.name }))) return false
+  }
+  return true
+}
+
+// Only ever reads the committed shell, and only URLs that belong to it.
+async function matchShell(url) {
+  const pointer = await readPointer()
+  if (!pointer || !pointer.urls.includes(url)) return undefined
+  return caches.match(url, { cacheName: pointer.name })
+}
+
+// One shell build at a time.
+let shellQueue = Promise.resolve()
+function cacheShell() {
+  const run = shellQueue.then(buildShell)
+  shellQueue = run.catch(() => {})
+  return run
+}
+
+async function buildShell() {
+  const res = await fetch(START_URL, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`start page HTTP ${res.status}`)
+  const html = await res.clone().text()
+  const name = SHELL_PREFIX + (await shortHash(html))
+  const pointer = { name, urls: [START_URL, ...referencedFiles(html)], builtAt: new Date().toISOString() }
+
+  const committed = await readPointer()
+  if (committed?.name === name && (await isComplete(committed))) return
+
+  // Anything already stored under this name is uncommitted (or broken): start clean.
+  await caches.delete(name)
+  try {
+    const cache = await caches.open(name)
+    await cache.addAll(pointer.urls.slice(1))
+    await cache.put(START_URL, res)
+    if (!(await isComplete(pointer))) throw new Error('shell incomplete after download')
+  } catch (err) {
+    await caches.delete(name)
+    throw err
+  }
+
+  await writePointer(pointer) // commit: the last write
+  const keys = await caches.keys()
+  await Promise.all(keys.filter((k) => k.startsWith(SHELL_PREFIX) && k !== name).map((k) => caches.delete(k)))
+}
+
+function referencedFiles(html) {
+  const found = new Set()
+  for (const match of html.matchAll(/\b(?:src|href)="([^"]+)"/g)) {
+    const url = new URL(match[1], START_URL)
+    url.hash = ''
+    if (url.origin !== self.location.origin || !url.href.startsWith(SCOPE)) continue
+    if (url.href === START_URL || url.href === SELF_URL) continue
+    found.add(url.href)
+  }
+  return [...found]
+}
+
+// ---- Helpers ---------------------------------------------------------------------------
+
+async function shortHash(text) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+  return [...new Uint8Array(digest)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+function withTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms)
+    promise.then(
+      (v) => {
+        clearTimeout(timer)
+        resolve(v)
+      },
+      (e) => {
+        clearTimeout(timer)
+        reject(e)
+      }
+    )
+  })
+}
+
+function offlinePage() {
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Moonrise</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1026;color:#f4f1ea;
+font:22px/1.5 system-ui,sans-serif;text-align:center;padding:24px}h1{font-size:32px}</style></head>
+<body><div><h1>Moonrise needs one online visit</h1>
+<p>Connect to the internet and open Moonrise once. After that it works without a connection.</p></div></body></html>`
+  return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } })
+}

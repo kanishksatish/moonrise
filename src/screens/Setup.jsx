@@ -1,17 +1,7 @@
-import { useState } from 'react'
-import { eraSongs, eraYears } from '../engine/index.js'
+import { useRef, useState } from 'react'
+import { eraSongs, eraYears, findCity } from '../engine/index.js'
 
 const THIS_YEAR = new Date().getFullYear()
-
-async function findCity(name) {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error('lookup failed')
-  const place = (await res.json()).results?.[0]
-  if (!place) throw new Error('not found')
-  const label = [place.name, place.admin1, place.country].filter(Boolean).join(', ')
-  return { lat: place.latitude, lon: place.longitude, city: label }
-}
 
 export default function Setup({ profile, onDone, onCancel }) {
   const [name, setName] = useState(profile?.name ?? '')
@@ -21,6 +11,8 @@ export default function Setup({ profile, onDone, onCancel }) {
   )
   const [cityText, setCityText] = useState('')
   const [locStatus, setLocStatus] = useState('')
+  const [locating, setLocating] = useState(false)
+  const lookupId = useRef(0)
   const [anchors, setAnchors] = useState(profile?.anchors ?? { hometown: '', spouse: '', job: '' })
 
   const year = Number(birthYear)
@@ -30,30 +22,39 @@ export default function Setup({ profile, onDone, onCancel }) {
   const canSave = name.trim() && yearValid && place
 
   function useMyLocation() {
+    if (locating) return
     if (!navigator.geolocation) {
       setLocStatus('Location is not available here. Type a city instead.')
       return
     }
     setLocStatus('Finding you…')
+    setLocating(true)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setPlace({ lat: pos.coords.latitude, lon: pos.coords.longitude, city: 'My location' })
         setLocStatus('')
+        setLocating(false)
       },
-      () => setLocStatus('Could not get your location. Type a city instead.'),
+      () => { setLocStatus('Could not get your location. Type a city instead.'); setLocating(false) },
       { timeout: 10000 }
     )
   }
 
   async function lookUpCity(e) {
     e.preventDefault()
-    if (!cityText.trim()) return
+    if (!cityText.trim() || locating) return
+    const id = ++lookupId.current
+    setLocating(true)
     setLocStatus('Looking up…')
     try {
-      setPlace(await findCity(cityText.trim()))
-      setLocStatus('')
+      const result = await findCity(cityText.trim())
+      if (id !== lookupId.current) return
+      setPlace(result)
+      setLocStatus(result ? '' : 'Could not find that city. Check the spelling, or try a bigger town nearby.')
     } catch {
-      setLocStatus('Could not find that city. Check the spelling, or try a bigger town nearby.')
+      if (id === lookupId.current) setLocStatus('Could not check cities right now. Try again or use my location.')
+    } finally {
+      if (id === lookupId.current) setLocating(false)
     }
   }
 
@@ -124,17 +125,19 @@ export default function Setup({ profile, onDone, onCancel }) {
             </div>
           ) : (
             <>
-              <button type="button" className="btn primary" onClick={useMyLocation}>
+              <button type="button" className="btn primary" onClick={useMyLocation} disabled={locating}>
                 Use my location
               </button>
               <div className="city-row">
                 <input
                   value={cityText}
-                  onChange={(e) => setCityText(e.target.value)}
+                  aria-label="City"
+                  disabled={locating}
+                  onChange={(e) => { setCityText(e.target.value); setLocStatus('') }}
                   placeholder="or type a city"
                   onKeyDown={(e) => e.key === 'Enter' && lookUpCity(e)}
                 />
-                <button type="button" className="btn" onClick={lookUpCity}>
+                <button type="button" className="btn" onClick={lookUpCity} disabled={locating || !cityText.trim()}>
                   Find
                 </button>
               </div>

@@ -116,6 +116,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Deferred per Codex: duskForecast (not built into the engine).
 - 106 tests pass.
 
+## 2026-09-26 02:42 UTC — Codex — midnight and Setup integration
+- Integrated main into the UI review branch. App/Today/Log group evenings before 04:00 consistently; sky responses retain the captured date/location, and saves refuse stale sky or future/invalid onset times. Same-evening song IDs survive late logs. Demo weeks end before the current evening.
+- Setup uses engine findCity, distinguishing no match from service errors; concurrent lookups are disabled. Added an accessible city label and explicit outcome button names. Storage failures are surfaced to the caregiver.
+- Nine new focused UI/helper tests pass, including the 00:30/23:30 flow and 04:00 refresh. Full suite/build and browser/demo pass follow PWA integration.
 ## 2026-09-26 02:34 UTC — Claude — README (task L2 of the split in issue #1)
 - Added README.md for judges: what it is, screens, the formulas, demo data, privacy (all on-device), how to run, layout, disclaimer.
 - Task split with Codex is in issue #1 (C1-C5 Codex: after-midnight UI, Setup findCity, offline integration, Higgsfield visuals, full demo run; L1-L5 Claude: DEMO.md, README, Pages deploy prep, song expansion, brief-compliance review).
@@ -134,3 +138,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 02:44 UTC — Claude — CI + more memory prompts
 - `.github/workflows/ci.yml`: npm ci, npm test, npm run build on every push and PR (all branches). Deploys nothing.
 - memoryPrompts: 24 unique prompts for a full profile (was 15), enough for an hour at one per 3 min without repeating. Added: evenings in the hometown, radio in their teenage decade, the 1957 satellite (age-gated like other era events), and six gentle general prompts (night sky where they grew up, a pet, outdoor games, Saturdays, kitchen smells, who taught them to cook). Same function signature. 109 tests pass.
+## 2026-09-26 02:50 UTC — Codex — offline integration and demo pass
+- Integrated reviewed PWA patch 4c3ae9b and engine/data/docs through 245bbd6 into claude-ui. All 132 tests pass (including 15 worker fault-injection tests and 10 UI/helper tests); production build passes. Manifest URLs now work under a sub-path.
+- Browser: live Dallas lookup and nonsense-city no-match both pass. At 768x1024, Setup for 1942 shows 44 songs; Today, Moonrise mode, log, demo-week generation, learned schedule, and report pass. Demo routine moves from 45 to 60 minutes before dusk with an explicit demo badge.
+- Browser midnight fixture (test/fixtures/midnight.html, dev-only): 00:45 rejected at 00:30; 23:30 saves September 26 with the prior dusk and song IDs. Fixed clock/weather are clearly labeled in the fixture and absent from the production build.
+- Actual production server stopped: app reload and new navigation still render using the service worker; state survives. Updated build loads online; final offline-update check follows. No real mobile/iOS test yet.
+- Accessibility/readability: 20px body text and >=48px controls checked, tablet + 390px layouts inspected without horizontal overflow. Added report row/column headers, stronger sky/prompt contrast, and reduced-motion behavior. Printed layout is styled; in-app browser does not expose print preview, so native print validation is pending.
+- Songs now enter the evening log only when a music link is opened, not merely displayed. Report language describes association rather than causation; sky timing is labeled an estimate, and caregiver-support disclaimer appears on Today. No main merge/deployment by Codex.

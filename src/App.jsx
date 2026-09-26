@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { effectiveDusk, loadState, saveState } from './engine/index.js'
-import { todayString } from './components/format.js'
+import { effectiveDusk, eveningDate, loadState, saveState } from './engine/index.js'
+import { currentSky, eveningKey } from './components/eveningLog.js'
+import useNow from './components/useNow.js'
 import NavBar from './components/NavBar.jsx'
 import Setup from './screens/Setup.jsx'
 import Today from './screens/Today.jsx'
@@ -15,29 +16,44 @@ function App() {
   const [state, setState] = useState(loadState)
   const [screen, setScreen] = useState('today')
   const [sky, setSky] = useState(null)
+  const [storageError, setStorageError] = useState(false)
   const profile = state.profile
+  const now = useNow()
+  const evening = eveningKey(now)
+  const visibleSky = profile ? currentSky(sky, profile, now) : null
 
   // Every change to state is saved right away.
   function update(next) {
     setState(next)
-    saveState(next)
+    setStorageError(!saveState(next))
   }
 
   // Tonight's effective dusk, refreshed every 30 minutes (weather changes, and the day rolls over).
   useEffect(() => {
     if (!profile) return
     let cancelled = false
+    let request = 0
     async function refresh() {
-      const result = await effectiveDusk(new Date(), profile.lat, profile.lon)
-      if (!cancelled) setSky({ ...result, date: todayString() })
+      const captured = new Date()
+      const date = eveningKey(captured)
+      const id = ++request
+      const result = await effectiveDusk(eveningDate(captured), profile.lat, profile.lon)
+      if (!cancelled && id === request && date === eveningKey()) {
+        setSky({ ...result, date, lat: profile.lat, lon: profile.lon })
+      }
     }
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
     refresh()
     const id = setInterval(refresh, SKY_REFRESH_MS)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', refresh)
     return () => {
       cancelled = true
       clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', refresh)
     }
-  }, [profile])
+  }, [profile, evening])
 
   if (!profile || screen === 'setup') {
     return (
@@ -57,7 +73,7 @@ function App() {
       <Moonrise
         state={state}
         onPlayed={(songId) => {
-          const today = todayString()
+          const today = eveningKey()
           const tonight = state.tonight?.date === today ? state.tonight : { date: today, songIds: [] }
           if (tonight.songIds.includes(songId)) return
           update({ ...state, tonight: { ...tonight, songIds: [...tonight.songIds, songId] } })
@@ -70,8 +86,9 @@ function App() {
   return (
     <div className="app">
       <div className="screen">
-        {screen === 'today' && <Today state={state} sky={sky} onStart={() => setScreen('moonrise')} />}
-        {screen === 'log' && <Log state={state} sky={sky} update={update} onDone={() => setScreen('today')} />}
+        {storageError && <p className="status" role="alert">This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>}
+        {screen === 'today' && <Today state={state} sky={visibleSky} onStart={() => setScreen('moonrise')} />}
+        {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
         {screen === 'report' && <Report state={state} />}
         {screen === 'settings' && (
           <Settings state={state} update={update} onEditProfile={() => setScreen('setup')} />

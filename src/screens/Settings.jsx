@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { addDemoLogs, clearDemoLogs, emptyState, generateDemoWeek } from '../engine/index.js'
+import { addDemoLogs, clearDemoLogs, emptyState, eveningDate, generateDemoWeek } from '../engine/index.js'
 import { prettyDate } from '../components/format.js'
 
 export default function Settings({ state, update, onEditProfile }) {
@@ -11,7 +11,7 @@ export default function Settings({ state, update, onEditProfile }) {
 
   function loadDemo() {
     // The week ends yesterday, so tonight stays free for a real log.
-    const yesterday = new Date()
+    const yesterday = eveningDate(new Date())
     yesterday.setDate(yesterday.getDate() - 1)
     const week = generateDemoWeek({ birthYear: profile.birthYear, lat: profile.lat, lon: profile.lon, endDate: yesterday })
     const realDates = new Set(logs.filter((l) => !l.demo).map((l) => l.date))
