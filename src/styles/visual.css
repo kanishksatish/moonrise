@@ -157,6 +157,10 @@
   .quiet-view .session-scene { margin:auto; max-width:850px; }
   .quiet-view .session-sky { height:480px; }
   .quiet-view .session-moon .moon-icon { width:260px; height:260px; }
+  @media(max-width:1099px) {
+    /* Leave room above the fixed navigation when keyboard focus scrolls. */
+    html:has(.navbar) { scroll-padding-block-end:calc(120px + env(safe-area-inset-bottom)); }
+  }
   @media(min-width:1100px) {
     .app:not(.onboarding-app)>.screen { margin-left:200px; width:calc(100% - 200px); padding:22px 32px 56px; }
     .app-header>.brand { display:none; }
