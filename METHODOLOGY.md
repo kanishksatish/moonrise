@@ -29,18 +29,20 @@ dusk. Before that it is 45 minutes before dusk. Once several episodes are logged
 median keeps a single unusual night from pulling the time far; with only one or two timed
 episodes, one night can still move it a lot.
 
-**Song ranking** (from AGENTS.md). Score = +1 for each calm evening a song's link was opened,
-−1 for each episode evening, 0 for restless. The playlist is sorted by score, with ties in
+**Song ranking** (from AGENTS.md). Score = +1 for each calm evening a song was recorded as
+played, −1 for each episode evening, 0 for restless. A catalog song is recorded only when the
+in-app player reports it actually playing; the included piano and caregiver-chosen local files
+are never recorded as catalog songs. The playlist is sorted by score, with ties in
 random order.
 
-**Song evidence, shown as plain counts.** For example: "Opened on 5 logged evenings: 3 calm,
-1 restless, 1 episode." This is not a probability, a rating or a claim that a song helps.
-Several songs can be opened on the same evening, repeated evenings aren't independent, and
-an opened link doesn't confirm the music was actually played.
+**Song evidence, as plain counts** (engine support). For example: "Played in the app on 5
+logged evenings: 3 calm, 1 restless, 1 episode." This is not a probability, a rating or a
+claim that a song helps. Several things happen on the same evening, repeated evenings aren't
+independent, and a song playing doesn't mean the person was listening.
 
 **Progress milestones (light, process-only gamification).**
 - First evening logged.
-- First song link opened.
+- First song played in the app.
 - Start time based on your logs (3 evenings including a timed episode).
 - A week of evenings recorded.
 

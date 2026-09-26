@@ -25,11 +25,11 @@ describe('songEvidence', () => {
 describe('evidenceText', () => {
   it('describes counts plainly, with no claim about the song', () => {
     expect(evidenceText({ plays: 5, calm: 3, restless: 1, episode: 1 })).toBe(
-      'Opened on 5 logged evenings: 3 calm, 1 restless, 1 episode.'
+      'Played in the app on 5 logged evenings: 3 calm, 1 restless, 1 episode.'
     )
-    expect(evidenceText({ plays: 1, calm: 0, restless: 0, episode: 1 })).toBe('Opened on 1 logged evening: 1 episode.')
-    expect(evidenceText({ plays: 2, calm: 0, restless: 0, episode: 2 })).toBe('Opened on 2 logged evenings: 2 episodes.')
-    expect(evidenceText(undefined)).toBe('Not opened on a logged evening yet.')
+    expect(evidenceText({ plays: 1, calm: 0, restless: 0, episode: 1 })).toBe('Played in the app on 1 logged evening: 1 episode.')
+    expect(evidenceText({ plays: 2, calm: 0, restless: 0, episode: 2 })).toBe('Played in the app on 2 logged evenings: 2 episodes.')
+    expect(evidenceText(undefined)).toBe('Not played in the app on a logged evening yet.')
     expect(evidenceText({ plays: 4, calm: 4, restless: 0, episode: 0 })).not.toMatch(/help|best|effective|%/i)
   })
 })

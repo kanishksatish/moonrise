@@ -1,9 +1,11 @@
 // Song evidence: plain counts from the family's own logged evenings.
 //
-// For each song: on how many logged evenings its link was opened, and how those evenings
-// went. These are descriptive counts only. They are not a probability, a rating of the
-// song, or evidence that a song helps: several songs can be opened on the same evening,
-// and an opened link doesn't confirm the music was actually played.
+// For each song: on how many logged evenings it was recorded as played, and how those
+// evenings went. A catalog song is recorded only when the in-app player reports it actually
+// playing (the included piano and caregiver-chosen local files are never recorded as catalog
+// songs). These are descriptive counts only: not a probability, a rating of the song, or
+// evidence that a song helps. Several things happen on the same evening, and a song playing
+// doesn't mean the person was listening.
 // (Why Moonrise shows counts instead of a fancier estimate: METHODOLOGY.md.)
 
 const OUTCOMES = ['calm', 'restless', 'episode']
@@ -25,12 +27,12 @@ export function songEvidence(logs = []) {
   return out
 }
 
-// "Opened on 5 logged evenings: 3 calm, 1 restless, 1 episode."
+// "Played in the app on 5 logged evenings: 3 calm, 1 restless, 1 episode."
 export function evidenceText(e) {
-  if (!e || !e.plays) return 'Not opened on a logged evening yet.'
+  if (!e || !e.plays) return 'Not played in the app on a logged evening yet.'
   const parts = []
   if (e.calm) parts.push(`${e.calm} calm`)
   if (e.restless) parts.push(`${e.restless} restless`)
   if (e.episode) parts.push(`${e.episode} ${e.episode === 1 ? 'episode' : 'episodes'}`)
-  return `Opened on ${e.plays} logged ${e.plays === 1 ? 'evening' : 'evenings'}: ${parts.join(', ')}.`
+  return `Played in the app on ${e.plays} logged ${e.plays === 1 ? 'evening' : 'evenings'}: ${parts.join(', ')}.`
 }

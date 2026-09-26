@@ -64,9 +64,9 @@ the optional demo week is explicitly labelled.
   checks cannot guarantee suitability: caregiver review is required. Generation needs a
   connection and API credits; approved prompts remain available offline.
 - **Plain evidence, light progress (engine support).** The engine can describe each song
-  with plain counts ("Opened on 5 logged evenings: 3 calm, 1 restless, 1 episode"), never a
+  with plain counts ("Played in the app on 5 logged evenings: 3 calm, 1 restless, 1 episode"), never a
   rating or a claim that it helps. It also provides process-only milestones (first evening
-  logged, first song opened, start time based on your logs, a week recorded) that never
+  logged, first song played in the app, start time based on your logs, a week recorded) that never
   reward outcomes and flag any use of demo data. Whether and how the screens show these is
   up to the UI. No model has been trained or clinically validated. What we tried instead of
   the simple rules, and why they stayed, is in [METHODOLOGY.md](METHODOLOGY.md).

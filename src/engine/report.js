@@ -5,7 +5,7 @@
 // Cloudy evening = cloudCover >= 50%. Clear = below 50%. Unknown cloud cover is left out of both.
 // Top songs = songs opened this week, ranked by score this week (calm +1, episode -1), then
 // plays. Each also carries this week's plain counts (calm, restless, episode) and an
-// evidenceText such as: Opened on 3 logged evenings: 2 calm, 1 restless.
+// evidenceText such as: Played in the app on 3 logged evenings: 2 calm, 1 restless.
 
 import seedSongs from '../data/songs.json'
 import { localDateString } from './sky.js'

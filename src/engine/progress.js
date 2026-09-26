@@ -1,6 +1,6 @@
 // Caregiver progress milestones: light, process-only gamification.
 //
-// Milestones mark steps in using Moonrise (logging evenings, opening songs, the start time
+// Milestones mark steps in using Moonrise (logging evenings, playing songs, the start time
 // becoming based on your own logs). They never reward a calm evening or a particular song,
 // there are no streaks to lose, nothing scores the person with dementia, and an episode
 // evening counts exactly like any other logged evening.
@@ -27,8 +27,8 @@ function evaluate(logs) {
     },
     {
       id: 'first-song',
-      title: 'First song link opened',
-      detail: 'Songs you open during Moonrise are noted with that evening.',
+      title: 'First song played in the app',
+      detail: 'Era songs that play in Moonrise are noted with that evening.',
       current: songsOpened ? 1 : 0,
       target: 1,
     },
