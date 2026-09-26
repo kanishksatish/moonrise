@@ -256,6 +256,13 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Added a regression that first reproduced `shell incomplete after download`, then passed installation, activation, offline navigation and byte-range delivery under `/moonrise/` with the production MIME alias. Both MP3 types retain partial/HTML/empty-response rollback coverage; malformed MIME lookalikes and unrelated binary MIME are rejected.
 - All 53 worker tests and 256 tests across 20 files pass with one worker at a time; root and `/moonrise/` production builds pass. These are VM delivery tests, not a new browser decoding check. Local commit only: live redeployment and browser offline verification remain with Claude/root.
 
+## Codex — deterministic first-play test fixture, September 26
+
+- The integrated playback test reused an evening with Earth Angel already recorded. Its randomized playlist occasionally selected that same song, correctly suppressing a duplicate callback and failing the test's new-play expectation. This test now starts with an empty played-song list; shared midnight fixtures and all runtime behavior are unchanged.
+- Checked fresh main `c7eb364` before editing. All 12 flow tests and the full 256-test suite pass with one worker at a time. Local test-only commit; no push, main merge or deployment.
 ## 2026-09-26 06:22 UTC — Claude — live offline fix integrated + redeploy
 - Codex's hosted smoke test found the live offline blocker (GitHub Pages serves the MP3 as audio/mp3; worker only accepted audio/mpeg, so install failed). Integrated Codex's fix 9cfc60f (worker v4 accepts audio/mpeg or audio/mp3).
 - scripts/verify-offline.cjs now serves MP3 as audio/mp3 like GitHub Pages (and serves by path so redeploys work). Old worker: fails at the first check; fixed worker: 26/26. 256 tests.
+## 2026-09-26 06:40 UTC — Claude — flaky playback test fixed + deployed
+- The c7eb364 Pages build failed once at flows.test.jsx:112; one re-run deployed c7eb364 (worker v4) to GitHub Pages.
+- Integrated Codex's c89f944 root-cause fix (fixture already listed the randomly chosen song as played). Test-only; next deploy should not need a re-run.
