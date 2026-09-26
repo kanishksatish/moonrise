@@ -20,11 +20,11 @@ Optional sourced context: in 2025, 12.7 million unpaid US caregivers provided 19
 
 **0:20–0:45 · Personal setup**
 
-Show **Their story.**, **Under your sky.**, and **Memory anchors**. Enter or point to 1942: the actual catalog filters to 1952–1972. Say, “That is a starting collection; the caregiver decides what feels familiar.” Use **Find** for a city if geolocation is unavailable. Finish with **Save** for an existing profile, or **Start** for a new one.
+Show **Who’s this evening for?** and **A few familiar details**. Enter 1942: **Songs from their youth, 1952–1972** appears with example titles. Say, “That is a starting collection; the caregiver decides what feels familiar.” Use **Find** for a city if geolocation is unavailable. Finish with **Save** for an existing profile, or **Start** for a new one.
 
 **0:45–1:10 · The evening dashboard**
 
-Show **Your suggested start**, the calculated moon phase, and **Behind tonight’s timing**. Say, “This is a prototype timing rule using sunset, cloud cover and the evenings we log.” The default is 45 minutes before estimated dusk; cloud cover can move that dusk estimate up to 30 minutes earlier. If weather is unavailable, name the visible fallback. The artwork is not a live view of the location.
+Show the sky card (**Start Moonrise** with its countdown, **Estimated dusk**, today’s calculated **Moon** phase) and **Behind tonight’s timing**. Say, “This is a prototype timing rule using sunset, cloud cover and the evenings we log.” The default is 45 minutes before estimated dusk; cloud cover can move that dusk estimate up to 30 minutes earlier. If weather is unavailable, name the visible fallback. The artwork is not a live view of the location.
 
 **1:10–1:40 · AI the caregiver chooses**
 
@@ -34,19 +34,19 @@ Tap **Make it personal** to open Settings. With the prepared fictional profile a
 
 Return to Today and tap **Start Moonrise now**. The silent rocket flight lasts 2.4 seconds and can be bypassed with **Skip launch**, Escape, or reduced-motion settings. It occurs only after an explicit start.
 
-In the routine, show the song suggestion and **Next prompt**. A newly approved AI prompt follows the initial song prompt; only approved AI text enters this view. Choose **piano instead** and use its native Play control, or select a prepared familiar recording through **Play a music file**. It plays here without uploading. Neither option is counted as the suggested era song. All current YouTube candidates remain unverified; do not promise they play. **Next song** alone does not log a play.
+In the routine, point to the sky behind the activity: it follows the real sky, and the moon rises slowly over an hour. Choose **A little music**: the stage shows a song from their youth, with **Play on YouTube** / **Spotify** search links and **Next song** for the caregiver (links are not logged as plays). Or choose an included recording and use its native Play control, or **Play a music file** (plays here without uploading). Choose **A familiar story** for one conversation starter at a time; it changes every 3 minutes or with **Next prompt**. Only caregiver-approved AI text enters this view.
 
-Tap **Quiet view**, then **Show conversation**. Say, “The caregiver can put the controls aside for a moment.” Quiet view stops this app’s audio and hides the cards. A local recording must be selected again afterward. **Full screen** is optional on supported desktop layouts. Tap **Finish** to reach Log.
+Tap **Quiet view**, then **Show conversation**. Say, “The caregiver can put the controls aside for a moment.” Quiet view stops this app’s audio and hides the cards. A local recording must be selected again afterward. Tap **Finish** to reach Log.
 
 **2:15–2:45 · Every evening counts**
 
 Choose **Calm**, **Restless**, or **Episode**. Episode offers an optional onset time; future times are rejected. After midnight, the evening stays grouped with the prior day until 04:00. Each logged evening adds one constellation star regardless of outcome.
 
-In Settings, **Load demo week** adds seeded, made-up observations without replacing real logged dates. Explicitly say “demo data.” Show the resulting suggestion rather than promising it always moves a particular direction. The demo generator deliberately includes patterns to exercise the app; these are not findings from patients.
+In Settings, **Load demo week** adds seeded, made-up observations without replacing real logged dates. Explicitly say “demo data.” Back on Today, the sky card shows a labelled **Demo week** line: what the same rule gives with the example evenings, next to the unchanged real suggestion. The demo generator deliberately includes patterns to exercise the app; these are not findings from patients.
 
 **2:45–3:00 · A record worth sharing**
 
-Open Report: **A week of evenings.** Show the daily marks, timing and weather context, **Songs from your evenings**, and **Print report**. Missing weather and unlogged dates remain visible. The report describes observations; it does not prove that music or the app caused a change. Close: “A familiar song. A moment together. A small note for tomorrow.”
+Open Report, choose **Fictional example preview**, and show timing, cloudy vs clear evenings, **Recorded music activity**, the night-by-night table, the doctor note, and print (one page). Missing weather and unlogged dates remain visible. The report describes observations; it does not prove that music or the app caused a change. Close: “A familiar song. A moment together. A small note for tomorrow.”
 
 ## Honest fallback and wording
 
@@ -58,7 +58,7 @@ Profiles and logs are stored in this browser. Weather requests use location. Loa
 
 ## Public-data evidence, accurately stated
 
-“We audited an existing public TIHM clinical-research label file containing 135 agitation records from 27 participants. These are historical observations from another study, not people who tested Moonrise. No model was trained or evaluated. The source’s six-hour agitation labels cannot validate our minute-level routine timing.” [Official TIHM dataset](https://zenodo.org/records/7622128), [original label definition](https://www.nature.com/articles/s41597-023-02519-y/tables/5).
+“We audited an existing public TIHM clinical-research label file containing 135 agitation records from 27 participants. These are historical observations from another study, not people who tested Moonrise. We separately trained exploratory research models on it; none met our alert-precision requirement, and none is in the app. The source’s six-hour agitation labels cannot validate our minute-level routine timing.” [Official TIHM dataset](https://zenodo.org/records/7622128), [original label definition](https://www.nature.com/articles/s41597-023-02519-y/tables/5).
 
 Do not describe this as “trained on real patients,” “clinically validated” or “tested in hospice.” The source record includes restrictions on commercial use; a future derived product needs permissions clarified. Acknowledge the TIHM creators and Surrey and Borders Partnership NHS Foundation Trust. No patient-level data is bundled in the app.
 

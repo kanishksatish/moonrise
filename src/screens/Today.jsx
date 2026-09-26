@@ -6,6 +6,7 @@ import useNow from '../components/useNow.js'
 import MoonIcon from '../components/MoonIcon.jsx'
 import Constellation from '../components/Constellation.jsx'
 import '../styles/observatory.css'
+import '../styles/sky-stage.css'
 import EveningWorkspace from '../components/EveningWorkspace.jsx'
 
 export default function Today({ state, sky, saveError = false, onStart, onPersonalize, reminders, onSavePlan }) {
@@ -14,6 +15,10 @@ export default function Today({ state, sky, saveError = false, onStart, onPerson
   const { profile, logs } = state
 
   const schedule = sky ? moonriseStart(sky.effectiveDusk, logs.filter(log => !log.demo)) : null
+  // Demo evenings never change the real suggestion; this shows, clearly labelled, what the same rule gives with them.
+  const hasDemo = logs.some(log => log.demo)
+  const demoSchedule = sky && hasDemo ? moonriseStart(sky.effectiveDusk, logs) : null
+  const untilStart = schedule ? schedule.start.getTime() - now.getTime() : null
   const tonightLog = logs.find((l) => l.date === eveningKey(now) && !l.demo)
   const moon = moonPhase(now)
   const gradient = skyGradient(skyState(now, profile.lat, profile.lon).darkness)
@@ -25,6 +30,15 @@ export default function Today({ state, sky, saveError = false, onStart, onPerson
       <p className="today-date small">{eveningDate(now).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       <EveningWorkspace profile={profile} plan={state.eveningPlan} onSave={onSavePlan} onStart={onStart} saveError={saveError} startTime={sky ? formatTime(schedule.start) : null}/>
       {alertText && !tonightLog && <div className="alert" role="alert">{alertText}</div>}
+      <section className="sky-card" aria-label="Tonight’s sky" style={{ background: `linear-gradient(135deg, ${gradient.top}, ${gradient.bottom})` }}>
+        <div className="sky-card__moon"><MoonIcon name={moon.name} phase={moon.phase}/></div>
+        <dl className="sky-card__facts">
+          <div><dt>Start Moonrise</dt><dd>{schedule ? `${formatTime(schedule.start)} · ${untilStart > 0 ? `in ${formatDuration(untilStart)}` : 'now'}` : 'Finding your sky…'}</dd></div>
+          <div><dt>Estimated dusk</dt><dd>{sky ? formatTime(sky.effectiveDusk) : '—'}</dd></div>
+          <div><dt>Moon</dt><dd>{moon.name}</dd></div>
+        </dl>
+        {demoSchedule && <p className="demo-flag sky-card__demo"><span aria-hidden="true">◌ </span>Demo week: with the example evenings, the same rule would start {demoSchedule.minutesBeforeDusk} min before dusk ({formatTime(demoSchedule.start)}), instead of {schedule.minutesBeforeDusk}. Your real suggestion uses only your own logs.</p>}
+      </section>
 
       <div className="evening-layout evening-context">
         <div className="evening-primary">

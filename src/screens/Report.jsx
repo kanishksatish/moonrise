@@ -196,7 +196,7 @@ export default function Report({ state, onReviewSession, saveError = false, init
         </>
       )}
 
-      <p className="doctor-note">{CARE_PLAN_NOTE}</p>
+      <p className="doctor-note">{CARE_PLAN_NOTE} {r.doctorNote}</p>
       <p className="muted small handoff-limits">Caregiver-support prototype. Not clinically validated; not a diagnosis, treatment recommendation, or monitored alert service. This handoff is prepared on this device; printing does not send it to a care team.</p>
     </div>
   )

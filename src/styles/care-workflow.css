@@ -82,11 +82,13 @@
   .report.care-handoff .handoff-record-key { font-size: 9pt; }
   .report.care-handoff .nights { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 4pt 0 0; }
   .report.care-handoff .nights th,
-  .report.care-handoff .nights td { font-size: 9pt; line-height: 1.25; padding: 4pt; vertical-align: top; text-align: left; border-bottom: 1px solid #bbb; overflow-wrap: break-word; }
+  .report.care-handoff .nights td { font-size: 9pt; line-height: 1.2; padding: 2pt 4pt; vertical-align: top; text-align: left; border-bottom: 1px solid #bbb; overflow-wrap: break-word; }
   .report.care-handoff .nights th:first-child { width: 22%; }
   .report.care-handoff .nights th:nth-child(2) { width: 15%; }
   .report.care-handoff .nights th:nth-child(3) { width: 24%; }
-  .report.care-handoff .handoff-row-source { display: block; font-size: 8pt; font-weight: 400; margin-top: 2pt; }
+  .report.care-handoff .handoff-row-source { display: block; font-size: 8pt; font-weight: 400; margin-top: 0; }
   .report.care-handoff .doctor-note { margin: 8pt 0 5pt; padding: 5pt 7pt; font-size: 9pt; border: 1px solid #333; }
   .report.care-handoff .handoff-limits { font-size: 8pt; line-height: 1.3; }
+  /* Let the night-by-night table continue on the same page instead of jumping whole to page 2. */
+  .report.care-handoff .report-records { break-inside: auto; }
 }

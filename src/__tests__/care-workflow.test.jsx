@@ -209,6 +209,11 @@ describe('source-separated printable handoff', () => {
     expect(within(table).queryByText('Fictional example')).toBeNull()
     // Missingness survives printing; it is not hidden by the no-print class.
     for (const missing of within(table).getAllByText('Not recorded')) expect(missing.closest('.no-print')).toBeNull()
+    // AGENTS.md: the printed report tells the caregiver to mention sudden changes to a doctor.
+    const note = document.querySelector('.doctor-note')
+    expect(note.textContent).toMatch(/mention it to a doctor/)
+    expect(note.textContent).toMatch(/Pain, infection, or a medication change/)
+    expect(note.closest('.no-print')).toBeNull()
   })
 
   it('requires the separate preview to see fictional data and labels every example row', () => {

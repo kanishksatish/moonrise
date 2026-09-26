@@ -65,7 +65,8 @@ the optional demo week is explicitly labelled.
   This does not establish listening duration or benefit. Old era-song IDs retain their
   meaning, and historical piano or personal-file activity is not reconstructed. The report
   can display old era songs and newly played included recordings together, with unknown
-  recording years omitted. Era ranking remains separate internally. Optional YouTube
+  recording years omitted. In Moonrise mode the top-ranked era song (songScore) is shown with
+  YouTube and Spotify search links for the caregiver; opening a link is not logged as a play. Optional YouTube
   playback still requires a verified recording; the unverified candidates are not shown as
   playable songs. **Play a music file** uses a temporary local file without uploading or
   assigning it a catalog ID. Nothing autoplays; changing a recording, Quiet view, and Finish
@@ -107,7 +108,7 @@ references to their original photos and plans. Browser storage can be cleared or
 is not a clinical record system or a backup. Photos, prepared stories, caregiver preferences
 and session events are excluded from generation requests.
 The hosted app has no Moonrise account or backend. Its network calls are weather and city lookups (Open-Meteo, which receives
-coordinates or a city name), YouTube when the caregiver explicitly loads an available player, and,
+coordinates or a city name), YouTube when the caregiver explicitly loads an available player, the YouTube or Spotify search page when the caregiver opens an era-song link, and,
 only if the caregiver sets up AI prompts and taps Generate, one request to the Anthropic
 API with the birth year and the optional hometown, spouse and job answers. The profile
 name, coordinates and evening logs are not sent. Anchors may themselves contain personal
@@ -129,13 +130,13 @@ Requires Node.js 22.12 or newer (needed by Vite 8 and Vitest 5).
 ```bash
 npm install
 npm run dev      # local dev server
-npm test         # engine unit tests (Vitest)
+npm test         # all engine and UI tests (Vitest)
 npm run build    # production build in dist/
 npm run preview  # preview that built dist/; rebuild after source changes
 ```
 
 The Vite development server updates from source and does not register the service worker.
-A static preview (including the local preview on port 4177) serves `dist/`; run a fresh
+A static preview serves `dist/`; run a fresh
 root-path build and reload it after changes. Test a subpath build separately, for example
 `VITE_BASE=/moonrise/ npm run build -- --outDir dist-subpath`, so the normal preview is not replaced.
 The initial production install atomically saves the app and Für Elise, without waiting

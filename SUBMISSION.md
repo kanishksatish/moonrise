@@ -12,7 +12,7 @@ Prepare familiar company. Follow their lead. Carry the evening forward.
 
 We wanted to simplify a caregiver's evening: a time to begin, music to choose together,
 an invitation to talk, and somewhere to note what happened. “Fly me to the moon” became
-a quiet observatory on a tablet. The moon rises, the screen grows warm, and the caregiver
+a quiet observatory on a tablet. The sky behind the routine follows the real sky, a moon rises, the light warms, and the caregiver
 can follow their person's lead—even when that means stopping the music and sitting together.
 
 ## What it does
@@ -59,10 +59,8 @@ independently, so a failed extra download cannot block the core app. Each track 
 actual offline availability; missing tracks offer the saved piano fallback. Complete
 cached recordings support seeking. Browser storage eviction can remove downloads.
 
-The redesigned app has **498 automated checks across 37 files**. Local verification passed
-495 checks in the full run; three old button-label expectations were then updated, and
-all 28 checks in those two files passed. The production build passed. Exact-commit CI is
-recorded in the current handoff once complete.
+The submitted app has **508 automated tests across 38 files**, all passing (`npx vitest run`),
+plus a production build and 26 automated offline checks (`scripts/verify-offline.cjs`).
 Developer browser checks of the redesign covered phone/desktop layouts, local photo
 persistence, explicit choices, source inspection, caregiver review and demo separation.
 Earlier checks covered native/offline playback, missing extra music, keyboard navigation

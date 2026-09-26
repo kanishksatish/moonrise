@@ -1,0 +1,31 @@
+/* Live sky behind the Moonrise session stage (SkyStage.jsx). */
+.sky-stage { position:absolute; z-index:-1; inset:0; overflow:hidden; transition:background 30s linear; }
+.sky-stage__stars { position:absolute; inset:0; transition:opacity 30s linear; }
+.sky-stage__stars span { position:absolute; border-radius:50%; background:#fff; }
+/* The moon starts low on the right and climbs as --rise goes from 0 to 1 over the session. */
+.sky-stage__moon { position:absolute; right:clamp(18px,8%,90px); width:clamp(64px,11vw,132px); height:clamp(64px,11vw,132px);
+  bottom:calc(6% + var(--rise) * 62%); filter:drop-shadow(0 0 28px rgba(255,240,200,.45)); transition:bottom 10s linear; }
+.sky-stage__moon svg, .sky-stage__moon > * { width:100%; height:100%; }
+.sky-stage__glow { position:absolute; inset:0; pointer-events:none; transition:background 30s linear; }
+.studio-era { margin-top:18px; }
+.studio-era .studio-stage__label { margin-bottom:6px; }
+.studio-era-title { font-family:Georgia,serif; font-size:clamp(30px,3vw,46px); line-height:1.15; margin:0 0 6px; overflow-wrap:anywhere; }
+.studio-era-links { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 18px; }
+.studio-era-links .btn { min-height:52px; display:inline-flex; align-items:center; }
+@media (prefers-reduced-motion: reduce) { .sky-stage, .sky-stage__stars, .sky-stage__moon, .sky-stage__glow { transition:none; } }
+@media print { .sky-stage { display:none; } }
+/* Today: tonight's sky card (live gradient, moon phase, start countdown). White text meets AA on every gradient stop. */
+.sky-card { display:flex; flex-wrap:wrap; align-items:center; gap:clamp(16px,3vw,36px); color:#fff; border-radius:24px; padding:clamp(18px,3vw,32px); margin:20px 0; }
+.sky-card__moon { width:clamp(72px,12vw,112px); height:clamp(72px,12vw,112px); flex:none; filter:drop-shadow(0 0 22px rgba(255,240,200,.4)); }
+.sky-card__moon svg { width:100%; height:100%; }
+.sky-card__facts { display:flex; flex-wrap:wrap; gap:clamp(14px,3vw,40px); margin:0; flex:1 1 280px; }
+.sky-card__facts div { min-width:0; }
+.sky-card__facts dt { font-size:20px; opacity:.9; }
+.sky-card__facts dd { margin:4px 0 0; font-size:clamp(24px,2.6vw,34px); font-family:Georgia,serif; }
+.sky-card__demo { flex-basis:100%; margin:0; }
+/* Text on the live sky: near-white keeps AA contrast on every gradient stop (the beige labels don't on daytime blue). */
+.session-studio .studio-stage .eyebrow, .session-studio .studio-stage .studio-stage__label { color:#fff8ec; }
+@media (max-width:600px) {
+  .session-studio .studio-stage .studio-stage__content { padding-right:64px; }
+  .sky-stage__moon { width:52px; height:52px; right:12px; }
+}
