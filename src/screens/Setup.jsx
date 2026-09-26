@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react'
 import { eraSongs, eraYears, findCity } from '../engine/index.js'
+import Brand from '../components/Brand.jsx'
+import MoonIcon from '../components/MoonIcon.jsx'
 
 const THIS_YEAR = new Date().getFullYear()
 
@@ -80,8 +82,11 @@ export default function Setup({ profile, onDone, onCancel }) {
   return (
     <div className="app">
       <form className="screen setup" onSubmit={save}>
-        <h1>Welcome to Moonrise</h1>
-        <p className="lead">A calm evening routine, timed to the real sky. Tell us a little about who you care for.</p>
+        <Brand />
+        <header className="setup-intro">
+          <div><p className="eyebrow">A little light. A familiar song.</p><h1>Make room for<br/><em>a gentler evening.</em></h1><p className="lead">A personal evening routine, timed to the real sky. Let’s start with the person you care for.</p></div>
+          <div className="setup-moon" aria-hidden="true"><MoonIcon phase={0.43} decorative/></div>
+        </header>
 
         <label className="field">
           <span>Their first name</span>
