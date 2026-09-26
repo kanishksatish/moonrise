@@ -22,6 +22,7 @@ function App() {
   const [state, setState] = useState(loadState)
   const stateRef = useRef(state)
   const [activeSessionId, setActiveSessionId] = useState(null)
+  const [sessionToLog, setSessionToLog] = useState(null)
   const [screen, setScreen] = useState('today')
   const [sky, setSky] = useState(null)
   const [storageError, setStorageError] = useState(false)
@@ -59,11 +60,11 @@ function App() {
 
   function recordEvent(event) {
     if (!activeSessionId) return
-    update(current => ({ ...current, sessions: (current.sessions || []).map(session => session.id === activeSessionId
+    return update(current => ({ ...current, sessions: (current.sessions || []).map(session => session.id === activeSessionId
       ? appendSessionEvent(session, { id: crypto.randomUUID(), at: new Date().toISOString(), ...event }) : session) }))
   }
 
-  function beginSession(activity = 'quiet', isDemo = false, withLaunch = false) {
+  function beginSession(activity = 'quiet', isDemo = false) {
     const plan = isDemo ? normalizeEveningPlan(EXAMPLE_PLAN) : normalizeEveningPlan(stateRef.current.eveningPlan)
     let session = createSession(isDemo ? { name: 'Avery (fictional)' } : profile, plan, {
       id: crypto.randomUUID(), now: new Date(), date: eveningKey(), isDemo,
@@ -71,8 +72,9 @@ function App() {
     session = appendSessionEvent(session, { id: crypto.randomUUID(), type: 'offered', activity, at: new Date().toISOString() })
     update(current => ({ ...current, sessions: [...(current.sessions || []), session] }))
     setActiveSessionId(session.id)
+    setSessionToLog(null)
     if (!isDemo) setStartedEvening(eveningKey())
-    setScreen(withLaunch ? 'launch' : 'moonrise')
+    setScreen('launch')
   }
 
   // Tonight's effective dusk, refreshed every 30 minutes (weather changes, and the day rolls over).
@@ -140,7 +142,7 @@ function App() {
           if (tonight.songIds.includes(songId)) return
           update({ ...current, tonight: { ...tonight, songIds: [...tonight.songIds, songId] } })
         }}
-        onExit={() => { recordEvent({ type: 'finished' }); setScreen('report') }}
+        onExit={() => { recordEvent({ type: 'finished' }); setSessionToLog(activeSessionId); setScreen('log') }}
       />
     )
   }
@@ -150,7 +152,7 @@ function App() {
       <div className={`screen screen-${screen}`}>
         <header className="app-header no-print">
           <Brand />
-          <div className="header-note"><span className="status-dot" aria-hidden="true"/>A little calm, every evening.</div>
+          <div className="header-note"><span className="status-dot" aria-hidden="true"/>Evening care</div>
           <button className="profile-chip" onClick={() => setScreen('settings')} aria-label={`Settings for ${profile.name}`}><span aria-hidden="true">{profile.name.trim().slice(0, 1).toUpperCase()}</span><span className="profile-name">{profile.name}</span></button>
         </header>
         {screen !== 'today' && reminders.alertText && <div className="alert" role="status">
@@ -161,14 +163,25 @@ function App() {
         <main ref={screenContent} tabIndex={-1} aria-label={SCREEN_NAMES[screen]}>
         {screen === 'today' && <Today state={state} sky={visibleSky} saveError={storageError} reminders={reminders} onStart={beginSession}
           onSavePlan={plan => update(current => ({ ...current, eveningPlan: plan }))} onPersonalize={() => setScreen('settings')} />}
-        {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
+        {screen === 'log' && <Log key={`${evening}:${sessionToLog || 'journal'}`} state={state} sky={visibleSky} update={update}
+          demoSession={Boolean(sessionToLog && state.sessions?.find(item => item.id === sessionToLog)?.isDemo)}
+          onDemoOutcome={outcome => recordEvent({ type: 'observation', text: `Evening indicator: ${outcome}.` })}
+          onSkip={sessionToLog ? () => { setSessionToLog(null); setScreen('report') } : undefined}
+          onDone={savedLog => {
+            if (sessionToLog) {
+              const session = stateRef.current.sessions?.find(item => item.id === sessionToLog)
+              const log = savedLog
+              if (!session?.isDemo && log) recordEvent({ type:'observation', text: `Evening indicator: ${log.outcome}.${log.episodeStart ? ` Reported onset: ${log.episodeStart}.` : ''}` })
+              setSessionToLog(null); setScreen('report')
+            } else setScreen('today')
+          }} /> }
         {screen === 'report' && <Report state={state} saveError={storageError} initialSessionId={activeSessionId} onReviewSession={(id, revision) => update(current => ({ ...current, sessions: (current.sessions || []).map(session => session.id === id ? { ...session, reviewedRevision: revision } : session) }))} />}
         {screen === 'settings' && (
           <Settings state={state} update={update} saveError={storageRetryAvailable} onEditProfile={() => setScreen('setup')} />
         )}
         </main>
       </div>
-      <NavBar current={screen} onChange={setScreen} />
+      <NavBar current={screen} onChange={next => { if (next === screen) return; setSessionToLog(null); setScreen(next) }} />
     </div>
   )
 }

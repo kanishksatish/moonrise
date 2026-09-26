@@ -163,9 +163,9 @@ describe('SDK chunk unavailable (first use while offline)', () => {
 describe('approved prompts in Moonrise mode', () => {
   it('come right after the song prompt, without duplicates', () => {
     const song = { title: 'Moon River', artist: 'Henry Mancini' }
-    const p = memoryPrompts(profile, { song, approved: ['Tell me about the river in Dayton.', '  ', 7, 'How did you and Frank meet?'] })
+    const p = memoryPrompts(profile, { song, approved: ['Tell me about the river in Dayton.', '  ', 7, 'How did you and Frank meet?', 'How did you and Frank meet?'] })
     expect(p.slice(0, 3)).toEqual([
-      'Do you remember "Moon River" by Henry Mancini?',
+      'Would you like to talk about "Moon River" by Henry Mancini?',
       'Tell me about the river in Dayton.',
       'How did you and Frank meet?',
     ])

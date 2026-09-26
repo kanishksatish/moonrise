@@ -32,7 +32,7 @@ export default function Moonrise({ state, session, onSessionEvent = () => {}, on
   const prompts = memoryPrompts(contextProfile, { approved: session?.isDemo ? [] : state.approvedPrompts })
   const name = session?.displayName || plan.preferredName || state.profile.name
   const playedSongIds = !session && state.tonight?.date === eveningKey() ? state.tonight.songIds : []
-  const title = activity === 'story' ? plan.familiarPlace || 'A little story, together.' : activity === 'music' ? 'Room for a familiar sound.' : 'There is nothing to finish.'
+  const title = activity === 'story' ? plan.familiarPlace || 'Conversation' : activity === 'music' ? 'Music' : 'Quiet'
   const returnActivity = plan.activities.includes(previousActivity) && previousActivity !== 'quiet' ? previousActivity : plan.activities.find(value => value !== 'quiet')
   function changeActivity(next) {
     if (next === activity) return
@@ -59,15 +59,15 @@ export default function Moonrise({ state, session, onSessionEvent = () => {}, on
     <main className="studio-layout">
       <section className="studio-stage" aria-label="Shared activity">
         <div className="studio-stage__sky" aria-hidden="true"/>
-        <p className="eyebrow">An evening with {name}</p>
+        <p className="eyebrow">{name}</p>
         <div className="studio-stage__content">{activity === 'story' && plan.photoId ? <ComfortPhoto id={plan.photoId} alt={plan.familiarPlace || 'Photo selected by the caregiver'}/> : <span className="studio-orbit" aria-hidden="true">{activity === 'music' ? '♫' : activity === 'story' ? '◇' : '◌'}</span>}<p className="studio-stage__label">{ACTIVITY_LABELS[activity]}</p><h1>{title}</h1>
-        {activity === 'story' && <><p className="studio-stage__label">{plan.story ? 'Shared by the caregiver' : 'Conversation starter'}</p><p className="studio-story prompt-text">{plan.story || prompts[promptIndex % prompts.length] || 'We can sit here together. There is no need to answer.'}</p></>}
-        {activity === 'music' && <p className="studio-story">Choose something they enjoy.<br/>Quiet is always another choice.</p>}
-        {activity === 'quiet' && <p className="studio-story">Music is stopped. Stay as long as you like.</p>}
-        <p className="studio-invitation">No questions to get right. No need to continue.</p></div>
+        {activity === 'story' && <><p className="studio-stage__label">{plan.story ? 'Shared by the caregiver' : 'Conversation starter'}</p><p className="studio-story prompt-text">{plan.story || prompts[promptIndex % prompts.length] || 'Conversation starter unavailable.'}</p></>}
+        {activity === 'music' && <p className="studio-story">Choose a recording from the library.</p>}
+        {activity === 'quiet' && <p className="studio-story">Music is stopped.</p>}
+        </div>
       </section>
       <aside className="studio-caregiver" aria-label="Caregiver controls">
-        <p className="eyebrow">Follow their lead</p><h2>What feels right now?</h2>{plan.avoid && <p className="studio-preference"><strong>Keep in mind:</strong> {plan.avoid}</p>}
+        <h2>Session controls</h2>{plan.avoid && <p className="studio-preference"><strong>Keep in mind:</strong> {plan.avoid}</p>}
         <div className="studio-choices" role="group" aria-label="Shared activity choices">{Object.entries(ACTIVITY_LABELS).filter(([key]) => key === 'quiet' || plan.activities.includes(key)).map(([key, label]) => <button key={key} className="btn" aria-pressed={activity === key} onClick={() => changeActivity(key)}>{label}</button>)}</div>
         {activity === 'music' && <><MusicPlayer song={song} youtubeId={song ? songVideo(song.id)?.youtubeId : null} onNext={songs.length > 1 ? () => setSongIndex(i => i + 1) : undefined} sessionId={session?.id || startedAt} playedSongIds={playedSongIds} onStopped={() => { onSessionEvent({ type: 'stopped', activity: 'music', source: 'player' }); setAcknowledged(false) }} onPlayback={id => { setAcknowledged(true); onSessionEvent({ type: 'started', activity: 'music', source: 'player', text: id ? `Recording: ${recordingCatalog.find(item => item.id === id)?.title || 'Catalog recording'}` : 'A music file from this device' }) }} onPlayed={onPlayed}/><details className="studio-cue" open><summary>Conversation starter</summary><p className="prompt-text">{prompts[promptIndex % prompts.length]}</p><button className="btn" onClick={() => setPromptIndex(index => index + 1)}>Next prompt</button></details></>}
         {activity === 'story' && !plan.story && <button className="btn" onClick={() => setPromptIndex(index => index + 1)}>Next prompt</button>}

@@ -18,10 +18,10 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 
-function LogHarness({ initial = base, onUpdate, onDone }) {
+function LogHarness({ initial = base, onUpdate, onDone, onSkip }) {
   const [state, setState] = useState(initial)
   // Match App: retain edits in memory even when persistence returns false.
-  return <Log state={state} sky={sky} update={next => { setState(next); return onUpdate(next) }} onDone={onDone} />
+  return <Log state={state} sky={sky} update={next => { setState(next); return onUpdate(next) }} onDone={onDone} onSkip={onSkip} />
 }
 
 describe('deliberate, optional caregiver context entry', () => {
@@ -133,6 +133,29 @@ describe('caregiver edits when device persistence fails', () => {
     click('Remove saved time')
     expect(onDone).toHaveBeenCalledOnce()
     expect(onUpdate.mock.lastCall[0].logs[0].episodeStart).toBeNull()
+  })
+
+  it('leaves a failed onset removal without forwarding the older saved onset into the session handoff', () => {
+    const savedOnset = '2026-09-26T23:15:00.000Z'
+    const initial = { ...base, logs: [{ date: sky.date, outcome: 'episode', episodeStart: savedOnset }] }
+    const onUpdate = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false)
+    const onDone = vi.fn(), onSkip = vi.fn()
+    render(<LogHarness initial={initial} onUpdate={onUpdate} onDone={onDone} onSkip={onSkip} />)
+
+    click('Episode')
+    expect(onUpdate.mock.calls[0][0].logs[0].episodeStart).toBe(savedOnset)
+    expect(screen.getByText('Episode saved · optional detail')).toBeTruthy()
+    click('Remove saved time')
+    expect(onUpdate.mock.lastCall[0].logs[0].episodeStart).toBeNull()
+    expect(screen.getByText('Time change not saved to device')).toBeTruthy()
+    expect(onDone).not.toHaveBeenCalled()
+    expect(onSkip).not.toHaveBeenCalled()
+
+    click('Leave for now (not saved)')
+    expect(onSkip).toHaveBeenCalledExactlyOnceWith()
+    expect(onDone).not.toHaveBeenCalled()
+    // Leaving must not retry persistence or emit lastSaved's stale onset.
+    expect(onUpdate).toHaveBeenCalledTimes(2)
   })
 
   it('keeps a failed comfort draft retryable, reports the error beside it, and confirms only success', () => {

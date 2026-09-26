@@ -117,7 +117,7 @@ export default function LaunchSequence({ onComplete, phase = 0.5 }) {
         </svg>
         <div className="launch-horizon" />
       </div>
-      <div className="launch-copy"><h1 id={`${id}-title`}>A little space<br/><em>for calm.</em></h1></div>
+      <div className="launch-copy"><h1 id={`${id}-title`}>Moonrise</h1></div>
       <div className="launch-progress" aria-hidden="true"><span /></div>
     </div>
   )

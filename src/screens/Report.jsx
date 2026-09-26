@@ -40,7 +40,7 @@ function WeekRhythm({ report, example }) {
   return (
     <section className="week-rhythm no-print" aria-labelledby="week-rhythm-title">
       <div className="rhythm-heading">
-        <h2 id="week-rhythm-title">{example ? 'An example week' : 'The shape of your week'}</h2>
+        <h2 id="week-rhythm-title">{example ? 'An example week' : 'This week'}</h2>
         <p><strong>{report.evenings}</strong> {example ? 'example' : 'recorded'} evening{report.evenings === 1 ? '' : 's'}</p>
       </div>
       <ol className="rhythm-days" aria-label="Evening records by date">
@@ -87,7 +87,7 @@ export default function Report({ state, onReviewSession, saveError = false, init
             {example ? 'Print example' : 'Print care handoff'}
           </button>
         </div>
-        <h1 className="no-print">An evening record<br />to share.</h1>
+        <h1 className="no-print">Evening report</h1>
         <h1 className="report-print-heading">{example ? 'EXAMPLE — fictional evening handoff' : `Evening care handoff for ${profile.name}`}</h1>
         <p className="muted report-dates">
           {fullDate(r.from)} to {fullDate(r.to)} · Most recent week in this view

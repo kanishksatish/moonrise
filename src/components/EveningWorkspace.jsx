@@ -5,6 +5,7 @@ import ComfortPhoto from './ComfortPhoto.jsx'
 import { deleteComfortPhoto, saveComfortPhoto, validateComfortPhotoFile } from '../engine/comfortPhoto.js'
 
 export const ACTIVITY_LABELS = { story: 'A familiar story', music: 'A little music', quiet: 'Quiet company' }
+const PREVIEWS = { story: 'Open the saved photo and story, or a conversation starter.', music: 'Open the listening library and play a recording in the app.', quiet: 'Open a quiet screen with music stopped.' }
 const ICONS = { story: '◇', music: '♫', quiet: '◌' }
 
 export const EXAMPLE_PLAN = {
@@ -27,6 +28,7 @@ export default function EveningWorkspace({ profile, plan: raw, onSave, onStart, 
   const mounted = useRef(true)
   const photoRequest = useRef(0)
   const name = plan.preferredName || profile.name
+  const firstActivity = plan.activities.includes(selected) ? selected : plan.activities[0] || 'quiet'
   async function discardPendingPhotos() {
     await Promise.all([...pendingPhotos.current].map(async id => {
       await deleteComfortPhoto(id)
@@ -97,27 +99,26 @@ export default function EveningWorkspace({ profile, plan: raw, onSave, onStart, 
   }
   return <section className="evening-workspace" aria-label="Prepare your evening">
     <header className="evening-workspace__hero">
-      <p className="eyebrow">Before the evening unfolds</p>
-      <h1>Familiar things.<br/><em>A gentler evening.</em></h1>
-      <p>Support for caregivers navigating sundowning. Prepare something familiar, follow their lead, and carry the evening’s details forward.</p>
-      <div className="evening-workspace__meta"><span>Prepare · Share · Remember what happened</span>{startTime && <span>Planning cue {startTime}</span>}</div>
+      <p className="eyebrow">Moonrise</p>
+      <h1>Evening care<br/><em>for {name}.</em></h1>
+      <p>Support for caregivers navigating sundowning. Choose an activity and keep a record for the next caregiver.</p>
+      {startTime && <div className="evening-workspace__meta"><span>Suggested start {startTime}</span></div>}
     </header>
     <div className="evening-workspace__layout">
       <section className="evening-plan-card" aria-label={`Prepared evening for ${name}`}>
-        <p className="eyebrow">Tonight, together</p><h2>A little time with <em>{name}.</em></h2>
+        <h2>Choose an activity</h2>
         <div className="evening-choices" role="group" aria-label="Choose your first activity">
-          {(plan.activities.length ? plan.activities : ['quiet']).map(activity => <button key={activity} className={selected === activity ? 'selected' : ''} aria-label={ACTIVITY_LABELS[activity]} aria-pressed={selected === activity} onClick={() => setSelected(activity)}><span className="activity-icon" aria-hidden="true">{ICONS[activity]}</span>{{story:'Story', music:'Music', quiet:'Quiet'}[activity]}</button>)}
+          {(plan.activities.length ? plan.activities : ['quiet']).map(activity => <button key={activity} className={firstActivity === activity ? 'selected' : ''} aria-label={ACTIVITY_LABELS[activity]} aria-pressed={firstActivity === activity} aria-describedby="activity-preview" onClick={() => setSelected(activity)}><span className="activity-icon" aria-hidden="true">{ICONS[activity]}</span>{{story:'Story', music:'Music', quiet:'Quiet'}[activity]}</button>)}
         </div>
-        <button className="btn primary evening-workspace__start" onClick={() => onStart(plan.activities.includes(selected) ? selected : plan.activities[0] || 'quiet')}><span>Start Moonrise now</span><span aria-hidden="true">↗</span></button>
-        <p>Every activity is optional. Stopping is always okay.</p>
-<p className="evening-plan-card__quote">{plan.story || 'A favorite place. A familiar sound. Or simply being here together.'}</p>
+        <div id="activity-preview" className="activity-preview" role="status"><p key={firstActivity}>{PREVIEWS[firstActivity]}</p></div>
+        <button className="btn primary evening-workspace__start" onClick={() => onStart(firstActivity)}><span>Start Moonrise now</span><span aria-hidden="true">↗</span></button>
+<p className="evening-plan-card__quote">{plan.story || 'Add a story or photo in the profile to use it during a session.'}</p>
         <ComfortPhoto id={plan.photoId} alt={plan.familiarPlace || 'Photo selected for this evening'}/>
-        <button className="text-action" onClick={() => onStart(plan.activities.includes(selected) ? selected : plan.activities[0] || 'quiet', false, true)}>Begin with moonflight <span aria-hidden="true">↗</span></button>
       </section>
       <aside className="evening-person-card" aria-label="Personal context">
         <span className="evening-person-card__initial" aria-hidden="true">{name.trim().slice(0, 1)}</span>
-        <p className="eyebrow">The small things matter</p><h2>{plan.familiarPlace || 'What feels familiar?'}</h2>
-        <p>{plan.caregiverCue || 'Keep a few words here that help someone else offer familiar company.'}</p>
+        <p className="eyebrow">Personal profile</p><h2>{plan.familiarPlace || 'Stories and preferences'}</h2>
+        <p>{plan.caregiverCue || 'Add a photo, story, caregiver notes and topics to avoid.'}</p>
         {plan.avoid && <p><strong>Keep in mind</strong><br/>{plan.avoid}</p>}
         <button ref={prepareButton} className="btn" disabled={photoBusy} onClick={() => { if (editing) closePreparation(); else { setDraft(plan); setEditing(true); setStatus(''); setPhotoStatus('') } }} aria-expanded={editing}>{editing ? 'Close preparation' : 'Prepare their evening'} <span aria-hidden="true">↗</span></button>
       </aside>
@@ -137,7 +138,7 @@ export default function EveningWorkspace({ profile, plan: raw, onSave, onStart, 
       </form>
     </section>}
     {status && <p role="status">{status}</p>}
-    <ol className="evening-path"><li><span>01</span><div><strong>Know the person</strong><p>Prepare a familiar invitation.</p></div></li><li><span>02</span><div><strong>Follow their lead</strong><p>Try, decline, or choose quiet.</p></div></li><li><span>03</span><div><strong>Pass on the details</strong><p>Keep the choices and observations.</p></div></li></ol>
+
     <details className="sky-facts evening-explanation"><summary>Why focus on the evening?</summary><p>Some people living with dementia experience more confusion or distress later in the day, often called sundowning. Moonrise helps a caregiver prepare familiar activities and record what happened. It does not predict episodes or determine what caused a change.</p><p>Follow the person’s care plan for new or concerning changes. Music, conversation and quiet company are optional.</p></details>
     <div className="evening-latest"><div><p className="eyebrow">Explore without changing your records</p><h2>One fictional evening.</h2><p>Follow Avery’s garden story, change the activity, and see the session handoff. Example sessions stay separate.</p></div><button className="btn" onClick={() => onStart('story', true)}>Try a fictional session <span aria-hidden="true">↗</span></button></div>
   </section>

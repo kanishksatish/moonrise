@@ -395,3 +395,8 @@
 .evening-photo-editor p { margin:12px 0; color:#ced7cb; }
 .evening-photo-editor input[type=file] { padding:12px; font-size:20px; }
 .studio-stage .comfort-photo { max-height:340px; margin:0 0 25px; }
+
+.evening-workspace .activity-preview { min-height: 58px; margin: 14px 0; color: #4d564f; }
+.evening-workspace .activity-preview p { margin: 0; font-size: 20px; line-height: 1.45; animation: activity-preview-in 180ms ease-out; }
+@keyframes activity-preview-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .evening-workspace .activity-preview p { animation: none; } }

@@ -27,12 +27,14 @@ function timeValue(date) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-export default function Log({ state, sky, update, onDone }) {
+export default function Log({ state, sky, update, onDone, onSkip, demoSession = false, onDemoOutcome }) {
   const today = eveningKey()
-  const existing = state.logs.find((l) => l.date === today && !l.demo)
+  const existing = demoSession ? null : state.logs.find((l) => l.date === today && !l.demo)
   const savedContext = cleanCareContext(existing?.careContext)
   const [askTime, setAskTime] = useState(false)
   const timeHeading = useRef(null)
+  const lastSaved = useRef(null)
+  const complete = () => onDone(lastSaved.current)
   const [error, setError] = useState('')
   const [errorLocation, setErrorLocation] = useState('outcome')
   const [deviceSaveFailed, setDeviceSaveFailed] = useState(false)
@@ -80,6 +82,7 @@ export default function Log({ state, sky, update, onDone }) {
       }
       setError('')
       setDeviceSaveFailed(false)
+      lastSaved.current = log
       setSavedEpisodeStart(log.episodeStart)
       setContextDirty(false)
       return true
@@ -90,13 +93,17 @@ export default function Log({ state, sky, update, onDone }) {
   }
 
   function choose(outcome) {
+    if (demoSession) {
+      if (onDemoOutcome?.(outcome) === false) { setError('The example could not be saved. Keep this page open and retry.'); return }
+      onDone(); return
+    }
     if (!save(outcome)) return
     if (outcome === 'episode') setAskTime(true)
-    else onDone()
+    else complete()
   }
 
   function saveTime() {
-    if (save('episode', time, 'onset')) onDone()
+    if (save('episode', time, 'onset')) complete()
   }
 
   function toggleStep(id) {
@@ -115,7 +122,7 @@ export default function Log({ state, sky, update, onDone }) {
     setError('')
   }
 
-  if (!sky) return <p className="big-number">Checking tonight’s sky…</p>
+  if (!sky && !demoSession) return <p className="big-number">Checking tonight’s sky…</p>
 
   if (askTime) {
     return (
@@ -138,8 +145,8 @@ export default function Log({ state, sky, update, onDone }) {
           />
           <div className="journal-time-actions">
             <button className="btn primary huge" onClick={saveTime}>Save time</button>
-            <button className="btn" onClick={onDone}>{deviceSaveFailed ? 'Leave for now (not saved)' : savedEpisodeStart ? 'Keep saved time' : 'Skip'}</button>
-            {savedEpisodeStart && <button className="btn" onClick={() => { if (save('episode', null, 'onset')) onDone() }}>Remove saved time</button>}
+            <button className="btn" onClick={() => { if (deviceSaveFailed) { if (onSkip) onSkip(); else onDone(null) } else complete() }}>{deviceSaveFailed ? 'Leave for now (not saved)' : savedEpisodeStart ? 'Keep saved time' : 'Skip'}</button>
+            {savedEpisodeStart && <button className="btn" onClick={() => { if (save('episode', null, 'onset')) complete() }}>Remove saved time</button>}
           </div>
         </div>
         <p className="care-plan-note">{CARE_PLAN_NOTE}</p>
@@ -152,7 +159,7 @@ export default function Log({ state, sky, update, onDone }) {
       <header className="journal-heading">
         <p className="eyebrow">The evening journal</p>
         <h1>How was tonight?</h1>
-        <p className="lead">Your observation, in one tap.</p>
+        {demoSession && <p className="studio-demo">Fictional session · this choice will not change your evening journal.</p>}
         <p className="journal-date"><span aria-hidden="true"/>Evening of {prettyDate(today)}</p>
       </header>
       {error && errorLocation !== 'comfort' && <p className="status" role="alert">{error}</p>}
@@ -176,7 +183,7 @@ export default function Log({ state, sky, update, onDone }) {
           </button>
         ))}
       </div>
-      <details className="comfort-editor">
+      {!demoSession && <details className="comfort-editor">
         <summary>Comfort steps used <span>Optional</span></summary>
         <div className="comfort-editor-content">
           <p id="comfort-help">What did you use this evening? These are your notes, not recommended actions or a measure of what worked.</p>
@@ -206,7 +213,8 @@ export default function Log({ state, sky, update, onDone }) {
           </div>
           {contextSaved && <p role="status">Comfort steps saved for this evening.</p>}
         </div>
-      </details>
+      </details>}
+      {onSkip && <button className="btn" onClick={onSkip}>Continue without an evening indicator</button>}
       <p className="care-plan-note">{CARE_PLAN_NOTE}</p>
     </div>
   )

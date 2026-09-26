@@ -121,7 +121,7 @@ export default function SessionHandoff({ sessions = [], onReview, saveError = fa
   return (
     <section className={`session-handoff${example ? ' session-handoff-example' : ''}`} aria-labelledby={`${id}-heading`}>
       <header className="session-handoff-heading">
-        <div><p className="session-handoff-kicker">An evening, carried forward</p><h2 id={`${id}-heading`}>Session handoff</h2></div>
+        <div><h2 id={`${id}-heading`}>Session handoff</h2></div>
         <span className="session-handoff-mark" aria-hidden="true">☾</span>
       </header>
 

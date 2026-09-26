@@ -64,7 +64,7 @@ it('keeps an approved conversation starter available without a technical badge, 
   fireEvent.click(quiet)
   expect(document.querySelector('audio')).toBeNull()
   expect(audio.getAttribute('src')).toBeNull()
-  expect(screen.getByText('Music is stopped. Stay as long as you like.')).toBeTruthy()
+  expect(screen.getByText('Music is stopped.')).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Next prompt' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Return to music' })).toBe(document.activeElement)
   fireEvent.click(screen.getByRole('button', { name: 'Return to music' }))

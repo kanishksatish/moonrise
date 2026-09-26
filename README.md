@@ -6,7 +6,7 @@ Moonrise is a caregiver-support prototype for evenings with a person living with
 Its connected workflow starts with a personal plan: a familiar story or photo, preferences,
 and topics to avoid. The caregiver offers story, music or quiet company, records choices
 and observations, then reviews a source-linked session handoff. The person can decline or
-stop at any point. The handoff distinguishes caregiver entries from player events and
+stop at any point. Finish opens the evening indicators before the report. The handoff distinguishes caregiver entries from player events and
 leaves missing observations unknown; it does not infer that an activity improved symptoms.
 
 Sunset and weather provide an optional planning cue, not a clinical prediction. The separate
@@ -24,7 +24,7 @@ The hosted app needs no hardware, account or backend. It is a web app (PWA) that
 | Step | What Moonrise does |
 | --- | --- |
 | Setup | Name, birth year, location (browser location or city search) and up to three optional memory anchors: hometown, spouse, job. |
-| Today | A warm evening workspace with a personal plan, first-activity choices, immediate Start, optional moonflight, and a clearly fictional walkthrough. Sunset timing remains a secondary planning cue. |
+| Today | A warm evening workspace with a personal plan, first-activity choices, one Start button with a skippable rocket launch, and a clearly fictional walkthrough. Sunset timing remains a secondary planning cue. |
 | Shared session | A large story/photo, music or quiet view. The caregiver controls progression, can record started/declined actions, and can add an observation. Quiet and Finish stop playback. Draft observations must be added or cleared before Finish. |
 | Session handoff | Timestamped actions, original source records, the preferences captured at session start, explicit missing observations, and a caregiver review tied to the exact record. This is a factual on-device summary, not an AI-generated clinical note. |
 | Log | Three large observation buttons: **Calm**, **Restless**, **Episode**; optional onset time and explicitly recorded comfort steps. Unknown is distinct from a reported “none.” |

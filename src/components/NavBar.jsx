@@ -8,7 +8,7 @@ const TABS = [
 export default function NavBar({ current, onChange }) {
   return (
     <nav className="navbar no-print" aria-label="Main navigation">
-      <div className="nav-brand"><Brand /><p>A little space<br/>for the evening.</p></div>
+      <div className="nav-brand"><Brand /></div>
       <div className="nav-tabs">
       {TABS.map((t) => (
         <button key={t.id} className={t.id === current ? 'nav-btn active' : 'nav-btn'} onClick={() => onChange(t.id)} aria-current={t.id === current ? 'page' : undefined}>
@@ -17,7 +17,7 @@ export default function NavBar({ current, onChange }) {
         </button>
       ))}
       </div>
-      <div className="nav-foot" aria-hidden="true"><div className="nav-horizon"><i/><span/></div><p>One evening<br/>at a time.</p></div>
+      <div className="nav-foot" aria-hidden="true"><div className="nav-horizon"><i/><span/></div></div>
     </nav>
   )
 }

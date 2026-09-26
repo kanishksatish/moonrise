@@ -222,7 +222,7 @@ it('does not remind during or after an already-started routine, then allows the 
   vi.setSystemTime(new Date(2026, 8, 26, 18, 10))
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))
-  click('A little music'); click('Start Moonrise now')
+  click('A little music'); click('Start Moonrise now'); click('Skip launch')
   vi.setSystemTime(new Date(2026, 8, 26, 18, 21))
   await act(async () => vi.advanceTimersByTime(15000))
   expect(delivered).not.toHaveBeenCalled()
@@ -372,7 +372,7 @@ it('recovers a damaged stored session through a complete song-and-log flow', asy
     tonight: { date: '2026-09-26', songIds: null },
   }))
   await act(async () => render(<App />))
-  click('A little music'); click('Start Moonrise now')
+  click('A little music'); click('Start Moonrise now'); click('Skip launch')
   await act(async () => chooseYouTube())
   act(() => players[0].events.onStateChange({ data: 1 }))
   click('Finish'); click('Log'); click('Calm')
@@ -385,7 +385,7 @@ it('recovers a damaged stored session through a complete song-and-log flow', asy
 it('preserves actual bundled IDs alongside old era IDs through playback, storage, and the report', async () => {
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))
-  click('A little music'); click('Start Moonrise now')
+  click('A little music'); click('Start Moonrise now'); click('Skip launch')
   fireEvent.playing(document.querySelector('audio'))
   fireEvent.pause(document.querySelector('audio'))
   fireEvent.playing(document.querySelector('audio'))
@@ -410,17 +410,21 @@ it('shows bundled tracks with an unknown recording year without inventing a year
 })
 
 
-it('starts directly on request without a launch delay, then opens the handoff', async () => {
+it('launches on Start, then asks for the evening indicator before the handoff', async () => {
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))
   expect(screen.queryByRole('dialog')).toBeNull()
   document.documentElement.scrollTop = 500
   click('Start Moonrise now')
+  expect(screen.getByRole('dialog')).toBeTruthy()
+  click('Skip launch')
   expect(document.documentElement.scrollTop).toBe(0)
   expect(screen.getByRole('region', { name: 'Shared activity' })).toBeTruthy()
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(screen.getByRole('button', { name: 'Quiet view' })).toBe(document.activeElement)
   click('Finish')
+  expect(screen.getByRole('heading', { name: 'How was tonight?' })).toBeTruthy()
+  click('Calm')
   expect(screen.getByRole('heading', { name: 'Session handoff' })).toBeTruthy()
 })
 

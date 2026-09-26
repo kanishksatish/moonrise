@@ -1,10 +1,12 @@
 // Memory prompts for the caregiver to read aloud in Moonrise mode, one at a time.
-// Built from the person's anchors (hometown, spouse, job), their era, and the current song.
+// Built from the person's anchors (hometown, spouse, job) and their era.
+// A caller may supply a song as a conversation topic; it does not imply playback.
 // The job anchor should be a role, e.g. "nurse" or "school teacher".
 //
 // Era events are included only if the person was at least MIN_AGE_AT_EVENT that year
 // (so the 1969 moon landing needs a birth year before ~1962).
-// Prompts are gentle and open-ended on purpose: no quizzes, nothing with a wrong answer.
+// Built-ins offer optional topics without asking the person to recall an event.
+// Caregiver-approved wording is preserved rather than rewritten here.
 
 import { eraYears } from './songs.js'
 
@@ -12,24 +14,24 @@ export const MIN_AGE_AT_EVENT = 7
 export const PROMPT_EVERY_MINUTES = 3
 
 const ERA_EVENTS = [
-  { year: 1969, text: 'Where were you when they landed on the moon in 1969?' },
-  { year: 1957, text: 'Do you remember when the first satellite crossed the night sky in 1957?' },
-  { year: 1956, text: 'Do you remember the first time you heard Elvis on the radio?' },
-  { year: 1964, text: 'Do you remember when the Beatles first came on television?' },
-  { year: 1955, text: 'What was the first thing you remember watching on television?' },
+  { year: 1969, text: 'Would you like to talk about the 1969 moon landing?' },
+  { year: 1957, text: 'We could talk about the first satellite in 1957.' },
+  { year: 1956, text: 'Would you like to talk about Elvis on the radio?' },
+  { year: 1964, text: 'We could talk about the Beatles on television.' },
+  { year: 1955, text: 'Would you like to talk about early television shows?' },
 ]
 
 const GENERAL = [
-  'What songs did you love to dance to?',
-  'What was your favorite meal when you were young?',
-  'Tell me about your best friend growing up.',
-  'What did you do on summer evenings when you were young?',
-  'What did the night sky look like where you grew up?',
-  'Tell me about a pet you loved.',
-  'What games did you play outside as a child?',
-  'What was your favorite place to go on a Saturday?',
-  'What did your kitchen smell like when you were small?',
-  'Who taught you to cook your favorite dish?',
+  'Would you like to talk about music or dancing?',
+  'We could talk about a meal you enjoy.',
+  'Would you like to talk about friends?',
+  'We could talk about summer evenings.',
+  'Would you like to talk about the night sky?',
+  'We could talk about pets.',
+  'Would you like to talk about games?',
+  'We could talk about places to spend a Saturday.',
+  'Would you like to talk about cooking?',
+  'We can sit together quietly, too.',
 ]
 
 function clean(value) {
@@ -47,30 +49,30 @@ export function memoryPrompts(profile = {}, { song = null, approved = [] } = {})
   const spouse = clean(anchors.spouse)
   const job = clean(anchors.job)
 
-  if (song) prompts.push(`Do you remember "${song.title}" by ${song.artist}?`)
+  if (song) prompts.push(`Would you like to talk about "${song.title}" by ${song.artist}?`)
   for (const text of Array.isArray(approved) ? approved : []) {
     if (typeof text === 'string' && text.trim()) prompts.push(text.trim())
   }
 
   if (hometown) {
-    prompts.push(`Tell me about ${hometown} when you were young.`)
-    prompts.push(`What was your street like in ${hometown}?`)
-    prompts.push(`What did the evenings feel like in ${hometown}?`)
+    prompts.push(`Would you like to talk about ${hometown}?`)
+    prompts.push(`We could talk about streets and shops in ${hometown}.`)
+    prompts.push(`Would you like to talk about evenings in ${hometown}?`)
   }
   if (spouse) {
-    prompts.push(`How did you and ${spouse} meet?`)
-    prompts.push(`Where did you and ${spouse} like to go together?`)
+    prompts.push(`Would you like to talk about ${spouse}?`)
+    prompts.push(`We could talk about time with ${spouse}, if you like.`)
   }
   if (job) {
-    prompts.push(`Tell me about your days as a ${job}.`)
-    prompts.push(`What was a good day at work like, back when you were a ${job}?`)
+    prompts.push(`Would you like to talk about working as a ${job}?`)
+    prompts.push(`We could talk about the work of a ${job}.`)
   }
 
   if (Number.isInteger(profile.birthYear)) {
     const { to } = eraYears(profile.birthYear)
     const decade = Math.floor((profile.birthYear + 15) / 10) * 10
-    prompts.push(`What did you wear to go out in the ${decade}s?`)
-    prompts.push(`What songs were on the radio in the ${decade}s?`)
+    prompts.push(`Would you like to talk about clothes from the ${decade}s?`)
+    prompts.push(`We could talk about radio music from the ${decade}s.`)
     for (const event of ERA_EVENTS) {
       if (event.year - profile.birthYear >= MIN_AGE_AT_EVENT && event.year <= to + 10) {
         prompts.push(event.text)
