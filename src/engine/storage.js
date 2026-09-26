@@ -27,27 +27,62 @@ function isValidIso(value) {
   return typeof value === 'string' && !Number.isNaN(new Date(value).getTime())
 }
 
+// A real calendar date in 'YYYY-MM-DD' form (rejects 2026-02-30, 2026-99-99 ...).
+function isCalendarDate(value) {
+  if (typeof value !== 'string' || !DATE_PATTERN.test(value)) return false
+  const [y, m, d] = value.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
+}
+
+function cleanString(value) {
+  return typeof value === 'string' ? value : ''
+}
+
+function cleanSongIds(value) {
+  return Array.isArray(value) ? value.filter((id) => typeof id === 'string') : []
+}
+
 // One stored evening, cleaned up, or null if it can't be used (no valid date or outcome).
 // Keeps extra fields (e.g. demo: true) and repairs the optional ones instead of dropping
 // the whole evening, so an old or half-written entry never breaks learning or the report.
 export function cleanLog(log) {
   if (!log || typeof log !== 'object' || Array.isArray(log)) return null
-  if (typeof log.date !== 'string' || !DATE_PATTERN.test(log.date) || !OUTCOMES.has(log.outcome)) return null
+  if (!isCalendarDate(log.date) || !OUTCOMES.has(log.outcome)) return null
   return {
     ...log,
     episodeStart: log.outcome === 'episode' && isValidIso(log.episodeStart) ? log.episodeStart : null,
     effectiveDusk: isValidIso(log.effectiveDusk) ? log.effectiveDusk : null,
     cloudCover: Number.isFinite(log.cloudCover) ? log.cloudCover : null,
-    songIds: Array.isArray(log.songIds) ? log.songIds.filter((id) => typeof id === 'string') : [],
+    songIds: cleanSongIds(log.songIds),
   }
 }
 
-// A profile the app can run on: needs a whole birth year and real coordinates.
-// Anything else sends the caregiver back to Setup instead of showing NaN times.
+// A profile the app can run on: a name, a whole birth year and real coordinates.
+// Anything else sends the caregiver back to Setup instead of showing NaN times or
+// crashing on a non-text name. Text fields the UI shows are always strings.
 function cleanProfile(profile) {
-  if (!profile || typeof profile !== 'object') return null
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile)) return null
+  if (typeof profile.name !== 'string' || !profile.name.trim()) return null
   if (!Number.isInteger(profile.birthYear) || !Number.isFinite(profile.lat) || !Number.isFinite(profile.lon)) return null
-  return profile
+  const anchors = profile.anchors && typeof profile.anchors === 'object' ? profile.anchors : {}
+  return {
+    ...profile,
+    city: cleanString(profile.city),
+    anchors: {
+      ...anchors,
+      hometown: cleanString(anchors.hometown),
+      spouse: cleanString(anchors.spouse),
+      job: cleanString(anchors.job),
+    },
+  }
+}
+
+// Tonight's session record ({ date, songIds }): kept only with a real date, songIds always
+// an array of strings.
+function cleanTonight(tonight) {
+  if (!tonight || typeof tonight !== 'object' || Array.isArray(tonight) || !isCalendarDate(tonight.date)) return undefined
+  return { ...tonight, songIds: cleanSongIds(tonight.songIds) }
 }
 
 export function loadState(storage = defaultStorage()) {
@@ -62,11 +97,15 @@ export function loadState(storage = defaultStorage()) {
       const clean = cleanLog(log)
       if (clean) byDate.set(clean.date, clean)
     }
-    return {
+    const state = {
       ...parsed,
       profile: cleanProfile(parsed.profile),
       logs: [...byDate.values()].sort((a, b) => (a.date < b.date ? -1 : 1)),
     }
+    const tonight = cleanTonight(parsed.tonight)
+    if (tonight) state.tonight = tonight
+    else delete state.tonight
+    return state
   } catch {
     return emptyState()
   }
