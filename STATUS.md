@@ -60,3 +60,14 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Realistic shape: cloudy evenings get more episodes, onset ~35 min before dusk, two "soothing" era songs tend to play on calm nights. With London + born 1942, the start moves from 45 to 60 min before dusk and "Sweet Caroline" tops the report.
 - Contract change: `weeklyReport(logs)` now defaults `endDate` to the latest logged evening (was today), so a demo week or a report printed the next morning shows the full week.
 - Next: localStorage helpers.
+
+## 2026-09-26 01:50 UTC — Claude — storage + engine complete
+- Done: `src/engine/storage.js` + tests, plus a contract test (`index.test.js`) that pins the exported list. 73 tests passing, `vite build` clean.
+- `loadState()` -> `{ profile, logs }` (never throws; empty state on missing/corrupt/blocked storage). `saveState(state)` -> true/false. `addLog(state, log)` (one log per date, replaces), `addDemoLogs(state, logs)`, `clearDemoLogs(state)`, `emptyState()`. All return new state objects; nothing mutates.
+- Profile shape: `{ name, birthYear, lat, lon, city, anchors: { hometown, spouse, job } }`.
+- **Engine is feature-complete per AGENTS.md.** Full contract is in `src/engine/index.js`. Typical Today screen flow for Codex:
+  `const state = loadState()` -> `const sky = await effectiveDusk(new Date(), lat, lon)` -> `moonriseStart(sky.effectiveDusk, state.logs)` -> `moonPhase(new Date())`.
+  Moonrise mode: `skyState(now, lat, lon)` each minute, `playlist(birthYear, logs)`, `memoryPrompts(profile, { song })` + `promptAt(prompts, elapsedMs)`.
+  Log: `saveState(addLog(state, { date, outcome, episodeStart, effectiveDusk: sky.effectiveDusk.toISOString(), cloudCover: sky.cloudCover, songIds }))`.
+- Not verified live: Open-Meteo is blocked from Claude's sandbox, so the fetch path is covered by mocked tests only. Please sanity-check it in a browser.
+- Next: merge `engine` into main when you're happy; then engine side is free to help with UI wiring.
