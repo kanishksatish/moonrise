@@ -4,10 +4,27 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import fs from 'node:fs'
 import vm from 'node:vm'
+import { JSDOM } from 'jsdom'
 
 const SW_SOURCE = fs.readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
 const ORIGIN = 'https://app.test'
 const SCOPE = `${ORIGIN}/`
+
+it('declares bundled audio for the shell without an active media element or resource hint', () => {
+  const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8')
+  const dom = new JSDOM(html, { url: SCOPE })
+  try {
+    const { document } = dom.window
+    expect(document.querySelector('audio')).toBeNull()
+    expect(document.querySelector('link[as="audio"]')).toBeNull()
+    expect(document.querySelector('[src$=".mp3"], [href$=".mp3"]')).toBeNull()
+    const audio = document.getElementById('offline-audio-assets').content.querySelector('audio')
+    expect(audio.getAttribute('src')).toBe('/src/assets/audio/fur-elise-v-gao.mp3')
+    expect(audio.isConnected).toBe(false)
+  } finally {
+    dom.window.close()
+  }
+})
 
 // ---- Fakes -------------------------------------------------------------------------------
 
@@ -423,7 +440,7 @@ const AUDIO_BYTES = new Uint8Array([73, 68, 51, 0, 255, 128, 1, 254, 7, 0, 192, 
 const audioPath = tag => `/assets/fur-elise-v-gao-${tag}.mp3`
 function audioBuild(tag) {
   const files = build(tag)
-  files['/'] = files['/'].replace('</head>', `<link rel="prefetch" as="audio" crossorigin="anonymous" href="${audioPath(tag)}"></head>`)
+  files['/'] = files['/'].replace('</head>', `<template id="offline-audio-assets"><audio src="${audioPath(tag)}"></audio></template></head>`)
   files[audioPath(tag)] = new Response(AUDIO_BYTES, {
     headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(AUDIO_BYTES.length), ETag: '"piano-v1"' },
   })
