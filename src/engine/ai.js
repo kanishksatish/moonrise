@@ -5,8 +5,10 @@
 // ever appear in Moonrise mode (see memoryPrompts in prompts.js). Nothing is sent unless the
 // caregiver taps "Generate" with their own Anthropic API key.
 //
-// Privacy: we send the birth year, era years, and the three optional anchors (hometown,
-// spouse's first name, job). Never the person's name, logs, location or anything else.
+// Privacy: we send the birth year, era years, and the three optional anchor answers
+// (hometown, spouse's first name, job) exactly as typed. We never send the profile name,
+// the saved coordinates/city, or any evening logs. (An anchor answer can itself contain a
+// name or place; that is the caregiver's choice, and the Settings note says so.)
 //
 // The key: there is no Moonrise server, so the browser calls the Anthropic API directly
 // with a key the caregiver pastes into Settings (stored only on this device, apart from the
@@ -22,6 +24,9 @@ import { eraYears } from './songs.js'
 export const AI_MODEL = 'claude-haiku-4-5'
 export const AI_PROMPT_COUNT = 6
 export const AI_TIMEOUT_MS = 30000
+// Six prompts of under 20 words fit in a few hundred tokens; this leaves plenty of room
+// while bounding cost if a reply ever runs long.
+export const AI_MAX_TOKENS = 2048
 const MAX_PROMPT_LENGTH = 140
 
 // Topics a caregiver would not want surfacing unprompted in a calming evening routine.
@@ -89,23 +94,37 @@ export function cleanGeneratedPrompts(prompts, existing = []) {
   return out
 }
 
-async function defaultClient(apiKey) {
-  const { default: Anthropic } = await import('@anthropic-ai/sdk')
-  return new Anthropic({ apiKey, dangerouslyAllowBrowser: true, maxRetries: 1, timeout: AI_TIMEOUT_MS })
+const OFFLINE_MESSAGE = 'Could not reach the AI service. Check the connection and try again.'
+
+// The SDK and its helpers are separate chunks loaded on first use. If that load fails
+// (e.g. offline before they were ever cached), report it as offline rather than letting a
+// raw import error escape.
+async function loadModules() {
+  try {
+    const [{ default: Anthropic }, { z }, { zodOutputFormat }] = await Promise.all([
+      import('@anthropic-ai/sdk'),
+      import('zod'),
+      import('@anthropic-ai/sdk/helpers/zod'),
+    ])
+    return { Anthropic, z, zodOutputFormat }
+  } catch {
+    throw new AiPromptError('offline', OFFLINE_MESSAGE)
+  }
 }
 
-// Map SDK errors to the few cases the caregiver can act on.
-async function toAiError(err) {
+// Map errors to the few cases the caregiver can act on. `Anthropic` is the already-loaded
+// SDK (or null if loading it is what failed), so this never imports anything itself.
+function toAiError(err, Anthropic) {
   if (err instanceof AiPromptError) return err
-  const { default: Anthropic } = await import('@anthropic-ai/sdk')
-  if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
+  const status = typeof err?.status === 'number' ? err.status : null
+  if (status === 401 || status === 403) {
     return new AiPromptError('bad_key', 'That API key was not accepted. Check it in Settings.')
   }
-  if (err instanceof Anthropic.RateLimitError) {
+  if (status === 429) {
     return new AiPromptError('rate_limited', 'Too many requests right now. Try again in a minute.')
   }
-  if (err instanceof Anthropic.APIConnectionError) {
-    return new AiPromptError('offline', 'Could not reach the AI service. Check the connection and try again.')
+  if (Anthropic && err instanceof Anthropic.APIConnectionError) {
+    return new AiPromptError('offline', OFFLINE_MESSAGE)
   }
   return new AiPromptError('service', 'The AI service had a problem. Try again later.')
 }
@@ -117,15 +136,19 @@ export async function generateMemoryPrompts(profile, { apiKey, client, existing 
   if (!client && !(typeof apiKey === 'string' && apiKey.trim())) {
     throw new AiPromptError('no_key', 'Add an Anthropic API key in Settings to use AI prompts.')
   }
+  let Anthropic = null
   try {
-    const api = client ?? (await defaultClient(apiKey.trim()))
-    const [{ z }, { zodOutputFormat }] = await Promise.all([import('zod'), import('@anthropic-ai/sdk/helpers/zod')])
+    const modules = await loadModules()
+    Anthropic = modules.Anthropic
+    const { z, zodOutputFormat } = modules
+    const api =
+      client ?? new Anthropic({ apiKey: apiKey.trim(), dangerouslyAllowBrowser: true, maxRetries: 1, timeout: AI_TIMEOUT_MS })
     const Schema = z.object({ prompts: z.array(z.string()) })
 
     // Haiku 4.5 takes no effort setting; structured output keeps the reply as { prompts: [...] }.
     const response = await api.messages.parse({
       model: AI_MODEL,
-      max_tokens: 16000,
+      max_tokens: AI_MAX_TOKENS,
       output_config: { format: zodOutputFormat(Schema) },
       system: SYSTEM,
       messages: [{ role: 'user', content: buildRequestText(profile, count) }],
@@ -139,6 +162,6 @@ export async function generateMemoryPrompts(profile, { apiKey, client, existing 
     }
     return cleanGeneratedPrompts(response.parsed_output.prompts, existing).slice(0, count)
   } catch (err) {
-    throw await toAiError(err)
+    throw toAiError(err, Anthropic)
   }
 }

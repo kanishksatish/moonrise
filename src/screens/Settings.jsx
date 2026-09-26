@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { addDemoLogs, clearDemoLogs, emptyState, eveningDate, generateDemoWeek } from '../engine/index.js'
+import { addDemoLogs, clearAiKey, clearDemoLogs, emptyState, eveningDate, generateDemoWeek } from '../engine/index.js'
 import { prettyDate } from '../components/format.js'
+import AiPrompts from '../components/AiPrompts.jsx'
 
 export default function Settings({ state, update, onEditProfile }) {
   const { profile, logs } = state
   const [message, setMessage] = useState('')
   const [confirmReset, setConfirmReset] = useState(false)
+  const [resetError, setResetError] = useState('')
   const demoCount = logs.filter((l) => l.demo).length
   const realCount = logs.length - demoCount
 
@@ -26,6 +28,10 @@ export default function Settings({ state, update, onEditProfile }) {
   }
 
   function resetAll() {
+    if (!clearAiKey()) {
+      setResetError('Could not remove the saved API key. Clear Moonrise site data in your browser settings to delete everything.')
+      return
+    }
     update(emptyState())
   }
 
@@ -43,10 +49,12 @@ export default function Settings({ state, update, onEditProfile }) {
         </button>
       </section>
 
+      <AiPrompts state={state} update={update} />
+
       <section className="card demo-card">
         <h2>Demo data</h2>
         <p>
-          Fills the last 7 evenings with made-up logs so you can see how Moonrise learns. Clearly marked as demo data.
+          Fills the last 7 evenings with made-up logs so you can see how suggestions adjust. Clearly marked as demo data.
           Real evenings are never replaced.
         </p>
         <button className="btn primary" onClick={loadDemo}>
@@ -84,6 +92,7 @@ export default function Settings({ state, update, onEditProfile }) {
             Delete all data
           </button>
         )}
+        {resetError && <p className="status" role="alert">{resetError}</p>}
       </section>
 
       <p className="muted small">Moonrise supports caregivers. It is not a medical treatment.</p>
