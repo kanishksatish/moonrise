@@ -105,7 +105,7 @@
   .care-note { text-align:right; max-width:520px; }
   .navbar { display:block; width:calc(100% - 32px); max-width:760px; left:50%; right:auto; transform:translateX(-50%); bottom:16px; border:1px solid #9cafa53d; border-radius:22px; background:#151d20f5; box-shadow:0 10px 40px #0008; backdrop-filter:blur(18px); padding:5px; padding-bottom:max(5px,env(safe-area-inset-bottom)); z-index:10; }
   .nav-tabs { display:grid; grid-template-columns:repeat(4,1fr); }
-  .nav-btn { min-height:70px; border-radius:16px; gap:5px; color:#b9c2c3; font-size:20px; }
+  .nav-btn { min-width:48px; min-height:70px; border-radius:16px; gap:5px; color:#b9c2c3; font-size:20px; }
   .nav-btn.active { color:#f4d5b1; background:#eac39c13; font-weight:500; }
   .nav-btn:hover { background:#eac39c0c; }
   .nav-icon { width:24px; height:24px; }
@@ -291,6 +291,7 @@
     .quiet-view .session-moon .moon-icon { width:230px; height:230px; }
   }
   @media(max-width:360px) {
+    .nav-tabs { grid-template-columns:1fr .8fr 1.15fr 1.4fr; }
     .screen { padding-left:14px; padding-right:14px; }
     .page-heading h1 { font-size:38px; }
     .scene-moon { width:130px; height:130px; right:-14px; top:44px; }
