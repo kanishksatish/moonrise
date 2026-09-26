@@ -1,5 +1,23 @@
 [
   {
+    "id": "when-you-wish-upon-a-star-1940",
+    "title": "When You Wish Upon a Star",
+    "artist": "Cliff Edwards",
+    "year": 1940
+  },
+  {
+    "id": "you-are-my-sunshine-1940",
+    "title": "You Are My Sunshine",
+    "artist": "Jimmie Davis",
+    "year": 1940
+  },
+  {
+    "id": "pennsylvania-6-5000-1940",
+    "title": "Pennsylvania 6-5000",
+    "artist": "Glenn Miller",
+    "year": 1940
+  },
+  {
     "id": "chattanooga-choo-choo-1941",
     "title": "Chattanooga Choo Choo",
     "artist": "Glenn Miller",
@@ -9,6 +27,18 @@
     "id": "boogie-woogie-bugle-boy-1941",
     "title": "Boogie Woogie Bugle Boy",
     "artist": "The Andrews Sisters",
+    "year": 1941
+  },
+  {
+    "id": "take-the-a-train-1941",
+    "title": "Take the \"A\" Train",
+    "artist": "Duke Ellington",
+    "year": 1941
+  },
+  {
+    "id": "a-string-of-pearls-1941",
+    "title": "A String of Pearls",
+    "artist": "Glenn Miller",
     "year": 1941
   },
   {
@@ -30,6 +60,12 @@
     "year": 1942
   },
   {
+    "id": "moonlight-becomes-you-1942",
+    "title": "Moonlight Becomes You",
+    "artist": "Bing Crosby",
+    "year": 1942
+  },
+  {
     "id": "i-ll-be-seeing-you-1944",
     "title": "I'll Be Seeing You",
     "artist": "Billie Holiday",
@@ -48,9 +84,21 @@
     "year": 1944
   },
   {
+    "id": "don-t-fence-me-in-1944",
+    "title": "Don't Fence Me In",
+    "artist": "Bing Crosby & The Andrews Sisters",
+    "year": 1944
+  },
+  {
     "id": "sentimental-journey-1945",
     "title": "Sentimental Journey",
     "artist": "Doris Day",
+    "year": 1945
+  },
+  {
+    "id": "let-it-snow-let-it-snow-let-it-snow-1945",
+    "title": "Let It Snow! Let It Snow! Let It Snow!",
+    "artist": "Vaughn Monroe",
     "year": 1945
   },
   {
@@ -60,15 +108,69 @@
     "year": 1948
   },
   {
+    "id": "nature-boy-1948",
+    "title": "Nature Boy",
+    "artist": "Nat King Cole",
+    "year": 1948
+  },
+  {
+    "id": "some-enchanted-evening-1949",
+    "title": "Some Enchanted Evening",
+    "artist": "Perry Como",
+    "year": 1949
+  },
+  {
     "id": "unforgettable-1951",
     "title": "Unforgettable",
     "artist": "Nat King Cole",
     "year": 1951
   },
   {
+    "id": "mockin-bird-hill-1951",
+    "title": "Mockin' Bird Hill",
+    "artist": "Les Paul & Mary Ford",
+    "year": 1951
+  },
+  {
+    "id": "how-much-is-that-doggie-in-the-window-1953",
+    "title": "How Much Is That Doggie in the Window?",
+    "artist": "Patti Page",
+    "year": 1953
+  },
+  {
+    "id": "secret-love-1953",
+    "title": "Secret Love",
+    "artist": "Doris Day",
+    "year": 1953
+  },
+  {
     "id": "earth-angel-1954",
     "title": "Earth Angel",
     "artist": "The Penguins",
+    "year": 1954
+  },
+  {
+    "id": "rock-around-the-clock-1955",
+    "title": "Rock Around the Clock",
+    "artist": "Bill Haley & His Comets",
+    "year": 1954
+  },
+  {
+    "id": "three-coins-in-the-fountain-1954",
+    "title": "Three Coins in the Fountain",
+    "artist": "The Four Aces",
+    "year": 1954
+  },
+  {
+    "id": "mr-sandman-1954",
+    "title": "Mr. Sandman",
+    "artist": "The Chordettes",
+    "year": 1954
+  },
+  {
+    "id": "blue-moon-of-kentucky-1954",
+    "title": "Blue Moon of Kentucky",
+    "artist": "Elvis Presley",
     "year": 1954
   },
   {
@@ -78,10 +180,10 @@
     "year": 1955
   },
   {
-    "id": "rock-around-the-clock-1955",
-    "title": "Rock Around the Clock",
-    "artist": "Bill Haley & His Comets",
-    "year": 1954
+    "id": "the-great-pretender-1955",
+    "title": "The Great Pretender",
+    "artist": "The Platters",
+    "year": 1955
   },
   {
     "id": "que-sera-sera-1956",
@@ -102,9 +204,39 @@
     "year": 1956
   },
   {
+    "id": "i-walk-the-line-1956",
+    "title": "I Walk the Line",
+    "artist": "Johnny Cash",
+    "year": 1956
+  },
+  {
     "id": "everyday-1957",
     "title": "Everyday",
     "artist": "Buddy Holly",
+    "year": 1957
+  },
+  {
+    "id": "catch-a-falling-star-1957",
+    "title": "Catch a Falling Star",
+    "artist": "Perry Como",
+    "year": 1957
+  },
+  {
+    "id": "bye-bye-love-1957",
+    "title": "Bye Bye Love",
+    "artist": "The Everly Brothers",
+    "year": 1957
+  },
+  {
+    "id": "tammy-1957",
+    "title": "Tammy",
+    "artist": "Debbie Reynolds",
+    "year": 1957
+  },
+  {
+    "id": "magic-moments-1957",
+    "title": "Magic Moments",
+    "artist": "Perry Como",
     "year": 1957
   },
   {
@@ -117,6 +249,12 @@
     "id": "volare-1958",
     "title": "Volare",
     "artist": "Domenico Modugno",
+    "year": 1958
+  },
+  {
+    "id": "all-i-have-to-do-is-dream-1958",
+    "title": "All I Have to Do Is Dream",
+    "artist": "The Everly Brothers",
     "year": 1958
   },
   {

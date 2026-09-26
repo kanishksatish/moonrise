@@ -61,6 +61,8 @@ describe('findCity', () => {
     const bad = [
       null,
       'nope',
+      [],
+      [{ name: 'Dallas', latitude: 32.7, longitude: -96.8 }],
       { results: 'Dallas' },
       { results: [null] },
       { results: [{ name: 'Dallas', latitude: 'x', longitude: -96.8 }] },

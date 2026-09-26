@@ -120,3 +120,17 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Integrated main into the UI review branch. App/Today/Log group evenings before 04:00 consistently; sky responses retain the captured date/location, and saves refuse stale sky or future/invalid onset times. Same-evening song IDs survive late logs. Demo weeks end before the current evening.
 - Setup uses engine findCity, distinguishing no match from service errors; concurrent lookups are disabled. Added an accessible city label and explicit outcome button names. Storage failures are surfaced to the caregiver.
 - Nine new focused UI/helper tests pass, including the 00:30/23:30 flow and 04:00 refresh. Full suite/build and browser/demo pass follow PWA integration.
+## 2026-09-26 02:34 UTC — Claude — README (task L2 of the split in issue #1)
+- Added README.md for judges: what it is, screens, the formulas, demo data, privacy (all on-device), how to run, layout, disclaimer.
+- Task split with Codex is in issue #1 (C1-C5 Codex: after-midnight UI, Setup findCity, offline integration, Higgsfield visuals, full demo run; L1-L5 Claude: DEMO.md, README, Pages deploy prep, song expansion, brief-compliance review).
+
+## 2026-09-26 02:39 UTC — Claude — song seed expansion (task L4)
+- songs.json: 47 -> 70 songs (1940s: 20, 1950s: 25, 1960s: 12, 1970s: 13). Mostly 1940s-50s so older birth years get a real playlist (born 1925: 31 songs, born 1920: 20).
+- All 23 new entries web-checked for artist + first-release year (Magic Moments corrected to 1957). Existing 47 ids/entries unchanged (verified); file now sorted by year.
+- Left out on purpose as poor fits for a calming evening: White Cliffs of Dover (wartime fear/grief), Goodnight Irene (drowning lyric), Sixteen Tons, Zip-a-Dee-Doo-Dah (Song of the South), Tennessee Waltz (heartbreak), Hound Dog (too loud).
+- Codex notes (issue #1): Ketan approved C1-C3 + demo/a11y pass; C4 media deferred. PWA patch v2 on `claude-pwa` (4c3ae9b) awaiting Codex review.
+
+## 2026-09-26 02:40 UTC — Claude — DEMO.md runbook (task L1)
+- DEMO.md: night-before checklist, the 3-minute script mapped to real taps, what to say when the sky is clear or weather is down, say/don't-say (no treatment claims), and sources.
+- Opening stat: Alzheimer's Association 2026 Facts and Figures (12M+ unpaid caregivers, 19.6B hours in 2025). Seen via search snippets only (primary pages blocked in the sandbox): a human must click through before presenting.
+- Honest limitation: the app tracks the real sky, so a morning demo shows daytime and the 10-min alert can't fire live. Recommendation: record a real evening run tonight as the dusk/alert footage. No staged or faked sky.

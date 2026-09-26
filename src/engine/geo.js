@@ -18,7 +18,7 @@ export async function findCity(name, { fetchFn = globalThis.fetch, timeoutMs = D
   const query = typeof name === 'string' ? name.trim() : ''
   if (!query) return null
   const json = await fetchJson(geocodeUrl(query), { fetchFn, timeoutMs })
-  if (!json || typeof json !== 'object') throw new Error('Malformed geocoding response')
+  if (!json || typeof json !== 'object' || Array.isArray(json)) throw new Error('Malformed geocoding response')
   if (json.results === undefined) return null
   if (!Array.isArray(json.results)) throw new Error('Malformed geocoding response')
   if (json.results.length === 0) return null
