@@ -91,7 +91,7 @@ export default function Moonrise({ state, onPlayed, onExit }) {
 
       <div className="moonrise-content">
         <div className="session-sky" aria-hidden="true">
-          <div className="session-moon" style={{ transform: `translate(${moonProgress * 22}px, ${-moonProgress * 35}px)` }}><MoonIcon phase={moon.phase} decorative/></div>
+          <div className="session-moon" style={{ '--moon-progress': moonProgress }}><MoonIcon phase={moon.phase} decorative/></div>
           <div className="session-orbit"/>
           <p className="session-caption">A moment, together.</p>
         </div>
