@@ -203,3 +203,24 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 -182 tests/17 files pass, including5 launch tests plus integrated start/auto-completion/focus, Quietview/manual prompts, midnight heading and empty catalog. Root and /moonrise/ production builds pass. Browser inspected1280x720 desktop and320/390/768px widths; phone/tabled review panels used600px height for final interactions. No horizontal overflow in measured320/390 cases, measured controls >=48px. Verified Start/Skip/routine/Quiet/restore/Nextprompt/Finish and return-to-top. Existing report print layout isolated from new screen-only CSS; independent updated print/offline/reduced-motion rendering review requested from Claude. Do not substitute v1 checks for v2.
 - Public TIHM Labels.csv suitability audit (outside repo):608records/49participants,135 agitation records/27participants. No training or predictive evaluation;6-hour labels cannot validate minute-level timing; terminal-illness treatment excluded. No Moonrise patient testing or hospice readiness claim. Dataset license notes need clarification for commercial use. Aggregate reproducible outputs remain in Ketan's handoff; raw data never entered app/repo.
 - Reviewed Claude experimental5063b6e; current UI does not consume proposed calm probabilities, confidence ranges or promising-song milestones. Requested correction of unsupported inference and mixed-demo progress disclosure. Original engine ranking/timing retained here. Successful real-key AI generation still awaits Kanishk's private test. Codex did not deploy or merge main.
+## 2026-09-26 04:06 UTC — Claude — learning evidence + milestones (METHODOLOGY.md)
+- Kanishk asked for trained, not random, scores and light gamification. Built Bayesian alternatives, then tested them with a seeded simulation (`node scripts/simulate-learning.mjs`): the simple AGENTS.md rules won both studies, so ranking and start time are unchanged. Full write-up: METHODOLOGY.md.
+- New (additive): `songStats(logs)` (Beta-Bernoulli evidence per song: plays/calm/restless/episode/score/calmRate/low/high/status untried|learning|promising|unpromising); `playlist()` and `weeklyReport().topSongs` items gain calmRate/status (ordering unchanged); `moonriseStart()` gains `range {earliest, latest}`, `halfWidthMinutes`, `confidence` (calibrated ~80% in simulation); `progress(logs)` milestones with `usesDemo`.
+- Honesty rule for UI: "promising" songs were truly helpful only ~39% of the time in simulation. Show "worth trying again" + counts, never "helps".
+- 194 tests.
+
+## 2026-09-26 04:10 UTC — Claude — learning narrowed per Codex review
+- Supersedes the previous entry. Public contract is now narrow and descriptive: `songEvidence(logs)` -> { [id]: { plays, calm, restless, episode, score } }; `evidenceText(e)` -> "Opened on 5 logged evenings: 3 calm, 1 restless, 1 episode."; `weeklyReport().topSongs` items gain calm/restless/episode/evidenceText; `progress(logs)` = 4 process-only milestones (first-evening, first-song, start-from-logs, week) with usesDemo.
+- Removed: songStats/calmRate/status labels, moonriseStart range/confidence, outcome milestones. playlist() and moonriseStart() are exactly the AGENTS.md contract again.
+- METHODOLOGY.md rewritten: evidence boundary (no trained model, no clinical validation; Codex's TIHM audit: 6-hour labels, license restrictions), rules, and the simulation of what was tried and rejected. 184 tests.
+
+## 2026-09-26 04:15 UTC — Claude — engine fixes from Codex review
+- Report per-song plays count distinct evenings (Set per evening), matching songEvidence; regression added.
+- schedule.js is byte-identical to the original AGENTS.md version again (stale shrinkage/range header removed).
+- METHODOLOGY: median robustness claim now qualified by sample size. 187 tests.
+
+## 2026-09-26 04:38 UTC — Claude — in-app music data (approved by Codex in issue #1)
+- `src/data/videos.json`: 15 YouTube candidates (1950s-70s, incl. Sinatra "Fly Me to the Moon" 1964) found by web search, official artist/label/"Provided to YouTube" uploads only; catalog ids unchanged; all `verified: false`. youtube.com is blocked from Claude's sandbox, so none were opened.
+- `songVideo(songId)` -> { youtubeId, watchUrl, embedUrl (youtube-nocookie, no autoplay) } only when `verified: true` (set by hand after real in-app playback); else null. `playlist()` items gain `hasVideo`; ordering unchanged.
+- `scripts/verify-videos.mjs [--write]` records oembedStatus/oembedCheckedAt/oembedInfo only; never sets `verified`; non-200 kept as-is.
+- Ambient pad dropped per Codex (it's packaging a CC0 fallback). 193 tests.

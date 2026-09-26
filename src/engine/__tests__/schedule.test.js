@@ -54,7 +54,7 @@ describe('moonriseStart', () => {
     expect(r.basis).toBe('default')
   })
 
-  it('learns from the median onset minus a 20 minute buffer', () => {
+  it('learns from the median onset minus a 20 minute buffer (AGENTS.md rule)', () => {
     // onsets -30, -10, +5 -> median -10 -> start 30 min before dusk
     const logs = [log(20, 'episode', -30), log(21, 'episode', -10), log(22, 'episode', 5), log(23, 'calm')]
     const r = moonriseStart(dusk, logs)
@@ -80,5 +80,13 @@ describe('moonriseStart', () => {
     const r = moonriseStart(dusk, logs)
     expect(r.minutesBeforeDusk).toBe(90)
     expect(r.start.toISOString()).toBe('2026-09-26T17:00:00.000Z')
+  })
+
+  it('is not swung by one unusual night', () => {
+    const steady = [log(20, 'episode', -20), log(21, 'episode', -20), log(22, 'episode', -20), log(23, 'episode', -20)]
+    const withOutlier = [...steady, log(24, 'episode', -85)]
+    const a = moonriseStart(dusk, steady).minutesBeforeDusk
+    const b = moonriseStart(dusk, withOutlier).minutesBeforeDusk
+    expect(Math.abs(b - a)).toBeLessThanOrEqual(3)
   })
 })

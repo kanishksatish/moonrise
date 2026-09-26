@@ -2,14 +2,18 @@
 //
 // eraYears(birthYear) = birthYear + 10 to birthYear + 30 (inclusive).
 // songScore: starts at 0, +1 for each "calm" evening it played on, -1 for each "episode"
-// evening. "restless" evenings do not change the score.
+// evening. "restless" evenings do not change the score. (The simple AGENTS.md count, kept
+// for display and the report.)
 // playlist: era songs sorted by score, highest first. Ties are shuffled randomly.
+// (We tested ranking by a smoothed calm rate instead; in simulation the simple score did
+// as well or better, so it stays. See METHODOLOGY.md.)
 //
 // Song ids are opaque and must never change once shipped: saved logs store them, and
 // scores and the report match them exactly. Fix a wrong year in `year` only; the year
 // inside an id is just part of the name (e.g. rock-around-the-clock-1955 has year 1954).
 
 import seedSongs from '../data/songs.json'
+import { songVideo } from './video.js'
 
 export const ERA_START_AGE = 10
 export const ERA_END_AGE = 30
@@ -33,9 +37,15 @@ export function songScore(songId, logs = []) {
   return score
 }
 
-// Returns era songs as [{ ...song, score }], best first. random is injectable for tests.
+// Returns era songs as [{ ...song, score, hasVideo }], best first. random is injectable
+// for tests. hasVideo = a playback-verified in-app video exists (songVideo); ordering is
+// unchanged by it.
 export function playlist(birthYear, logs = [], { songs = seedSongs, random = Math.random } = {}) {
-  const scored = eraSongs(birthYear, songs).map((s) => ({ ...s, score: songScore(s.id, logs) }))
+  const scored = eraSongs(birthYear, songs).map((s) => ({
+    ...s,
+    score: songScore(s.id, logs),
+    hasVideo: songVideo(s.id) !== null,
+  }))
   // Shuffle first (Fisher-Yates), then a stable sort by score keeps ties in random order.
   for (let i = scored.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1))
