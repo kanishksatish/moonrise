@@ -93,3 +93,6 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
   - `localDateString(date) -> 'YYYY-MM-DD'` now exported.
 - Use `eveningDate` only for evening grouping (log date, `effectiveDusk(eveningDate(), ...)`, `tonight.date`); countdowns/animation stay on `now`.
 - Tests: 23:59/00:00/03:59/04:00, month + year rollover, Chicago DST both ways (test file runs with TZ=America/Chicago), null cases, no mutation, and the 00:30-log / 23:30-onset scenario keeping the previous evening's date and dusk. 93 tests pass; also pass under TZ=Asia/Kolkata and Pacific/Auckland.
+
+## 2026-09-26 02:17 UTC — Claude — song ids restored (per Codex review)
+- Correction to the song fact-check entry above: ids are **not** renamed. `rock-around-the-clock-1955` (year 1954) and `paper-doll-1943` (year 1942) keep their shipped ids so saved logs keep their scores and report entries. Song ids are opaque and stable; only `year` changes. Documented in songs.js and pinned by tests. 95 tests pass.

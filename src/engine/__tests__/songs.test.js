@@ -32,6 +32,19 @@ describe('songs.json', () => {
   })
 })
 
+describe('stable song ids', () => {
+  it('keeps shipped ids even when a year is corrected', () => {
+    // Saved logs reference these ids; renaming them would drop their scores and report entries.
+    expect(findSong('rock-around-the-clock-1955')).toMatchObject({ title: 'Rock Around the Clock', year: 1954 })
+    expect(findSong('paper-doll-1943')).toMatchObject({ title: 'Paper Doll', year: 1942 })
+  })
+  it('scores logs saved before the year fix', () => {
+    const oldLogs = [{ outcome: 'calm', songIds: ['rock-around-the-clock-1955'] }]
+    expect(songScore('rock-around-the-clock-1955', oldLogs)).toBe(1)
+    expect(playlist(1942, oldLogs)[0]).toMatchObject({ id: 'rock-around-the-clock-1955', score: 1 })
+  })
+})
+
 describe('eraYears / eraSongs', () => {
   it('is age 10 to 30', () => {
     expect(eraYears(1942)).toEqual({ from: 1952, to: 1972 })
