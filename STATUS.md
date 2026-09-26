@@ -147,3 +147,8 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Songs now enter the evening log only when a music link is opened, not merely displayed. Report language describes association rather than causation; sky timing is labeled an estimate, and caregiver-support disclaimer appears on Today. No main merge/deployment by Codex.
 ## 2026-09-26 02:52 UTC — Claude — sky gradient contrast (L5 review, engine-side fix)
 - skyGradient day/dusk stops darkened so white text is >= 4.5:1 (WCAG AA) on every color the gradient passes through, top and bottom (was as low as 1.43:1 on the daytime horizon). Day is still blue, dusk deep orange, night unchanged. Pinned by a new test that checks 101 points. 111 tests pass. No interface change.
+
+## 2026-09-26 03:12 UTC — Claude — loadState hardening
+- loadState now cleans stored data instead of passing it through: logs without a valid 'YYYY-MM-DD' date or known outcome are dropped; optional fields are repaired (bad episodeStart/effectiveDusk -> null, non-numeric cloudCover -> null, songIds filtered to strings, episodeStart cleared on non-episode evenings); one log per date (later wins), sorted; extra fields (demo) kept.
+- A profile without an integer birthYear and finite lat/lon loads as null (back to Setup) instead of producing NaN times. Non-object JSON loads as empty state.
+- Same signature. 143 tests pass (UI tests included).

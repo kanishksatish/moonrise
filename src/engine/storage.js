@@ -20,15 +20,52 @@ function defaultStorage() {
   }
 }
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+const OUTCOMES = new Set(['calm', 'restless', 'episode'])
+
+function isValidIso(value) {
+  return typeof value === 'string' && !Number.isNaN(new Date(value).getTime())
+}
+
+// One stored evening, cleaned up, or null if it can't be used (no valid date or outcome).
+// Keeps extra fields (e.g. demo: true) and repairs the optional ones instead of dropping
+// the whole evening, so an old or half-written entry never breaks learning or the report.
+export function cleanLog(log) {
+  if (!log || typeof log !== 'object' || Array.isArray(log)) return null
+  if (typeof log.date !== 'string' || !DATE_PATTERN.test(log.date) || !OUTCOMES.has(log.outcome)) return null
+  return {
+    ...log,
+    episodeStart: log.outcome === 'episode' && isValidIso(log.episodeStart) ? log.episodeStart : null,
+    effectiveDusk: isValidIso(log.effectiveDusk) ? log.effectiveDusk : null,
+    cloudCover: Number.isFinite(log.cloudCover) ? log.cloudCover : null,
+    songIds: Array.isArray(log.songIds) ? log.songIds.filter((id) => typeof id === 'string') : [],
+  }
+}
+
+// A profile the app can run on: needs a whole birth year and real coordinates.
+// Anything else sends the caregiver back to Setup instead of showing NaN times.
+function cleanProfile(profile) {
+  if (!profile || typeof profile !== 'object') return null
+  if (!Number.isInteger(profile.birthYear) || !Number.isFinite(profile.lat) || !Number.isFinite(profile.lon)) return null
+  return profile
+}
+
 export function loadState(storage = defaultStorage()) {
   try {
     const raw = storage?.getItem(STORAGE_KEY)
     if (!raw) return emptyState()
     const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return emptyState()
+    // One log per evening; if storage somehow holds two for a date, the later entry wins.
+    const byDate = new Map()
+    for (const log of Array.isArray(parsed.logs) ? parsed.logs : []) {
+      const clean = cleanLog(log)
+      if (clean) byDate.set(clean.date, clean)
+    }
     return {
       ...parsed,
-      profile: parsed.profile ?? null,
-      logs: Array.isArray(parsed.logs) ? parsed.logs : [],
+      profile: cleanProfile(parsed.profile),
+      logs: [...byDate.values()].sort((a, b) => (a.date < b.date ? -1 : 1)),
     }
   } catch {
     return emptyState()
