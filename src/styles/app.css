@@ -203,6 +203,9 @@ input {
   align-items: center;
 }
 
+.city-row input { min-width: 0; }
+.place-row strong { overflow-wrap: anywhere; }
+
 .place-row strong {
   flex: 1;
 }
@@ -264,7 +267,7 @@ input {
 }
 
 .big-number {
-  font-size: 56px;
+  font-size: clamp(34px, 7vw, 56px);
   font-weight: 800;
   line-height: 1.1;
   margin: 0;
@@ -402,10 +405,12 @@ input {
   border-collapse: collapse;
 }
 
-.nights td {
+.nights td, .nights th {
   padding: 8px 6px;
   border-bottom: 1px solid var(--surface-2);
+  text-align: left;
 }
+.nights tbody th { font-weight: 400; }
 
 .outcome-cell {
   font-weight: 700;
@@ -443,7 +448,7 @@ input {
 .moonrise {
   position: fixed;
   inset: 0;
-  overflow: hidden;
+  overflow: auto;
   color: #fff;
   transition: background 30s linear;
 }
@@ -492,7 +497,8 @@ input {
 .moonrise-content {
   position: relative;
   z-index: 1;
-  height: 100%;
+  min-height: 100%;
+  gap: 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -502,6 +508,9 @@ input {
 
 .prompt {
   max-width: 900px;
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: var(--radius);
+  padding: 16px 20px;
 }
 
 .prompt-label {
@@ -519,7 +528,7 @@ input {
 }
 
 .song {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.65);
   border-radius: var(--radius);
   padding: 16px 20px;
   max-width: 900px;
@@ -552,11 +561,12 @@ input {
 }
 
 /* Print: the weekly report on one plain white page. */
+@page { size: auto; margin: 12mm; }
 @media print {
   body {
     background: #fff;
     color: #000;
-    font-size: 14pt;
+    font-size: 11pt;
   }
 
   .no-print {
@@ -593,6 +603,27 @@ input {
   }
 
   h2 {
-    margin-top: 12px;
+    margin-top: 8px;
+    font-size: 13pt;
   }
+  h1 { font-size: 20pt; }
+  .small { font-size: 10pt; }
+  .stat-number { font-size: 22pt; }
+  .nights td, .nights th { padding: 3px 4px; }
+  .doctor-note { margin-top: 10px; padding: 6px 10px; }
+  p { margin-bottom: 6px; }
+  section, tr, .doctor-note { break-inside: avoid; }
+}
+
+@media (max-width: 430px) {
+  .sky-row { flex-wrap: wrap; }
+  .moon-box { display: flex; align-items: center; gap: 12px; }
+  .moon-icon { font-size: 48px; }
+  .moonrise-content { padding: 88px 16px 24px; }
+  .nights { font-size: 20px; }
+  .nights td, .nights th { padding: 8px 2px; overflow-wrap: anywhere; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moonrise, .stars, .moon, .lamp-glow { transition: none; }
 }

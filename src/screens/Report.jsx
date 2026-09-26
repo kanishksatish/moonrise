@@ -58,7 +58,8 @@ export default function Report({ state }) {
           </section>
 
           <section>
-            <h2>Songs that helped most</h2>
+            <h2>Songs linked with calmer evenings</h2>
+            <p className="small">Based on your logs and opened song links; this does not show that a song caused a change.</p>
             {r.topSongs.length === 0 ? (
               <p>No songs played this week.</p>
             ) : (
@@ -75,10 +76,11 @@ export default function Report({ state }) {
           <section>
             <h2>Night by night</h2>
             <table className="nights">
+              <thead><tr><th scope="col">Evening</th><th scope="col">Outcome</th><th scope="col">Onset</th><th scope="col">Cloud</th></tr></thead>
               <tbody>
                 {r.nights.map((n) => (
                   <tr key={n.date}>
-                    <td>{prettyDate(n.date)}</td>
+                    <th scope="row">{prettyDate(n.date)}</th>
                     <td className={`outcome-cell ${n.outcome}`}>{n.outcome}</td>
                     <td>{n.onsetText ?? ''}</td>
                     <td>{Number.isFinite(n.cloudCover) ? `${Math.round(n.cloudCover)}% cloud` : ''}</td>
@@ -95,4 +97,3 @@ export default function Report({ state }) {
     </div>
   )
 }
-

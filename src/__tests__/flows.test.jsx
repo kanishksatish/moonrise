@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App.jsx'
 import Setup from '../screens/Setup.jsx'
+import Moonrise from '../screens/Moonrise.jsx'
 import { effectiveDusk, findCity } from '../engine/index.js'
 
 vi.mock('../engine/index.js', async (original) => ({
@@ -82,4 +83,17 @@ describe('Setup city lookup', () => {
     await search(null, true)
     expect(screen.getByRole('status').textContent).toMatch(/Could not check cities right now/)
   })
+})
+
+it('records songs only when a play link is opened, not when a suggestion is displayed', () => {
+  const onPlayed = vi.fn()
+  render(<Moonrise state={initial} onPlayed={onPlayed} onExit={() => {}} />)
+  expect(onPlayed).not.toHaveBeenCalled()
+  click('Next song')
+  expect(onPlayed).not.toHaveBeenCalled()
+  const link = screen.getByRole('link', { name: /Spotify/ })
+  link.addEventListener('click', event => event.preventDefault())
+  fireEvent.click(link)
+  expect(onPlayed).toHaveBeenCalledOnce()
+  expect(typeof onPlayed.mock.calls[0][0]).toBe('string')
 })
