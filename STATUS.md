@@ -255,3 +255,8 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Live Pages serves the bundled piano as `audio/mp3`; the prior `audio/mpeg`-only check rejected the complete shell and prevented worker activation. Worker v4 accepts those two exact MIME types (including existing case/parameter handling), while retaining the exact asset allowlist, status 200, no Content-Range and nonempty-body requirements.
 - Added a regression that first reproduced `shell incomplete after download`, then passed installation, activation, offline navigation and byte-range delivery under `/moonrise/` with the production MIME alias. Both MP3 types retain partial/HTML/empty-response rollback coverage; malformed MIME lookalikes and unrelated binary MIME are rejected.
 - All 53 worker tests and 256 tests across 20 files pass with one worker at a time; root and `/moonrise/` production builds pass. These are VM delivery tests, not a new browser decoding check. Local commit only: live redeployment and browser offline verification remain with Claude/root.
+
+## Codex — deterministic first-play test fixture, September 26
+
+- The integrated playback test reused an evening with Earth Angel already recorded. Its randomized playlist occasionally selected that same song, correctly suppressing a duplicate callback and failing the test's new-play expectation. This test now starts with an empty played-song list; shared midnight fixtures and all runtime behavior are unchanged.
+- Checked fresh main `c7eb364` before editing. All 12 flow tests and the full 256-test suite pass with one worker at a time. Local test-only commit; no push, main merge or deployment.

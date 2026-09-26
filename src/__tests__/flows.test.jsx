@@ -102,7 +102,8 @@ describe('Setup city lookup', () => {
 it('records a song only after the integrated player observes playback', async () => {
   songVideo.mockReturnValue({ youtubeId: 'TJx9E-rUqhg' })
   const onPlayed = vi.fn()
-  render(<Moonrise state={initial} onPlayed={onPlayed} onExit={() => {}} />)
+  const unplayedEvening = { ...initial, tonight: { ...initial.tonight, songIds: [] } }
+  render(<Moonrise state={unplayedEvening} onPlayed={onPlayed} onExit={() => {}} />)
   expect(onPlayed).not.toHaveBeenCalled()
   click('Next song')
   expect(onPlayed).not.toHaveBeenCalled()
