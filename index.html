@@ -3,9 +3,11 @@
   <head>
     <link rel="preload" as="image" href="/src/assets/night-lake.webp" />
     <link rel="preload" as="image" href="/src/assets/lunar-surface.webp" />
-    <!-- Vite hashes this inert reference for service-worker precaching. -->
+    <!-- The core shell includes piano; extra recordings download after activation. -->
     <template id="offline-audio-assets">
       <audio src="/src/assets/audio/fur-elise-v-gao.mp3"></audio>
+    </template>
+    <template id="offline-extra-audio-assets">
       <audio src="/src/assets/audio/gymnopedie-1-macleod.mp3"></audio>
       <audio src="/src/assets/audio/clair-de-lune-goedhart.mp3"></audio>
       <audio src="/src/assets/audio/canon-in-d-macleod.mp3"></audio>

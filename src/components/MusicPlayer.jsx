@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { bundledMusic } from './bundledMusic.js'
+import useOfflineAudioStatus from './useOfflineAudioStatus.js'
 import '../styles/music-player.css'
 
 const API_SCRIPT_ID = 'moonrise-youtube-api'
@@ -139,7 +140,7 @@ function YouTubePlayer({ song, youtubeId, onPlaying }) {
   )
 }
 
-function NativeAudio({ src, label, onPlaying, errorMessage = 'This audio couldn’t load. Try again when connected.' }) {
+function NativeAudio({ src, label, onPlaying, onError, errorMessage = 'This audio couldn’t load. Try again when connected.' }) {
   const audio = useRef(null)
   const [status, setStatus] = useState('Use the player to begin.')
   useEffect(() => {
@@ -162,21 +163,38 @@ function NativeAudio({ src, label, onPlaying, errorMessage = 'This audio couldn�
         onPlaying={() => { setStatus('Playing here'); onPlaying?.() }}
         onPause={() => setStatus('Paused')}
         onEnded={() => setStatus('The piece has ended.')}
-        onError={() => setStatus(errorMessage)}
+        onError={() => { setStatus(errorMessage); onError?.() }}
       />
       <p className="music-player-status" role="status">{status}</p>
     </div>
   )
 }
 
-function IncludedPlayer({ recording, onPlaying }) {
+function IncludedPlayer({ recording, onPlaying, availability, online, fallback, fallbackStatus, onFallback, onRetry }) {
+  const [failed, setFailed] = useState(false)
+  const [retry, setRetry] = useState(0)
+  const missingOffline = !online && availability === 'missing'
   return (
     <div className="music-player-included">
-      <NativeAudio key={recording.id} src={recording.src} label={`${recording.title} — ${recording.artist}`} onPlaying={() => onPlaying(recording.id)} />
+      <NativeAudio
+        key={`${recording.id}:${retry}`} src={recording.src} label={`${recording.title} — ${recording.artist}`}
+        onPlaying={() => { setFailed(false); onPlaying(recording.id) }} onError={() => setFailed(true)}
+      />
+      {(missingOffline || failed) && <div className="music-player-recovery">
+        {missingOffline && <p className="music-player-note music-player-error" role="alert">You’re offline. This recording has not been saved for offline use.</p>}
+        {fallback && fallback.id !== recording.id && fallbackStatus !== 'missing' && <>
+          <p className="music-player-note">{fallbackStatus === 'ready'
+            ? `${fallback.title} is ready to play offline.`
+            : `You can try ${fallback.title}. Its offline availability has not been confirmed.`}</p>
+          <button type="button" className="music-player-button" onClick={onFallback}>Choose {fallback.title}</button>
+        </>}
+        {!online && <p className="music-player-note">Reconnect to finish downloading more recordings.</p>}
+        {online && failed && <button type="button" className="music-player-button" onClick={() => { onRetry(); setFailed(false); setRetry(value => value + 1) }}>Retry this recording</button>}
+      </div>}
       <details className="music-player-details">
         <summary>About this recording</summary>
         <p>This included collection is available to everyone; it is not personalized to a birth year or music history. Playback is recorded under this recording’s own title.</p>
-        <p>Keep Moonrise open online for its first download. The full included library can then play offline while this browser keeps its site data.</p>
+        <p>Keep Moonrise open online to download the library in the background. Only recordings marked “Ready offline” have been confirmed saved. They remain available while this browser keeps its site data.</p>
         <p>{recording.attribution}</p>
         <p>{recording.recordingYear ? `Recorded in ${recording.recordingYear}. ` : ''}{recording.licenseName}.</p>
         <p><a href={recording.sourceUrl} target="_blank" rel="noreferrer">Recording source</a> · <a href={recording.licenseUrl} target="_blank" rel="noreferrer">Use and license details</a></p>
@@ -186,6 +204,7 @@ function IncludedPlayer({ recording, onPlaying }) {
 }
 
 function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext, recordings }) {
+  const offline = useOfflineAudioStatus(recordings)
   const [source, setSource] = useState('included')
   const [recordingId, setRecordingId] = useState(recordings[0].id)
   const [localFile, setLocalFile] = useState(null)
@@ -198,6 +217,13 @@ function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext,
   const included = source === 'included' || (source === 'youtube' && !canEmbed)
   const local = source === 'local' && localFile
   const recording = recordings.find(item => item.id === recordingId) || recordings[0]
+  const fallback = recordings.find(item => item.filename === 'fur-elise-v-gao.mp3')
+  const availabilityText = { ready: 'Ready offline', missing: 'Not downloaded', unknown: 'Offline status unknown' }
+  const offlineSummary = !offline.known
+    ? 'Offline availability has not been confirmed. Connect and keep Moonrise open to download recordings.'
+    : offline.downloading && offline.online
+      ? `Downloading for offline use. ${offline.readyCount} of ${recordings.length} recordings ready.`
+      : `${offline.readyCount} of ${recordings.length} recordings ready offline.${offline.readyCount < recordings.length ? ' The remaining recordings have not been downloaded.' : ''}`
   const title = local ? 'Your own recording' : included ? recording.title : song.title
   const artist = local ? localFile.name : included ? recording.artist : `${song.artist}, ${song.year}`
   useEffect(() => {
@@ -243,15 +269,22 @@ function MusicSelection({ song, youtubeId, onPlaying, onIncludedPlaying, onNext,
         <label htmlFor={pickerId}>Choose an included recording</label>
         <select id={pickerId} value={included ? recording.id : ''} onChange={event => chooseRecording(event.target.value)}>
           {!included && <option value="" disabled>Choose from the listening library</option>}
-          {recordings.map(item => <option key={item.id} value={item.id}>{item.title} — {item.artist}</option>)}
+          {recordings.map(item => <option key={item.id} value={item.id}>{item.title} — {item.artist} · {availabilityText[offline.statusFor(item.src)]}</option>)}
         </select>
-        <p className="music-player-note">Choose a track, then press Play. Available offline after downloading.</p>
+        <p className="music-player-note">Choose a track, then press Play.</p>
+        <p className="music-player-note" aria-live="polite">{offlineSummary}</p>
+        {offline.online && (!offline.known || offline.readyCount < recordings.length) && !offline.downloading && <button type="button" className="music-player-button" onClick={offline.requestDownload}>Download for offline use</button>}
       </div>
       <h2 className="music-player-title" id={titleId}>{title}</h2>
       <p className="music-player-artist">{artist}</p>
 
       {source === 'youtube' && canEmbed && <YouTubePlayer key={`${song.id}:${youtubeId}`} song={song} youtubeId={youtubeId} onPlaying={onPlaying} />}
-      {included && <IncludedPlayer recording={recording} onPlaying={onIncludedPlaying} />}
+      {included && <IncludedPlayer
+        key={recording.id} recording={recording} onPlaying={onIncludedPlaying}
+        availability={offline.statusFor(recording.src)} online={offline.online}
+        fallback={fallback} fallbackStatus={fallback ? offline.statusFor(fallback.src) : 'unknown'}
+        onFallback={() => chooseRecording(fallback.id)} onRetry={offline.requestDownload}
+      />}
       {local && <>
         <NativeAudio key={localFile.url} src={localFile.url} label={`Your audio file: ${localFile.name}`} errorMessage="This file couldn’t play. Choose another recording, such as an MP3." />
         <p className="music-player-note">No upload. This recording stays separate from the songs in your evening log.</p>

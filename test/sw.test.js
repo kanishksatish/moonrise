@@ -20,7 +20,9 @@ it('declares bundled audio for the shell without an active media element or reso
     expect(document.querySelector('audio')).toBeNull()
     expect(document.querySelector('link[as="audio"]')).toBeNull()
     expect(document.querySelector('[src$=".mp3"], [href$=".mp3"]')).toBeNull()
-    const recordings = [...document.getElementById('offline-audio-assets').content.querySelectorAll('audio')]
+    const core = [...document.getElementById('offline-audio-assets').content.querySelectorAll('audio')]
+    expect(core.map(audio => audio.getAttribute('src'))).toEqual(['/src/assets/audio/fur-elise-v-gao.mp3'])
+    const recordings = [...core, ...document.getElementById('offline-extra-audio-assets').content.querySelectorAll('audio')]
     expect(recordings.map(audio => audio.getAttribute('src')).sort()).toEqual(audioCatalog.map(item => `/src/assets/audio/${item.filename}`).sort())
     expect(recordings.every(audio => !audio.isConnected)).toBe(true)
   } finally {
@@ -129,12 +131,13 @@ function build(tag) {
 // Load a fresh copy of the worker (a new worker version or a restarted worker) over shared caches.
 function loadWorker(caches, server, scope = SCOPE) {
   const handlers = {}
+  const messages = []
   const self = {
     registration: { scope },
     location: { origin: ORIGIN },
     addEventListener: (type, fn) => (handlers[type] = fn),
     skipWaiting: async () => {},
-    clients: { claim: async () => {} },
+    clients: { claim: async () => {}, matchAll: async () => [{ postMessage: message => messages.push(message) }] },
   }
   const context = vm.createContext({
     self,
@@ -143,6 +146,7 @@ function loadWorker(caches, server, scope = SCOPE) {
     Response,
     Request,
     Headers,
+    AbortController,
     URL,
     TextEncoder,
     crypto: globalThis.crypto,
@@ -162,6 +166,14 @@ function loadWorker(caches, server, scope = SCOPE) {
   vm.runInContext(SW_SOURCE, context)
 
   const worker = {
+    messages,
+    async message(type) {
+      let promise
+      let reply
+      handlers.message({ data: { type }, ports: [{ postMessage: value => { reply = value } }], waitUntil: value => { promise = value } })
+      await promise
+      return reply
+    },
     async install() {
       let p
       handlers.install({ waitUntil: (x) => (p = x) })
@@ -294,7 +306,7 @@ describe('failed writes never produce a servable incomplete shell', () => {
     // Simulate a worker killed after writing B's HTML but before its assets or the commit.
     server.deploy(build('B'))
     const hashB = await (async () => {
-      const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(build('B')['/']))
+      const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('core-audio-v1\n' + build('B')['/']))
       return [...new Uint8Array(d)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('')
     })()
     const partial = await caches.open(`moonrise-shell-${hashB}`)
@@ -453,12 +465,180 @@ function libraryBuild(tag) {
 }
 
 describe('included recording library offline playback', () => {
+  it('installs and activates core plus piano without requesting any extra recording', async () => {
+    const files = libraryBuild('weak')
+    for (const stem of libraryStems.slice(1)) delete files[`/assets/${stem}-weak.mp3`]
+    server.deploy(files)
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    await sw.activate()
+    expect(server.requests.filter(url => url.endsWith('.mp3'))).toEqual([ORIGIN + audioPath('weak')])
+    expect(await sw.message('MOONRISE_AUDIO_STATUS')).toMatchObject({ version: 1, cachedUrls: [ORIGIN + audioPath('weak')], downloading: false })
+    server.down = true
+    expect((await sw.navigate()).text).toContain('index-weak.js')
+    expect((await sw.request(audioPath('weak'), { destination: 'audio', headers: { Range: 'bytes=4-7' } })).bytes).toEqual(AUDIO_BYTES.slice(4, 8))
+  })
+
+  it('preserves a partial library across worker restarts and retries only missing recordings', async () => {
+    const files = libraryBuild('partial')
+    const missing = libraryStems.slice(4).map(stem => `/assets/${stem}-partial.mp3`)
+    for (const path of missing) delete files[path]
+    server.deploy(files)
+    const first = loadWorker(caches, server)
+    await first.install()
+    await first.activate()
+    await first.message('MOONRISE_DOWNLOAD_AUDIO')
+    expect((await first.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toHaveLength(4)
+    expect(first.messages.at(-1).downloading).toBe(false)
+    server.down = true
+    const restarted = loadWorker(caches, server)
+    expect((await restarted.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toHaveLength(4)
+    const cachedPath = `/assets/${libraryStems[2]}-partial.mp3`
+    expect((await restarted.request(cachedPath, { destination: 'audio', headers: { Range: 'bytes=-1' } })).bytes).toEqual(new Uint8Array([2]))
+    expect((await restarted.request(audioPath('partial'), { destination: 'audio', headers: { Range: 'bytes=0-1' } })).status).toBe(206)
+    await expect(restarted.request(missing[0], { destination: 'audio' })).rejects.toThrow('Failed to fetch')
+    server.down = false
+    server.deploy(libraryBuild('partial'))
+    server.requests = []
+    await restarted.message('MOONRISE_DOWNLOAD_AUDIO')
+    expect((await restarted.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toHaveLength(libraryStems.length)
+    expect(server.requests.sort()).toEqual(missing.map(path => ORIGIN + path).sort())
+  })
+
+  it('keeps completed extra downloads visible while another recording is still pending', async () => {
+    server.deploy(libraryBuild('slow'))
+    const originalFetch = server.fetch
+    let release
+    let started
+    const waiting = new Promise(resolve => { started = resolve })
+    const slowUrl = `${ORIGIN}/assets/${libraryStems[2]}-slow.mp3`
+    server.fetch = async (request, options) => {
+      if (request === slowUrl) {
+        started()
+        await new Promise(resolve => { release = resolve })
+      }
+      return originalFetch(request, options)
+    }
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    await sw.activate()
+    const downloading = sw.message('MOONRISE_DOWNLOAD_AUDIO')
+    await waiting
+    expect((await sw.message('MOONRISE_AUDIO_STATUS'))).toMatchObject({ downloading: true, cachedUrls: [ORIGIN + audioPath('slow'), `${ORIGIN}/assets/${libraryStems[1]}-slow.mp3`] })
+    const restarted = loadWorker(caches, server)
+    expect((await restarted.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toHaveLength(2)
+    release()
+    await downloading
+    expect((await sw.message('MOONRISE_AUDIO_STATUS')).downloading).toBe(false)
+  })
+
+  it('migrates previously committed v5 audio without deleting it or copying it under quota pressure', async () => {
+    const old = libraryBuild('legacy')
+    server.deploy(old)
+    const oldName = 'moonrise-shell-v5-complete'
+    const oldUrls = [SCOPE, ...Object.keys(old).filter(path => path !== '/' && path !== '/sw.js' && path !== '/api/status').map(path => ORIGIN + path)]
+    const oldCache = await caches.open(oldName)
+    for (const url of oldUrls) await oldCache.put(url, await server.fetch(url))
+    const meta = await caches.open('moonrise-meta')
+    await meta.put(`${SCOPE}__moonrise_committed_shell__`, new Response(JSON.stringify({ name: oldName, urls: oldUrls })))
+    server.deploy(libraryBuild('current'))
+    caches.faults.beforePut = (name) => { if (name === 'moonrise-audio-v1') throw new Error('Audio quota exceeded') }
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    await sw.activate()
+    await sw.message('MOONRISE_DOWNLOAD_AUDIO')
+    expect(await caches.has(oldName)).toBe(true)
+    expect((await committed(caches)).audioArchives).toHaveLength(1)
+    expect((await sw.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toEqual([ORIGIN + audioPath('current')])
+    server.down = true
+    const restarted = loadWorker(caches, server)
+    for (const [i, stem] of libraryStems.entries()) {
+      const reply = await restarted.request(`/assets/${stem}-legacy.mp3`, { destination: 'audio', headers: { Range: 'bytes=-1' } })
+      expect(reply.bytes).toEqual(new Uint8Array([i]))
+    }
+    expect((await restarted.navigate()).text).toContain('index-current.js')
+  })
+
+  it('serves a network Range response unchanged while caching only a separate validated full download', async () => {
+    server.deploy(libraryBuild('demand'))
+    const originalFetch = server.fetch
+    const path = `/assets/${libraryStems[1]}-demand.mp3`
+    server.fetch = async (request, options) => {
+      if (request?.url === ORIGIN + path) return new Response(AUDIO_BYTES.slice(0, 2), { status: 206, headers: { 'Content-Type': 'audio/mpeg', 'Content-Range': 'bytes 0-1/17' } })
+      return originalFetch(request, options)
+    }
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    const response = await sw.request(path, { destination: 'audio', headers: { Range: 'bytes=0-1' } })
+    expect(response.status).toBe(206)
+    expect(response.bytes).toEqual(AUDIO_BYTES.slice(0, 2))
+    expect((await sw.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toContain(ORIGIN + path)
+    server.down = true
+    expect((await sw.request(path, { destination: 'audio', headers: { Range: 'bytes=12-' } })).bytes).toEqual(new Uint8Array([...AUDIO_BYTES.slice(12), 1]))
+  })
+
+  it('does not download or cache an undeclared extra, even when its stem is approved', async () => {
+    server.deploy(audioBuild('coreOnly'))
+    const path = '/assets/gymnopedie-1-macleod-undeclared.mp3'
+    server.files.set(ORIGIN + path, new Response(AUDIO_BYTES, { headers: { 'Content-Type': 'audio/mpeg' } }))
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    server.requests = []
+    await sw.request(path, { destination: 'audio' })
+    expect(server.requests).toEqual([ORIGIN + path])
+    expect(await caches.match(ORIGIN + path)).toBeUndefined()
+    expect((await sw.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toEqual([ORIGIN + audioPath('coreOnly')])
+  })
+
+  it.each(['redirected', 'cross-origin'])('does not cache an extra audio response that is %s', async kind => {
+    server.deploy(libraryBuild('origin'))
+    const path = `/assets/${libraryStems[1]}-origin.mp3`
+    const originalFetch = server.fetch
+    server.fetch = async (request, options) => {
+      if (request === ORIGIN + path) {
+        const response = new Response(AUDIO_BYTES, { headers: { 'Content-Type': 'audio/mpeg' } })
+        Object.defineProperty(response, 'type', { value: kind === 'cross-origin' ? 'cors' : 'basic' })
+        Object.defineProperty(response, 'redirected', { value: kind === 'redirected' })
+        return response
+      }
+      return originalFetch(request, options)
+    }
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    await sw.message('MOONRISE_DOWNLOAD_AUDIO')
+    expect((await sw.message('MOONRISE_AUDIO_STATUS')).cachedUrls).not.toContain(ORIGIN + path)
+    expect(await caches.match(ORIGIN + path)).toBeUndefined()
+  })
+
+  it('reports scoped downloaded URLs and seeks extra recordings offline under /moonrise/', async () => {
+    const sub = makeServer()
+    sub.files = new Map(Object.entries(libraryBuild('subLibrary')).map(([path, value]) => [
+      `${ORIGIN}/moonrise${path}`, path === '/' ? value.replaceAll('"/', '"/moonrise/') : value,
+    ]))
+    const subCaches = new FakeCacheStorage(sub.fetch)
+    const sw = loadWorker(subCaches, sub, `${ORIGIN}/moonrise/`)
+    await sw.install()
+    await sw.activate()
+    expect((await sw.message('MOONRISE_AUDIO_STATUS')).cachedUrls).toEqual([`${ORIGIN}/moonrise${audioPath('subLibrary')}`])
+    await sw.message('MOONRISE_DOWNLOAD_AUDIO')
+    const status = await sw.message('MOONRISE_AUDIO_STATUS')
+    expect(status.cachedUrls).toHaveLength(libraryStems.length)
+    expect(status.cachedUrls.every(url => url.startsWith(`${ORIGIN}/moonrise/assets/`))).toBe(true)
+    sub.down = true
+    const path = `/moonrise/assets/${libraryStems[1]}-subLibrary.mp3`
+    expect((await sw.request(path, { destination: 'audio', headers: { Range: 'bytes=-1' } })).bytes).toEqual(new Uint8Array([1]))
+    expect((await sw.request(path.replace('/moonrise', ''), { destination: 'audio' })).intercepted).toBe(false)
+  })
+
   it.each(libraryStems)('plays and seeks %s offline before it has ever been played', async stem => {
     server.deploy(libraryBuild('library'))
     const sw = loadWorker(caches, server)
     await sw.install()
     const pointer = await committed(caches)
-    for (const name of libraryStems) expect(pointer.urls).toContain(`${ORIGIN}/assets/${name}-library.mp3`)
+    for (const name of libraryStems) expect(pointer.audioUrls).toContain(`${ORIGIN}/assets/${name}-library.mp3`)
+    expect(pointer.urls.filter(url => url.endsWith('.mp3'))).toEqual([`${ORIGIN}${audioPath('library')}`])
+    await sw.activate()
+    await sw.message('MOONRISE_DOWNLOAD_AUDIO')
     server.down = true
     const path = `/assets/${stem}-library.mp3`
     const bytes = new Uint8Array([...AUDIO_BYTES, libraryStems.indexOf(stem)])
@@ -472,22 +652,35 @@ describe('included recording library offline playback', () => {
     expect((await sw.request(path, { destination: 'audio' })).bytes).toEqual(bytes)
   })
 
-  it.each(['missing', 'html', 'partial', 'quota'])('keeps every previous recording usable when a second recording update is %s', async failure => {
+  it.each(['missing', 'html', 'partial', 'empty', 'content-range', 'quota'])('activates core and preserves cached extras when one new recording is %s', async failure => {
     server.deploy(libraryBuild('old'))
     const sw = loadWorker(caches, server)
     await sw.install()
+    await sw.activate()
+    await sw.message('MOONRISE_DOWNLOAD_AUDIO')
     const previous = await committed(caches)
     const next = libraryBuild('new')
     const failingPath = '/assets/gymnopedie-1-macleod-new.mp3'
     if (failure === 'missing') delete next[failingPath]
     if (failure === 'html') next[failingPath] = new Response('<html>Not audio</html>', { headers: { 'Content-Type': 'text/html' } })
     if (failure === 'partial') next[failingPath] = new Response(AUDIO_BYTES.slice(0, 2), { status: 206, headers: { 'Content-Type': 'audio/mpeg' } })
+    if (failure === 'empty') next[failingPath] = new Response(null, { headers: { 'Content-Type': 'audio/mpeg' } })
+    if (failure === 'content-range') next[failingPath] = new Response(AUDIO_BYTES, { headers: { 'Content-Type': 'audio/mpeg', 'Content-Range': 'bytes 0-15/99' } })
     if (failure === 'quota') caches.faults.beforePut = (_name, url) => { if (url.endsWith(failingPath)) throw new Error('Storage full') }
     server.deploy(next)
-    await expect(sw.install()).rejects.toThrow()
-    expect(await committed(caches)).toEqual(previous)
+    await sw.install()
+    await sw.activate()
+    expect((await committed(caches)).name).not.toBe(previous.name)
+    await sw.message('MOONRISE_DOWNLOAD_AUDIO')
+    const status = await sw.message('MOONRISE_AUDIO_STATUS')
+    expect(status.cachedUrls).not.toContain(ORIGIN + failingPath)
+    expect(status.cachedUrls).toHaveLength(libraryStems.length - 1)
+    expect(status.downloading).toBe(false)
     server.down = true
+    expect((await sw.navigate()).text).toContain('index-new.js')
+    expect((await sw.request(audioPath('new'), { destination: 'audio', headers: { Range: 'bytes=0-1' } })).bytes).toEqual(AUDIO_BYTES.slice(0, 2))
     for (const [i, stem] of libraryStems.entries()) {
+      if (stem === 'fur-elise-v-gao') continue // the newly committed core owns current piano
       const reply = await sw.request(`/assets/${stem}-old.mp3`, { destination: 'audio', headers: { Range: 'bytes=-1' } })
       expect(reply.bytes).toEqual(new Uint8Array([i]))
     }

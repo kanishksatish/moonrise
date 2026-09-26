@@ -115,11 +115,15 @@ The Vite development server updates from source and does not register the servic
 A static preview (including the local preview on port 4177) serves `dist/`; run a fresh
 root-path build and reload it after changes. Test a subpath build separately, for example
 `VITE_BASE=/moonrise/ npm run build -- --outDir dist-subpath`, so the normal preview is not replaced.
-After a successful online production install, the committed offline shell includes the
-entire licensed listening library and supports byte-range seeking. Wait for the initial
-download to finish while online. A failed recording download or storage write keeps the
-previous complete offline build instead of committing a partial library. Other audio and YouTube
-are never cached. Offline availability depends on the browser retaining its site storage.
+The initial production install atomically saves the app and Für Elise, without waiting
+for the ten additional recordings. Those recordings download independently in the background
+after activation, or when requested. The picker reports each track's offline availability;
+an older worker or unavailable status channel is shown as unknown, never as downloaded.
+Only complete, validated audio responses are cached, with byte-range seeking supported.
+An extra recording's network or storage failure does not block the core app or erase other
+downloaded tracks. Failed core updates retain the previous complete core. Missing offline
+recordings offer the piano fallback. Other audio and YouTube are never cached. Browser
+storage eviction can remove offline data, and status is checked again when the app reconnects.
 
 ## Project layout
 

@@ -1,12 +1,13 @@
 // Moonrise service worker: makes the app open with no signal after one online visit.
 //
 // WHAT IS CACHED (positive list only):
-//   - The "shell" of the current build: the start page plus every same-origin file its HTML
-//     references (Vite's hashed JS/CSS, the manifest, the icon).
+//   - The core "shell" of the current build: the start page and same-origin static
+//     references (Vite's hashed JS/CSS, manifest, icon), plus the single piano recording.
 //   - Files under the build's assets/ folder that are only reached from JS/CSS (e.g. lazy
 //     chunks), and only for script/style/image/font requests.
-//   - Licensed bundled MP3s are explicitly referenced by the HTML and cached
-//     in full with the shell. Their cached bytes satisfy media Range requests offline.
+//   - Für Elise is cached in full with the core shell. The ten extra licensed
+//     recordings download independently after activation; their failures never
+//     hold up installation. Only complete validated files enter the audio cache.
 //     Other audio, including all remote music, is never intercepted or cached.
 // NEVER CACHED: fetch()/XHR requests (API calls, same-origin or not), cross-origin requests,
 // non-GET requests, and anything outside the app's scope. fetch()/XHR requests are not
@@ -15,7 +16,7 @@
 // HOW A BUILD'S SHELL IS SAVED (commit protocol):
 //   1. Fetch the start page. The shell cache is named after a hash of its HTML, so every
 //      Vite build (new hashed file names -> new HTML) gets its own cache.
-//   2. Download the HTML and every referenced file into that cache.
+//   2. Download the HTML, core assets, and piano into that cache (not extra audio).
 //   3. Check every file is really there.
 //   4. Only then write the "committed shell" pointer (in moonrise-meta). This is the LAST write.
 //   5. Delete the other shell caches.
@@ -33,8 +34,8 @@
 //   - No committed shell (first visit was offline, or site data was cleared): the start page
 //     is a short "connect once" page (HTTP 503) instead of a browser error.
 
-const SW_VERSION = 'v5'
-// Exact approved file stems; membership in the committed shell is also required.
+const SW_VERSION = 'v6'
+// Exact approved stems; new downloads also require a current HTML-declared URL.
 const BUNDLED_AUDIO_FILES = [
   'fur-elise-v-gao',
   'gymnopedie-1-macleod', 'let-me-call-you-sweetheart-1911', 'shine-on-harvest-moon-1909',
@@ -45,6 +46,9 @@ const BUNDLED_AUDIO_FILES = [
 const SHELL_PREFIX = 'moonrise-shell-' // not versioned: a committed shell survives worker updates
 const META_CACHE = 'moonrise-meta'
 const RUNTIME_CACHE = `moonrise-assets-${SW_VERSION}`
+const AUDIO_CACHE = 'moonrise-audio-v1' // immutable hashed files survive worker/build updates
+const CORE_AUDIO_STEM = 'fur-elise-v-gao'
+const SHELL_PROTOCOL = 'core-audio-v1\n'
 const NAV_TIMEOUT_MS = 4000
 const STATIC_DESTINATIONS = new Set(['script', 'style', 'image', 'font', 'manifest'])
 
@@ -63,12 +67,22 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const committed = await readPointer()
-      const keep = new Set([META_CACHE, RUNTIME_CACHE, committed?.name])
+      const keep = new Set([META_CACHE, RUNTIME_CACHE, AUDIO_CACHE, committed?.name, ...(committed?.audioArchives || []).map(item => item.name)])
       const keys = await caches.keys()
       await Promise.all(keys.filter((k) => k.startsWith('moonrise-') && !keep.has(k)).map((k) => caches.delete(k)))
       await self.clients.claim()
     })()
   )
+})
+
+// This runs only after activation: registerServiceWorker and the music card send
+// these messages to the active worker. A slow library never delays clients.claim.
+self.addEventListener('message', event => {
+  if (event.data?.type === 'MOONRISE_AUDIO_STATUS') {
+    event.waitUntil(audioStatus().then(status => event.ports?.[0]?.postMessage(status)))
+  } else if (event.data?.type === 'MOONRISE_DOWNLOAD_AUDIO') {
+    event.waitUntil(downloadLibrary())
+  }
 })
 
 self.addEventListener('fetch', (event) => {
@@ -82,7 +96,7 @@ self.addEventListener('fetch', (event) => {
     return
   }
   if (req.destination === 'audio' && isBundledAudio(req.url)) {
-    event.respondWith(bundledAudio(req))
+    event.respondWith(bundledAudio(event))
     return
   }
   // fetch()/XHR (destination '') and anything that isn't a static file: not intercepted.
@@ -93,7 +107,7 @@ self.addEventListener('fetch', (event) => {
 async function navigate(event) {
   try {
     const res = await withTimeout(fetch(event.request), NAV_TIMEOUT_MS)
-    if (res.ok) event.waitUntil(cacheShell().catch(() => {}))
+    if (res.ok) event.waitUntil(cacheShell().then(() => downloadLibrary()).catch(() => {}))
     return res
   } catch {
     return (await matchShell(START_URL)) ?? offlinePage()
@@ -122,10 +136,103 @@ function isBundledAudio(url) {
   return BUNDLED_AUDIO_FILES.some(stem => new RegExp(`^${stem}-[A-Za-z0-9_-]+\\.mp3$`).test(url.slice(ASSET_DIR.length)))
 }
 
-async function bundledAudio(req) {
-  const full = await matchShell(req.url)
-  // Preserve the original Range request on network misses. Never cache a streamed
-  // partial response, and never opportunistically cache an uncommitted audio URL.
+function isCoreAudio(url) {
+  return isBundledAudio(url) && url.slice(ASSET_DIR.length).startsWith(`${CORE_AUDIO_STEM}-`)
+}
+
+function isFullAudio(response) {
+  return response?.status === 200 && !response.headers.has('Content-Range') &&
+    /^audio\/(?:mpeg|mp3)(?:;|$)/i.test(response.headers.get('Content-Type') || '') &&
+    response.headers.get('Content-Length') !== '0'
+}
+
+function declaredAudio(pointer) {
+  return (pointer?.audioUrls || pointer?.urls || []).filter(isBundledAudio)
+}
+
+async function cachedAudio(url, pointer = undefined) {
+  if (!isBundledAudio(url)) return undefined
+  const committed = pointer || await readPointer()
+  let response
+  if (committed?.urls.includes(url)) response = await caches.match(url, { cacheName: committed.name })
+  if (isFullAudio(response)) return response
+  response = await caches.match(url, { cacheName: AUDIO_CACHE })
+  if (isFullAudio(response)) return response
+  // Retain only explicitly referenced, previously committed v5 audio. Never
+  // search arbitrary/partially built shell caches for a recording.
+  for (const archive of committed?.audioArchives || []) {
+    if (!archive.urls.includes(url)) continue
+    response = await caches.match(url, { cacheName: archive.name })
+    if (isFullAudio(response)) return response
+  }
+  return undefined
+}
+
+let libraryDownload = null
+const audioDownloads = new Map()
+
+async function audioStatus() {
+  const pointer = await readPointer()
+  const cachedUrls = []
+  for (const url of declaredAudio(pointer)) if (await cachedAudio(url, pointer)) cachedUrls.push(url)
+  return { type: 'MOONRISE_AUDIO_STATUS', version: 1, cachedUrls, downloading: Boolean(libraryDownload || audioDownloads.size) }
+}
+
+async function broadcastAudioStatus() {
+  const status = await audioStatus()
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  for (const client of clients) client.postMessage(status)
+}
+
+function downloadAudio(url) {
+  if (audioDownloads.has(url)) return audioDownloads.get(url)
+  const task = (async () => {
+    const pointer = await readPointer()
+    if (!declaredAudio(pointer).includes(url) || isCoreAudio(url) || await cachedAudio(url, pointer)) return
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 15000)
+    try {
+      // A new full request, never the player's potentially partial Range response.
+      const response = await fetch(url, { cache: 'no-store', signal: controller.signal })
+      if (response.type !== 'basic' || response.redirected || !isFullAudio(response)) throw new Error('invalid audio response')
+      const bytes = await response.arrayBuffer()
+      if (!bytes.byteLength) throw new Error('empty audio response')
+      const headers = new Headers(response.headers)
+      headers.delete('Content-Encoding')
+      headers.set('Content-Length', String(bytes.byteLength))
+      const cache = await caches.open(AUDIO_CACHE)
+      // A failed put leaves any previously cached immutable recording untouched.
+      await cache.put(url, new Response(bytes, { status: 200, headers }))
+    } finally {
+      clearTimeout(timer)
+    }
+  })().catch(() => {}).finally(async () => {
+    audioDownloads.delete(url)
+    await broadcastAudioStatus().catch(() => {})
+  })
+  audioDownloads.set(url, task)
+  return task
+}
+
+function downloadLibrary() {
+  if (libraryDownload) return libraryDownload
+  libraryDownload = (async () => {
+    const pointer = await readPointer()
+    await broadcastAudioStatus().catch(() => {})
+    for (const url of declaredAudio(pointer)) if (!isCoreAudio(url)) await downloadAudio(url)
+  })().finally(async () => {
+    libraryDownload = null
+    await broadcastAudioStatus().catch(() => {})
+  })
+  return libraryDownload
+}
+
+async function bundledAudio(event) {
+  const req = event.request
+  const full = await cachedAudio(req.url)
+  // Preserve the original Range request on a miss. Independently try one full
+  // download of an exact declared extra URL; unknown URLs are never downloaded.
+  if (!full) event.waitUntil(downloadAudio(req.url))
   if (!full || full.status !== 200) return fetch(req)
   const bytes = await full.arrayBuffer()
   const size = bytes.byteLength
@@ -194,7 +301,7 @@ async function isComplete(pointer) {
       // A static host may return its HTML fallback with status 200 for a missing
       // MP3. Do not commit that, a partial response, or an empty audio response.
       // GitHub Pages serves this MP3 as audio/mp3 rather than audio/mpeg.
-      if (res.status !== 200 || res.headers.has('Content-Range') || !/^audio\/(?:mpeg|mp3)(?:;|$)/i.test(res.headers.get('Content-Type') || '')) return false
+      if (!isFullAudio(res)) return false
       if (!(await res.arrayBuffer()).byteLength) return false
     }
   }
@@ -220,10 +327,15 @@ async function buildShell() {
   const res = await fetch(START_URL, { cache: 'no-store' })
   if (!res.ok) throw new Error(`start page HTTP ${res.status}`)
   const html = await res.clone().text()
-  const name = SHELL_PREFIX + (await shortHash(html))
-  const pointer = { name, urls: [START_URL, ...referencedFiles(html)], builtAt: new Date().toISOString() }
-
   const committed = await readPointer()
+  const files = referencedFiles(html)
+  const name = SHELL_PREFIX + (await shortHash(SHELL_PROTOCOL + html))
+  const audioArchives = [...(committed?.audioArchives || [])]
+  if (committed?.urls.some(url => isBundledAudio(url) && !isCoreAudio(url)) && !audioArchives.some(item => item.name === committed.name)) {
+    audioArchives.push({ name: committed.name, urls: committed.urls.filter(isBundledAudio) })
+  }
+  const pointer = { name, urls: [START_URL, ...files.filter(url => !isBundledAudio(url) || isCoreAudio(url))],
+    audioUrls: files.filter(isBundledAudio), audioArchives, builtAt: new Date().toISOString() }
   if (committed?.name === name && (await isComplete(committed))) return
 
   // Anything already stored under this name is uncommitted (or broken): start clean.
@@ -240,7 +352,8 @@ async function buildShell() {
 
   await writePointer(pointer) // commit: the last write
   const keys = await caches.keys()
-  await Promise.all(keys.filter((k) => k.startsWith(SHELL_PREFIX) && k !== name).map((k) => caches.delete(k)))
+  const keep = new Set([name, ...audioArchives.map(item => item.name)])
+  await Promise.all(keys.filter((k) => k.startsWith(SHELL_PREFIX) && !keep.has(k)).map((k) => caches.delete(k)))
 }
 
 function referencedFiles(html) {
