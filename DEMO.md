@@ -34,7 +34,7 @@ wording before presenting**.
 
 1. Name: a fictional first name (e.g. "Rose"). **Never a real patient's name or details.**
 2. Birth year: **1942**. The "Their songs: 1952 to 1972" card appears with era songs.
-   *Say:* "Music from ages 10 to 30, the reminiscence bump, is what people remember best."
+   *Say:* "Music from ages 10 to 30, the 'reminiscence bump', tends to be the most familiar."
 3. **Use my location** (or type the backup city → Find).
 4. Anchors (optional): hometown, spouse's name, job. These become memory prompts.
 5. **Start**.
@@ -42,13 +42,14 @@ wording before presenting**.
 ### 3. Today: the real sky (≈30 s)
 
 Point at the sky card:
-- **Estimated dusk** plus the line under it: sunset, cloud %, and how many minutes the clouds
-  pull dusk earlier (`cloud % / 100 × 30 min`).
-- **Start Moonrise at** with the countdown, which defaults to 45 min before dusk.
-- The moon phase.
+- **Your evening begins at** with the countdown, which defaults to 45 min before estimated dusk.
+- The moon, drawn in tonight's real phase.
+- Tap **Tonight's sky · estimated dusk** to open the details: sunset, cloud %, and how many
+  minutes Moonrise's prototype rule moves the estimate earlier (`cloud % / 100 × 30 min`).
 
-*If today is clear:* "Clear sky today, so dusk is right at sunset. On an overcast evening it
-comes up to 30 minutes sooner." (Then show the cloudy-vs-clear split in the report, step 5.)
+*If today is clear:* "Clear sky today, so the estimate is right at sunset. On a fully overcast
+evening, our rule moves it up to 30 minutes earlier." (Then show the cloudy-vs-clear split
+in the report, step 5.)
 *If the weather service is down:* the card says so and uses the plain sunset. Say that; it
 is the designed fallback.
 
@@ -77,9 +78,10 @@ Tap **Finish** → Log.
 2. Settings → **Load demo week**. It's clearly labelled demo data, generated from a seeded
    random function. It never overwrites a real logged evening, and "Remove demo data"
    clears it in one tap.
-3. Today: the start time has **moved earlier**, and the card says it was learned from logged
-   episodes. *Say:* "It learns from the evenings you log: the median episode time minus
-   a 20-minute buffer."
+3. Today: the suggested start time has **moved earlier**, and the card says it was adjusted
+   from logged episodes. The constellation now has a star for each logged evening (demo
+   stars are labelled). *Say:* "It adjusts the suggestion from the evenings you log: the
+   median episode time minus a 20-minute buffer."
 4. Report: the episode count, when episodes started relative to dusk, cloudy vs clear
    evenings, "Songs linked with calmer evenings" (an association, not proof a song caused
    anything), and the note to mention sudden changes to a doctor. Tap **Print** to show
@@ -97,7 +99,10 @@ which is why the dusk footage is a recording of a real evening run.
 
 ## Say / don't say
 
-- ✅ "Helps caregivers get ahead of evening agitation." "Caregiver support."
+- ✅ "Helps caregivers plan ahead for evening agitation." "Caregiver support." "Estimated
+  dusk", "suggested start time", "songs linked with calmer evenings".
+- ❌ "Knows when it gets dark", "learns which songs help", "AI-powered" (the app runs no AI
+  model; AI was used to build it and to make two illustrations).
 - ❌ "Treats", "prevents", "reduces sundowning", or any clinical outcome claim. Moonrise
   makes no medical claims.
 - ✅ "All data stays on the tablet. No account, no server."
