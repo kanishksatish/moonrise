@@ -135,6 +135,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Opening stat: Alzheimer's Association 2026 Facts and Figures (12M+ unpaid caregivers, 19.6B hours in 2025). Seen via search snippets only (primary pages blocked in the sandbox): a human must click through before presenting.
 - Honest limitation: the app tracks the real sky, so a morning demo shows daytime and the 10-min alert can't fire live. Recommendation: record a real evening run tonight as the dusk/alert footage. No staged or faked sky.
 
+## 2026-09-26 02:44 UTC — Claude — CI + more memory prompts
+- `.github/workflows/ci.yml`: npm ci, npm test, npm run build on every push and PR (all branches). Deploys nothing.
+- memoryPrompts: 24 unique prompts for a full profile (was 15), enough for an hour at one per 3 min without repeating. Added: evenings in the hometown, radio in their teenage decade, the 1957 satellite (age-gated like other era events), and six gentle general prompts (night sky where they grew up, a pet, outdoor games, Saturdays, kitchen smells, who taught them to cook). Same function signature. 109 tests pass.
 ## 2026-09-26 02:50 UTC — Codex — offline integration and demo pass
 - Integrated reviewed PWA patch 4c3ae9b and engine/data/docs through 245bbd6 into claude-ui. All 132 tests pass (including 15 worker fault-injection tests and 10 UI/helper tests); production build passes. Manifest URLs now work under a sub-path.
 - Browser: live Dallas lookup and nonsense-city no-match both pass. At 768x1024, Setup for 1942 shows 44 songs; Today, Moonrise mode, log, demo-week generation, learned schedule, and report pass. Demo routine moves from 45 to 60 minutes before dusk with an explicit demo badge.
@@ -154,3 +157,5 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - A seven-evening constellation counts logged dates equally across calm/restless/episode and labels demo data. No streak pressure or patient outcome score. Added integration regression coverage. All 137 tests pass before final integration; production build succeeds. 20px body/56px routine controls measured in the browser; mobile moon remains visible.
 - Integrated main56ccb58 and enginebc1ac52 locally; next integrate Kanishk's newer main55acd4e. Screen styles are separate from print. Claude independently confirmed the earlier print refinements yield one page at Letter/A4 on8764863; requesting recheck of this design.
 - Two Higgsfield image jobs, no video, purchases or deployment. Asset jobs/prompts and visual story in DESIGN.md. HTML preloads put both art assets into the committed shell.
+## 2026-09-26 02:52 UTC — Claude — sky gradient contrast (L5 review, engine-side fix)
+- skyGradient day/dusk stops darkened so white text is >= 4.5:1 (WCAG AA) on every color the gradient passes through, top and bottom (was as low as 1.43:1 on the daytime horizon). Day is still blue, dusk deep orange, night unchanged. Pinned by a new test that checks 101 points. 111 tests pass. No interface change.

@@ -42,7 +42,7 @@ wording before presenting**.
 ### 3. Today: the real sky (≈30 s)
 
 Point at the sky card:
-- **Dusk tonight** plus the line under it: sunset, cloud %, and how many minutes the clouds
+- **Estimated dusk** plus the line under it: sunset, cloud %, and how many minutes the clouds
   pull dusk earlier (`cloud % / 100 × 30 min`).
 - **Start Moonrise at** with the countdown, which defaults to 45 min before dusk.
 - The moon phase.
@@ -61,7 +61,9 @@ Tap **Start Moonrise now**. Full screen:
 - The sky gradient follows the **real** sky right now, so in the morning it's daytime blue.
   *Say:* "At dusk this deepens to night, the moon rises, and the screen gets warmer and
   brighter as the room gets darker." Then **play the recorded dusk clip** to show it.
-- Big song title with Spotify / YouTube links (Moonrise doesn't host audio).
+- Big song title with Spotify / YouTube links (Moonrise doesn't host audio). **Open one of the
+  links**: only songs whose link was opened are recorded for tonight's log, and so only those
+  count toward "Songs linked with calmer evenings".
 - A memory prompt in large text for the caregiver to read aloud, e.g. "Where were you when
   they landed on the moon in 1969?" (only for people born before about 1962).
 - The person with dementia never has to read or press anything.
@@ -70,7 +72,8 @@ Tap **Finish** → Log.
 
 ### 5. The learning: demo week and the report (≈40 s)
 
-1. On Log, tap **Episode** (one tap), then optionally set a time. Or skip logging and go on.
+1. On Log, tap **Episode** (one tap), then optionally set a time (a time in the future is
+   refused). Or skip logging and go on.
 2. Settings → **Load demo week**. It's clearly labelled demo data, generated from a seeded
    random function. It never overwrites a real logged evening, and "Remove demo data"
    clears it in one tap.
@@ -78,8 +81,9 @@ Tap **Finish** → Log.
    episodes. *Say:* "It learns from the evenings you log: the median episode time minus
    a 20-minute buffer."
 4. Report: the episode count, when episodes started relative to dusk, cloudy vs clear
-   evenings, the top songs, and the note to mention sudden changes to a doctor. Tap
-   **Print** to show it's one page.
+   evenings, "Songs linked with calmer evenings" (an association, not proof a song caused
+   anything), and the note to mention sudden changes to a doctor. Tap **Print** to show
+   it's one page.
 
 ### 6. Close (≈10 s)
 
