@@ -15,3 +15,4 @@ export {
 export { weeklyReport, formatOnset } from './report.js'
 export { moonPhase, skyState, skyGradient } from './moon.js'
 export { memoryPrompts, promptAt } from './prompts.js'
+export { generateDemoWeek } from './demo.js'

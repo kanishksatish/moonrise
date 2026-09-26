@@ -89,3 +89,11 @@ describe('weeklyReport', () => {
     expect(empty.doctorNote).toBeTruthy()
   })
 })
+
+describe('weeklyReport default window', () => {
+  it('ends on the latest logged evening', () => {
+    const r = weeklyReport(logs, { songs })
+    expect(r.to).toBe('2026-09-26')
+    expect(r.evenings).toBe(7)
+  })
+})

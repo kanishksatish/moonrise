@@ -1,6 +1,7 @@
 // Report engine: one printable weekly summary, computed only from stored logs.
 //
 // Covers the 7 calendar days ending on endDate (inclusive).
+// endDate defaults to the most recent logged evening, or today if there are no logs.
 // Cloudy evening = cloudCover >= 50%. Clear = below 50%. Unknown cloud cover is left out of both.
 // Top songs = songs played this week, ranked by score this week (calm +1, episode -1), then plays.
 
@@ -34,7 +35,14 @@ function skyGroup(logs) {
   return { evenings: logs.length, episodes: logs.filter((l) => l.outcome === 'episode').length }
 }
 
-export function weeklyReport(logs = [], { endDate = new Date(), songs = seedSongs } = {}) {
+function latestLogDate(logs) {
+  if (logs.length === 0) return new Date()
+  const latest = logs.reduce((max, l) => (l.date > max ? l.date : max), logs[0].date)
+  const [y, m, d] = latest.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+export function weeklyReport(logs = [], { endDate = latestLogDate(logs), songs = seedSongs } = {}) {
   const to = localDateString(endDate)
   const from = daysBack(endDate, REPORT_DAYS - 1)
   const week = logs

@@ -53,3 +53,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - `memoryPrompts(profile, { song })` -> string[]. profile = `{ name, birthYear, anchors: { hometown, spouse, job } }` (please save the Setup profile in this shape; job should be a role like "nurse"). Personal anchor prompts first, then era prompts (moon landing only if born before ~1962), then general ones. Passing the current `song` adds "Do you remember ... ?" first.
 - `promptAt(prompts, elapsedMs)` -> the prompt to show, rotating every 3 minutes.
 - Next: demo week generator.
+
+## 2026-09-26 01:50 UTC — Claude — demo week
+- Done: `src/engine/demo.js` + tests (66 passing total).
+- `generateDemoWeek({ birthYear, lat, lon, endDate?, seed? })` -> 7 logs (oldest first, ending on endDate, default today), every one has `demo: true`. Seeded (default seed 1969) so the demo is repeatable. For "Load demo week": append these to stored logs and label them as demo data; filter `!log.demo` to clear them.
+- Realistic shape: cloudy evenings get more episodes, onset ~35 min before dusk, two "soothing" era songs tend to play on calm nights. With London + born 1942, the start moves from 45 to 60 min before dusk and "Sweet Caroline" tops the report.
+- Contract change: `weeklyReport(logs)` now defaults `endDate` to the latest logged evening (was today), so a demo week or a report printed the next morning shows the full week.
+- Next: localStorage helpers.
