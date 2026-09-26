@@ -4,6 +4,7 @@ import { formatDuration, formatTime } from '../components/format.js'
 import { eveningKey } from '../components/eveningLog.js'
 import useNow from '../components/useNow.js'
 import MoonIcon from '../components/MoonIcon.jsx'
+import Constellation from '../components/Constellation.jsx'
 
 const HEADS_UP_MINUTES = 10
 const MINUTE = 60000
@@ -69,6 +70,7 @@ export default function Today({ state, sky, onStart }) {
   return (
     <div className="today">
       <header className="today-head">
+        <p className="eyebrow">An evening, together</p>
         <h1>Tonight for {profile.name}</h1>
         {profile.city && <p className="muted">{profile.city}</p>}
       </header>
@@ -90,19 +92,29 @@ export default function Today({ state, sky, onStart }) {
           <>
             <div className="sky-row">
               <div>
-                <p className="label">Start Moonrise at</p>
+                <p className="label">Your evening begins at</p>
                 <p className="big-number">{formatTime(schedule.start)}</p>
                 <p className="countdown">
                   {now < schedule.start ? `in ${formatDuration(schedule.start - now)}` : duskPassed ? 'Dusk has passed' : 'Now'}
                 </p>
               </div>
               <div className="moon-box">
-                <MoonIcon name={moon.name} />
+                <MoonIcon name={moon.name} phase={moon.phase} />
                 <p className="small">{moon.name}</p>
               </div>
             </div>
 
-            <div className="sky-facts">
+
+          </>
+        )}
+      </section>
+
+      <button className="btn primary huge start-routine" onClick={onStart}>
+        <span>Start Moonrise now</span><span aria-hidden="true">↗</span>
+      </button>
+      {sky && (
+            <details className="sky-facts">
+                <summary>Tonight’s sky · estimated dusk {formatTime(sky.effectiveDusk)}</summary>
               <p>
                 Estimated dusk <strong>{formatTime(sky.effectiveDusk)}</strong>
               </p>
@@ -121,19 +133,14 @@ export default function Today({ state, sky, onStart }) {
                   ? `Starting ${schedule.minutesBeforeDusk} min before dusk, learned from ${schedule.episodesUsed} logged episode${schedule.episodesUsed === 1 ? '' : 's'}.`
                   : `Starting ${schedule.minutesBeforeDusk} min before dusk. After 3 logged evenings with a timed episode, Moonrise can adjust this suggestion.`}
               </p>
-            </div>
-          </>
-        )}
-      </section>
-
-      <button className="btn primary huge" onClick={onStart}>
-        Start Moonrise now
-      </button>
+            </details>
+      )}
+      <div className="routine-steps" aria-label="Your evening routine"><span><b>01</b> Settle in</span><span><b>02</b> Play a memory</span><span><b>03</b> Log tonight</span></div>
       <p className="muted small">A suggested routine based on the sky and your logs. Caregiver support, not a medical treatment.</p>
 
       {tonightLog && (
         <p className="logged">
-          Tonight is logged: <strong>{tonightLog.outcome}</strong>
+          <span aria-hidden="true">✧ </span>Tonight is logged: <strong>{tonightLog.outcome}</strong>. A star for showing up.
         </p>
       )}
 
@@ -142,6 +149,8 @@ export default function Today({ state, sky, onStart }) {
           Turn on alerts
         </button>
       )}
+      {(permission === 'default' || permission === 'granted') && <p className="small alert-hint">Keep Moonrise open to get the heads-up.</p>}
+      <Constellation logs={logs} now={now}/>
     </div>
   )
 }

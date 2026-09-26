@@ -148,3 +148,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 
 ## 2026-09-26 02:52 UTC — Claude — sky gradient contrast (L5 review, engine-side fix)
 - skyGradient day/dusk stops darkened so white text is >= 4.5:1 (WCAG AA) on every color the gradient passes through, top and bottom (was as low as 1.43:1 on the daytime horizon). Day is still blue, dusk deep orange, night unchanged. Pinned by a new test that checks 101 points. 111 tests pass. No interface change.
+
+## Codex — visual direction and constellation, September 25 night
+- Ketan explicitly requested a substantially more polished UI and beneficial light gamification, and authorized Higgsfield artwork using existing credits. Implemented a midnight/ivory visual system, original lightweight lake/lunar art, live-phase SVG moon, larger clear hero action, expandable weather explanation, redesigned screens/nav and a visible moon stage separated from controls. Native fullscreen is now opt-in.
+- A seven-evening constellation counts logged dates equally across calm/restless/episode and labels demo data. No streak pressure or patient outcome score. Added integration regression coverage. All 137 tests pass before final integration; production build succeeds. 20px body/56px routine controls measured in the browser; mobile moon remains visible.
+- Integrated main56ccb58 and enginebc1ac52 locally; next integrate Kanishk's newer main55acd4e. Screen styles are separate from print. Claude independently confirmed the earlier print refinements yield one page at Letter/A4 on8764863; requesting recheck of this design.
+- Two Higgsfield image jobs, no video, purchases or deployment. Asset jobs/prompts and visual story in DESIGN.md. HTML preloads put both art assets into the committed shell.
