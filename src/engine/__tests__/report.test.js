@@ -68,12 +68,19 @@ describe('weeklyReport', () => {
     expect(r.clear).toEqual({ evenings: 3, episodes: 0 })
   })
 
-  it('lists the top 5 songs by weekly score', () => {
+  it('lists the top 5 songs by weekly score, with their evidence', () => {
     expect(r.topSongs).toHaveLength(5)
     // s1: calm, restless, calm = +2 (3 plays). s4: calm, calm = +2 (2 plays). s3: two episodes = -2.
     expect(r.topSongs.map((s) => s.id).slice(0, 2)).toEqual(['s1', 's4'])
     expect(r.topSongs.find((s) => s.id === 's3')).toBeUndefined()
     expect(r.topSongs[0]).toMatchObject({ score: 2, plays: 3 })
+    // s1: calm on 20th, restless on 22nd, calm on 24th
+    expect(r.topSongs[0]).toMatchObject({ calm: 2, restless: 1, episode: 0 })
+    expect(r.topSongs[0].evidenceText).toBe('Opened on 3 logged evenings: 2 calm, 1 restless.')
+    for (const s of r.topSongs) {
+      expect(s).not.toHaveProperty('calmRate')
+      expect(s).not.toHaveProperty('status')
+    }
   })
 
   it('always includes the doctor note', () => {
@@ -95,5 +102,14 @@ describe('weeklyReport default window', () => {
     const r = weeklyReport(logs, { songs })
     expect(r.to).toBe('2026-09-26')
     expect(r.evenings).toBe(7)
+  })
+})
+
+describe('per-song counts refer to distinct evenings', () => {
+  it('counts a repeated song id once per evening, matching songEvidence', () => {
+    const damaged = [log(24, 'calm', { songIds: ['s1', 's1'] }), log(25, 'restless', { songIds: ['s1'] })]
+    const [top] = weeklyReport(damaged, { endDate, songs }).topSongs
+    expect(top).toMatchObject({ id: 's1', plays: 2, calm: 1, restless: 1 })
+    expect(top.evidenceText).toBe('Opened on 2 logged evenings: 1 calm, 1 restless.')
   })
 })

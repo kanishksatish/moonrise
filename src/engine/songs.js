@@ -2,8 +2,11 @@
 //
 // eraYears(birthYear) = birthYear + 10 to birthYear + 30 (inclusive).
 // songScore: starts at 0, +1 for each "calm" evening it played on, -1 for each "episode"
-// evening. "restless" evenings do not change the score.
+// evening. "restless" evenings do not change the score. (The simple AGENTS.md count, kept
+// for display and the report.)
 // playlist: era songs sorted by score, highest first. Ties are shuffled randomly.
+// (We tested ranking by a smoothed calm rate instead; in simulation the simple score did
+// as well or better, so it stays. See METHODOLOGY.md.)
 //
 // Song ids are opaque and must never change once shipped: saved logs store them, and
 // scores and the report match them exactly. Fix a wrong year in `year` only; the year

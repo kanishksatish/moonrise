@@ -3,12 +3,15 @@
 // Covers the 7 calendar days ending on endDate (inclusive).
 // endDate defaults to the most recent logged evening, or today if there are no logs.
 // Cloudy evening = cloudCover >= 50%. Clear = below 50%. Unknown cloud cover is left out of both.
-// Top songs = songs played this week, ranked by score this week (calm +1, episode -1), then plays.
+// Top songs = songs opened this week, ranked by score this week (calm +1, episode -1), then
+// plays. Each also carries this week's plain counts (calm, restless, episode) and an
+// evidenceText such as: Opened on 3 logged evenings: 2 calm, 1 restless.
 
 import seedSongs from '../data/songs.json'
 import { localDateString } from './sky.js'
 import { median, onsetMinutes } from './schedule.js'
 import { songScore } from './songs.js'
+import { songEvidence, evidenceText } from './learning.js'
 
 export const CLOUDY_THRESHOLD = 50
 export const REPORT_DAYS = 7
@@ -58,11 +61,23 @@ export function weeklyReport(logs = [], { endDate = latestLogDate(logs), songs =
   const clear = withCloud.filter((l) => l.cloudCover < CLOUDY_THRESHOLD)
 
   const plays = new Map()
-  for (const l of week) for (const id of l.songIds ?? []) plays.set(id, (plays.get(id) ?? 0) + 1)
+  // Each song counts once per evening, like songEvidence, even if stored data repeats an id.
+  for (const l of week) for (const id of new Set(l.songIds ?? [])) plays.set(id, (plays.get(id) ?? 0) + 1)
+  const weekEvidence = songEvidence(week)
   const topSongs = [...plays.keys()]
     .map((id) => {
       const song = songs.find((s) => s.id === id)
-      return song ? { ...song, score: songScore(id, week), plays: plays.get(id) } : null
+      if (!song) return null
+      const e = weekEvidence[id] ?? { calm: 0, restless: 0, episode: 0 }
+      return {
+        ...song,
+        score: songScore(id, week),
+        plays: plays.get(id),
+        calm: e.calm,
+        restless: e.restless,
+        episode: e.episode,
+        evidenceText: evidenceText({ ...e, plays: plays.get(id) }),
+      }
     })
     .filter(Boolean)
     .sort((a, b) => b.score - a.score || b.plays - a.plays || a.title.localeCompare(b.title))

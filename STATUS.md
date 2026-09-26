@@ -210,3 +210,28 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Added local audio selection with native controls, visible filename, no upload, object-URL revocation on replacement/quiet/exit, and no mapping to era-song outcomes. Files are selected again after leaving the routine; the user-supplied commercial recording was not bundled or copied into the repository.
 - Service worker v3 commits the full bundled piano with the shell, validates audio MIME/status, and serves single bounded/open-ended/suffix byte ranges offline. Unknown/remote audio is never cached. Failed audio downloads, partial responses, HTML fallbacks and quota errors leave the previous committed shell usable. Binary cache tests cover byte accuracy, conditionals, malformed ranges and subpaths.
 - 231 tests pass across19 files. Root and /moonrise/ builds independently emit the same provenance-checked3,499,346-byte MP3. In isolated production Chrome, the HTTP server was stopped before the first Play: piano played with duration176.61s and no media error, then sought to129.87s with the server still stopped. Reload reopened the app from its offline shell. Safari/iOS native playback remains untested. Separate provider QA returned ERROR150 for Sinatra, Mancini and Armstrong; no candidate promoted.
+## 2026-09-26 04:06 UTC — Claude — learning evidence + milestones (METHODOLOGY.md)
+- Kanishk asked for trained, not random, scores and light gamification. Built Bayesian alternatives, then tested them with a seeded simulation (`node scripts/simulate-learning.mjs`): the simple AGENTS.md rules won both studies, so ranking and start time are unchanged. Full write-up: METHODOLOGY.md.
+- New (additive): `songStats(logs)` (Beta-Bernoulli evidence per song: plays/calm/restless/episode/score/calmRate/low/high/status untried|learning|promising|unpromising); `playlist()` and `weeklyReport().topSongs` items gain calmRate/status (ordering unchanged); `moonriseStart()` gains `range {earliest, latest}`, `halfWidthMinutes`, `confidence` (calibrated ~80% in simulation); `progress(logs)` milestones with `usesDemo`.
+- Honesty rule for UI: "promising" songs were truly helpful only ~39% of the time in simulation. Show "worth trying again" + counts, never "helps".
+- 194 tests.
+
+## 2026-09-26 04:10 UTC — Claude — learning narrowed per Codex review
+- Supersedes the previous entry. Public contract is now narrow and descriptive: `songEvidence(logs)` -> { [id]: { plays, calm, restless, episode, score } }; `evidenceText(e)` -> "Opened on 5 logged evenings: 3 calm, 1 restless, 1 episode."; `weeklyReport().topSongs` items gain calm/restless/episode/evidenceText; `progress(logs)` = 4 process-only milestones (first-evening, first-song, start-from-logs, week) with usesDemo.
+- Removed: songStats/calmRate/status labels, moonriseStart range/confidence, outcome milestones. playlist() and moonriseStart() are exactly the AGENTS.md contract again.
+- METHODOLOGY.md rewritten: evidence boundary (no trained model, no clinical validation; Codex's TIHM audit: 6-hour labels, license restrictions), rules, and the simulation of what was tried and rejected. 184 tests.
+
+## 2026-09-26 04:15 UTC — Claude — engine fixes from Codex review
+- Report per-song plays count distinct evenings (Set per evening), matching songEvidence; regression added.
+- schedule.js is byte-identical to the original AGENTS.md version again (stale shrinkage/range header removed).
+- METHODOLOGY: median robustness claim now qualified by sample size. 187 tests.
+
+## 2026-09-26 04:38 UTC — Claude — in-app music data (approved by Codex in issue #1)
+- `src/data/videos.json`: 15 YouTube candidates (1950s-70s, incl. Sinatra "Fly Me to the Moon" 1964) found by web search, official artist/label/"Provided to YouTube" uploads only; catalog ids unchanged; all `verified: false`. youtube.com is blocked from Claude's sandbox, so none were opened.
+- `songVideo(songId)` -> { youtubeId, watchUrl, embedUrl (youtube-nocookie, no autoplay) } only when `verified: true` (set by hand after real in-app playback); else null. `playlist()` items gain `hasVideo`; ordering unchanged.
+- `scripts/verify-videos.mjs [--write]` records oembedStatus/oembedCheckedAt/oembedInfo only; never sets `verified`; non-200 kept as-is.
+- Ambient pad dropped per Codex (it's packaging a CC0 fallback). 193 tests.
+
+## Codex — integrate reviewed main baseline, September 26
+- Merged origin/main5e0b1dc into claude-ui only, preserving the new direct/local/offline music player and generic recorded-song-activity labels. Main remains unchanged by Codex. Resolved status history, additive contract exports and a YouTube-specific source comment. Scheduling and song ranking are unchanged; descriptive engine helpers remain unused by UI.
+- Prior player headee73268 passed231tests, bothroot/basebuilds and GitHubCI. This integration is validated in GitHubCI to avoid restarting browsers/build servers on the host after Ketan reported computer crashes.
