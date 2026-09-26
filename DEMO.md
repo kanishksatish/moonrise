@@ -64,7 +64,7 @@ Tap **Start Moonrise now**. Full screen:
   brighter as the room gets darker." Then **play the recorded dusk clip** to show it.
 - Big song title with Spotify / YouTube links (Moonrise doesn't host audio). **Open one of the
   links**: only songs whose link was opened are recorded for tonight's log, and so only those
-  count toward "Songs linked with calmer evenings".
+  count toward "Songs from your evenings".
 - A memory prompt in large text for the caregiver to read aloud, e.g. "Where were you when
   they landed on the moon in 1969?" (only for people born before about 1962).
 - The person with dementia never has to read or press anything.
@@ -83,7 +83,7 @@ Tap **Finish** → Log.
    stars are labelled). *Say:* "It adjusts the suggestion from the evenings you log: the
    median episode time minus a 20-minute buffer."
 4. Report: the episode count, when episodes started relative to dusk, cloudy vs clear
-   evenings, "Songs linked with calmer evenings" (an association, not proof a song caused
+   evenings, "Songs from your evenings" (an association, not proof a song caused
    anything), and the note to mention sudden changes to a doctor. Tap **Print** to show
    it's one page.
 
@@ -100,7 +100,7 @@ which is why the dusk footage is a recording of a real evening run.
 ## Say / don't say
 
 - ✅ "Helps caregivers plan ahead for evening agitation." "Caregiver support." "Estimated
-  dusk", "suggested start time", "songs linked with calmer evenings".
+  dusk", "suggested start time", "songs from your evenings".
 - ❌ "Knows when it gets dark", "learns which songs help", "AI-powered" (the app runs no AI
   model; AI was used to build it and to make two illustrations).
 - ❌ "Treats", "prevents", "reduces sundowning", or any clinical outcome claim. Moonrise

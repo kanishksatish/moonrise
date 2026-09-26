@@ -6,6 +6,7 @@ export default function Report({ state }) {
   const r = weeklyReport(logs)
   const weekLogs = logs.filter((l) => l.date >= r.from && l.date <= r.to)
   const hasDemo = weekLogs.some((l) => l.demo)
+  const unknownWeather = weekLogs.filter((l) => !Number.isFinite(l.cloudCover)).length
 
   return (
     <div className="report">
@@ -54,14 +55,15 @@ export default function Report({ state }) {
               <br />
               Clear: {r.clear.episodes} episode{r.clear.episodes === 1 ? '' : 's'} in {r.clear.evenings} evening
               {r.clear.evenings === 1 ? '' : 's'}.
+              {unknownWeather > 0 && <><br />Weather was unavailable for {unknownWeather} evening{unknownWeather === 1 ? '' : 's'}.</>}
             </p>
           </section>
 
           <section>
-            <h2>Songs linked with calmer evenings</h2>
+            <h2>Songs from your evenings</h2>
             <p className="small">Based on your logs and opened song links; this does not show that a song caused a change.</p>
             {r.topSongs.length === 0 ? (
-              <p>No songs played this week.</p>
+              <p>No song links recorded this week.</p>
             ) : (
               <ol className="top-songs">
                 {r.topSongs.map((s) => (

@@ -12,7 +12,7 @@ A quiet observatory for an evening together. Midnight blue, warm ivory, a restra
 | Music and memory | A familiar title and a prompt; opening a music link is the only event recorded as a song. | Spotify / YouTube / Next song |
 | Reflection | Three equally prominent choices, without a success or failure judgment. | Every evening is worth remembering. |
 | Constellation | One star per logged date in the last seven evenings. All outcomes count equally. Demo stars are explicitly labeled. No streak loss or patient score. | Every kind of evening counts. |
-| Share with a clinician | The report keeps the compact print layout and medical caution. | Songs linked with calmer evenings |
+| Share with a clinician | The report keeps the compact print layout and medical caution. | Songs from your evenings |
 
 ## Editable source
 

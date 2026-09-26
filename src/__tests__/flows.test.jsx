@@ -113,3 +113,19 @@ it('counts all logged outcomes equally in the constellation and labels demo star
   expect(constellation.textContent).toContain('Every kind of evening counts.')
   expect(constellation.querySelectorAll('.star-filled')).toHaveLength(3)
 })
+
+it('recovers a damaged stored session through a complete song-and-log flow', async () => {
+  localStorage.setItem('moonrise:v1', JSON.stringify({
+    ...initial, logs: [{ date: '2026-99-99', outcome: 'calm' }],
+    tonight: { date: '2026-09-26', songIds: null },
+  }))
+  await act(async () => render(<App />))
+  click('Start Moonrise now')
+  const link = screen.getByRole('link', { name: /Spotify/ })
+  link.addEventListener('click', event => event.preventDefault())
+  fireEvent.click(link)
+  click('Finish'); click('Calm')
+  expect(saved().logs).toHaveLength(1)
+  expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', outcome: 'calm' })
+  expect(saved().logs[0].songIds).toHaveLength(1)
+})

@@ -4,7 +4,7 @@
 @media screen {
   :root { --bg: #090f1e; --surface: #141e30; --surface-2: #2c3b51; --text: #f4f0e6; --muted: #b8c5d5; --accent: #eed5a4; --accent-text: #251c11; --radius: 22px; }
   body { background: radial-gradient(ellipse at 85% 0%, #22314566, transparent 48%), var(--bg); }
-  .screen { max-width: 960px; padding: 28px 32px 142px; gap: 28px; }
+  .screen { overflow-wrap: anywhere; max-width: 960px; padding: 28px 32px 142px; gap: 28px; }
   .brand { display: flex; align-items: center; gap: 8px; font-family: Georgia, serif; font-size: 30px; letter-spacing: -1.5px; line-height: 1; margin-bottom: 12px; }
   .brand .moon-icon { width: 33px; height: 33px; filter: none; }
   .brand-dot { color: var(--accent); }
@@ -95,7 +95,7 @@
   .session-orbit { width: 700px; height: 300px; border: 1px solid #ecddb542; border-radius: 50%; position: absolute; top: 74%; background: radial-gradient(ellipse at 50% 0%, #d3ad6440, transparent 60%); }
   .session-caption { position: absolute; bottom: 12px; z-index: 2; font-family: Georgia, serif; font-style: italic; font-size: 28px; margin: 0; color: #fff4da; background: #091422e6; border-radius: 18px; padding: 8px 14px; }
   .session-cards { display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 780px; margin: auto; }
-  .prompt, .song { width: 100%; max-width: none; border: 1px solid #a4b0c34d; background: #090f1eeb; border-radius: 24px; padding: 24px 28px; }
+  .prompt, .song { overflow-wrap: anywhere; width: 100%; max-width: none; border: 1px solid #a4b0c34d; background: #090f1eeb; border-radius: 24px; padding: 24px 28px; }
   .prompt-label { color: #eed5a4; opacity: 1; text-transform: none; letter-spacing: 0; }
   .prompt-text { font-family: Georgia, serif; font-weight: 400; font-size: clamp(32px, 3.5vw, 42px); margin: 12px 0 0; line-height: 1.18; }
   .song-title { font-size: clamp(30px, 3vw, 40px); font-weight: 550; }
@@ -120,7 +120,7 @@
     .sky-row { min-height: 0; flex-wrap: nowrap; gap: 8px; align-items: flex-start; }
     .sky-row > div:first-child { flex: 1; min-width: 0; }
     .sky-row .label { max-width: 180px; }
-    .big-number { font-size: 48px; letter-spacing: -2px; white-space: nowrap; }
+    .big-number { font-size: clamp(34px, 11vw, 48px); letter-spacing: -2px; white-space: nowrap; }
     .moon-box { min-width: 76px; max-width: 100px; display: flex; flex-direction: column; gap: 0; padding-top: 6px; }
     .moon-box .moon-icon { width: 76px; height: 76px; }
     .moon-box .small { font-size: 20px; line-height: 1.2; margin: 6px 0 20px; }
@@ -150,6 +150,9 @@
     .song-actions { gap: 8px; }
     .song-actions .btn { flex: 1 1 auto; padding: 12px; }
     .prompt-text { font-size: 32px; }
+  }
+  @media (max-width: 360px) {
+    .moon-box { flex: 0 0 76px; max-width: 76px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

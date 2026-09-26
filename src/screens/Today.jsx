@@ -130,8 +130,8 @@ export default function Today({ state, sky, onStart }) {
               </p>
               <p className="small">
                 {schedule.basis === 'learned'
-                  ? `Starting ${schedule.minutesBeforeDusk} min before dusk, learned from ${schedule.episodesUsed} logged episode${schedule.episodesUsed === 1 ? '' : 's'}.`
-                  : `Starting ${schedule.minutesBeforeDusk} min before dusk. After 3 logged evenings with a timed episode, Moonrise can adjust this suggestion.`}
+                  ? `Starting ${schedule.minutesBeforeDusk} min before dusk, based on ${schedule.episodesUsed} logged episode${schedule.episodesUsed === 1 ? '' : 's'}.`
+                  : `Starting ${schedule.minutesBeforeDusk} min before dusk. After 3 logged evenings and at least one episode time, this suggestion can adjust.`}
               </p>
             </details>
       )}
