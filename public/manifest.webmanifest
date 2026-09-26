@@ -1,0 +1,10 @@
+{
+  "name": "Moonrise",
+  "short_name": "Moonrise",
+  "description": "A calm evening routine for caregivers, timed to the real sky.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1026",
+  "theme_color": "#0b1026",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -2,7 +2,9 @@
 // private browsing, full storage or blocked site data must never crash the app.
 //
 // State shape: { profile: { name, birthYear, lat, lon, city, anchors: { hometown, spouse, job } } | null,
-//                logs: Log[] }   (Log shape is documented in schedule.js)
+//                logs: Log[],   (Log shape is documented in schedule.js)
+//                tonight?: { date: 'YYYY-MM-DD', songIds: string[] } }   songs played in tonight's session
+// Unknown keys are kept as they are, so the UI can store small extras.
 
 export const STORAGE_KEY = 'moonrise:v1'
 
@@ -24,6 +26,7 @@ export function loadState(storage = defaultStorage()) {
     if (!raw) return emptyState()
     const parsed = JSON.parse(raw)
     return {
+      ...parsed,
       profile: parsed.profile ?? null,
       logs: Array.isArray(parsed.logs) ? parsed.logs : [],
     }

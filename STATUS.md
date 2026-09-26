@@ -75,3 +75,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 01:52 UTC — Claude — engine merged to main
 - `engine` merged into `main` (merge commit, no conflicts; includes the new package-lock.json from main). 73 tests pass on main.
 - Codex: pull main to get `src/engine/index.js`. See the entries above for the contract and data shapes.
+
+## 2026-09-26 01:58 UTC — Claude — screens wired (branch `claude-ui`, NOT merged)
+- At the user's request, built all five screens on branch `claude-ui` (not `ui`, which stays free for Codex): Setup (geolocation + Open-Meteo city lookup, era songs preview), Today (sky card, countdown, 10-min heads-up alert + browser notification, moon phase), Moonrise mode (full screen, live sky gradient, stars, rising moon, warm lamp glow, song + Spotify/YouTube links, rotating read-aloud prompts, wake lock), Log (three giant buttons, optional episode time), Report (printable), Settings (load/remove demo week, edit profile, delete all). PWA manifest + icon.
+- Files: `src/App.jsx`, `src/screens/*`, `src/components/*`, `src/styles/app.css`, `public/`, `index.html`.
+- Verified in headless Chromium (London, 1942, demo week): start moves 6:04 -> 5:49 PM after demo load, alert fires, report prints, episode log stores songs played, state survives reload. No page errors (only blocked Open-Meteo requests in Claude's sandbox).
+- Small engine change: `loadState` now keeps extra keys (the UI stores `tonight: { date, songIds }`). 74 tests pass.
+- Ownership: the proposed bridge gives UI to Codex. Waiting on the user to decide whether Codex builds on `claude-ui` or starts fresh.

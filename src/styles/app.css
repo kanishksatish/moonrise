@@ -1,0 +1,598 @@
+/* Moonrise UI. Rules from the brief: body text >= 20px, tap targets >= 48px,
+   high contrast, comfortable in a dark room. */
+
+:root {
+  --bg: #0b1026;
+  --surface: #161d3d;
+  --surface-2: #212a55;
+  --text: #f4f1ea;
+  --muted: #b9bdd6;
+  --accent: #ffc36b;
+  --accent-text: #1a1206;
+  --calm: #7fd6a6;
+  --restless: #ffc36b;
+  --episode: #ff8f8f;
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+
+h2 {
+  font-size: 24px;
+  margin: 24px 0 8px;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.lead {
+  font-size: 22px;
+}
+
+/* Layout: one column, content scrolls, nav bar pinned to the bottom within thumb reach. */
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.navbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--surface);
+  border-top: 1px solid var(--surface-2);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-btn {
+  min-height: 72px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nav-btn.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.nav-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* Buttons */
+.btn {
+  min-height: 56px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  border: 2px solid var(--surface-2);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 20px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.btn:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.btn.big {
+  min-height: 64px;
+  font-size: 24px;
+}
+
+.btn.huge {
+  min-height: 88px;
+  font-size: 28px;
+  width: 100%;
+}
+
+.btn.small {
+  min-height: 48px;
+  padding: 8px 16px;
+}
+
+.btn.danger {
+  background: var(--episode);
+  border-color: var(--episode);
+  color: #2a0808;
+  font-weight: 700;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Forms */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field > span {
+  font-weight: 600;
+}
+
+input {
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px solid var(--surface-2);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 22px;
+  width: 100%;
+}
+
+.city-row,
+.place-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.place-row strong {
+  flex: 1;
+}
+
+.status {
+  color: var(--accent);
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.era-title {
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+
+.era-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* Today */
+.alert {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: 24px;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.sky-card {
+  border-radius: var(--radius);
+  padding: 20px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.sky-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.big-number {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.countdown {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.moon-box {
+  text-align: center;
+}
+
+.moon-icon {
+  font-size: 64px;
+  line-height: 1;
+}
+
+.sky-facts {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 8px;
+}
+
+.sky-facts .small {
+  color: #e6e8f5;
+}
+
+.logged {
+  text-align: center;
+  font-size: 22px;
+}
+
+/* Log */
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.btn.outcome {
+  min-height: 120px;
+  flex-direction: column;
+  border-width: 3px;
+}
+
+.outcome-label {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.outcome-hint {
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.btn.outcome.calm {
+  border-color: var(--calm);
+}
+
+.btn.outcome.restless {
+  border-color: var(--restless);
+}
+
+.btn.outcome.episode {
+  border-color: var(--episode);
+}
+
+.btn.outcome.chosen {
+  background: var(--surface-2);
+}
+
+.time-input {
+  font-size: 40px;
+  min-height: 80px;
+  text-align: center;
+  color-scheme: dark;
+}
+
+/* Report */
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.demo-flag {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  border-top: 6px solid;
+}
+
+.stat.calm {
+  border-color: var(--calm);
+}
+
+.stat.restless {
+  border-color: var(--restless);
+}
+
+.stat.episode {
+  border-color: var(--episode);
+}
+
+.stat-number {
+  display: block;
+  font-size: 40px;
+  font-weight: 800;
+}
+
+.top-songs {
+  margin: 0;
+  padding-left: 28px;
+}
+
+.nights {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nights td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.outcome-cell {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.outcome-cell.calm {
+  color: var(--calm);
+}
+
+.outcome-cell.restless {
+  color: var(--restless);
+}
+
+.outcome-cell.episode {
+  color: var(--episode);
+}
+
+.doctor-note {
+  margin-top: 24px;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-weight: 600;
+}
+
+/* Settings */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Moonrise mode: full screen, nothing the person needs to read or press. */
+.moonrise {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: #fff;
+  transition: background 30s linear;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  transition: opacity 30s linear;
+}
+
+.stars span {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.moon {
+  position: absolute;
+  width: min(28vw, 28vh);
+  height: min(28vw, 28vh);
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fffdf2 0%, #f3e9c6 55%, #d9cb9a 100%);
+  box-shadow: 0 0 60px 20px rgba(255, 240, 200, 0.35);
+  transition:
+    bottom 10s linear,
+    left 10s linear;
+}
+
+.lamp-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 30s linear;
+}
+
+.finish {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  z-index: 2;
+}
+
+.moonrise-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 88px 24px 32px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.prompt {
+  max-width: 900px;
+}
+
+.prompt-label {
+  font-size: 20px;
+  opacity: 0.85;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.prompt-text {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.song {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  max-width: 900px;
+  text-shadow: none;
+}
+
+.song-title {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.song-artist {
+  font-size: 24px;
+  opacity: 0.9;
+}
+
+.song-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn.play {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+/* Print: the weekly report on one plain white page. */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 14pt;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .screen {
+    padding: 0;
+    max-width: none;
+  }
+
+  .muted,
+  .small {
+    color: #333;
+  }
+
+  .stat,
+  .card {
+    background: none;
+    border: 1px solid #999;
+  }
+
+  .outcome-cell.calm,
+  .outcome-cell.restless,
+  .outcome-cell.episode {
+    color: #000;
+  }
+
+  .demo-flag,
+  .doctor-note {
+    background: none;
+    color: #000;
+    border: 2px solid #000;
+  }
+
+  h2 {
+    margin-top: 12px;
+  }
+}
