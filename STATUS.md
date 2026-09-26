@@ -266,3 +266,5 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 06:40 UTC — Claude — flaky playback test fixed + deployed
 - The c7eb364 Pages build failed once at flows.test.jsx:112; one re-run deployed c7eb364 (worker v4) to GitHub Pages.
 - Integrated Codex's c89f944 root-cause fix (fixture already listed the randomly chosen song as played). Test-only; next deploy should not need a re-run.
+## 2026-09-26 07:10 UTC — Claude — docs: TIHM research benchmark results
+- METHODOLOGY.md, SUBMISSION.md, README.md now state Codex's separate TIHM benchmark factually (participant-separated folds, AP 0.047 vs clock-only 0.027, interval of difference includes zero, 3.7% precision at threshold, no high-precision setting found). No model connected to the app; no clinical claims. SUBMISSION links no longer say "make public first".

@@ -124,14 +124,15 @@ service-worker, pwa, github-actions
   Its separate soundtrack uses a user-supplied Frank Sinatra recording; that recording
   is not included in the app or repository. Public soundtrack distribution rights have
   not been documented in this project.
-- **Public data.** The team audited the public TIHM label file. Its six-hour agitation labels
-  can't validate minute-level timing, so no model was trained on it and no data from it is
-  in the app or repo.
+- **Public data.** A separate research benchmark on the public TIHM dataset was completed with
+  participant-separated testing. Its precision (about 4% of flagged six-hour windows matched a
+  recorded agitation label) was insufficient to support predictive care alerts, so no model
+  is connected to the app, and no data from it is in the app or repo (`METHODOLOGY.md`).
 - **Music.** The included piano is a CC0 recording (provenance in `src/assets/audio/`).
   Catalog songs are suggestions; no commercial recordings are distributed with the app.
 
 ## Links to add
 
-- Code: https://github.com/kanishksatish/moonrise (make the repository public first)
-- Live app: https://kanishksatish.github.io/moonrise/ (after Pages is enabled and deployed)
+- Code: https://github.com/kanishksatish/moonrise
+- Live app: https://kanishksatish.github.io/moonrise/
 - Video: add the final demonstration link after resolving the public soundtrack rights.

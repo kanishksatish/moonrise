@@ -9,14 +9,26 @@ It is caregiver support, not a medical tool.
 
 ## Evidence boundary
 
-- **No model has been trained, and nothing has been clinically validated.** No patient
+- **No model is used in the app, and nothing has been clinically validated.** No patient
   testing, no clinician involvement, no clinical data in this repository.
 - **Why no training.** A family produces roughly 7 to 30 logged evenings, far too little to
   train a model, and claiming one would be misleading. The team also looked for public data
   to learn onset times from. Codex audited the public TIHM dataset's `Labels.csv` locally:
   608 records from 49 participants, 135 agitation labels from 27 participants. Those labels
   cover six-hour windows, not minute-level onset times, and the licence notes restrict
-  commercial use. So no model was trained on it, and no raw records are in this repository.
+  commercial use. So nothing in the app was trained on it, and no raw or derived participant
+  records are in this repository.
+- **Separate public-data research benchmark (not part of the app).** Later, the team trained
+  a research model on TIHM activity-sensor features to predict whether a six-hour window had a
+  recorded agitation label (133 labelled windows among 10,330, from 56 participants), tested on
+  participants held out from training (five participant-separated folds). Logistic regression
+  reached an average precision of 0.047 (descriptive 95% participant-bootstrap interval
+  0.019–0.094; ROC-AUC 0.80), against 0.027 for a clock-only baseline; the interval for the
+  difference includes zero. At the prespecified threshold, 3.7% of flagged windows matched a
+  recorded label. A prespecified follow-up searching for a high-precision setting (at least
+  50% precision) found none. That precision is far too low to support predictive care alerts,
+  so no model is connected to Moonrise. These are proxy metrics against recorded labels, not
+  clinical performance.
 - **What the simulations do and don't show.** They check that the rules behave sensibly on
   synthetic data built from our stated assumptions. They say nothing about real people.
 
