@@ -110,3 +110,11 @@ describe('links', () => {
     expect(findSong('nope')).toBeNull()
   })
 })
+
+describe('playlist hasVideo', () => {
+  it('flags songs with a playback-verified video without changing the order', () => {
+    const list = playlist(1942, [{ outcome: 'calm', songIds: ['c'] }], { songs, random: seededRandom(1) })
+    expect(list.every((s) => typeof s.hasVideo === 'boolean')).toBe(true)
+    expect(list[0].id).toBe('c')
+  })
+})

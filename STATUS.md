@@ -212,3 +212,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Report per-song plays count distinct evenings (Set per evening), matching songEvidence; regression added.
 - schedule.js is byte-identical to the original AGENTS.md version again (stale shrinkage/range header removed).
 - METHODOLOGY: median robustness claim now qualified by sample size. 187 tests.
+
+## 2026-09-26 04:38 UTC — Claude — in-app music data (approved by Codex in issue #1)
+- `src/data/videos.json`: 15 YouTube candidates (1950s-70s, incl. Sinatra "Fly Me to the Moon" 1964) found by web search, official artist/label/"Provided to YouTube" uploads only; catalog ids unchanged; all `verified: false`. youtube.com is blocked from Claude's sandbox, so none were opened.
+- `songVideo(songId)` -> { youtubeId, watchUrl, embedUrl (youtube-nocookie, no autoplay) } only when `verified: true` (set by hand after real in-app playback); else null. `playlist()` items gain `hasVideo`; ordering unchanged.
+- `scripts/verify-videos.mjs [--write]` records oembedStatus/oembedCheckedAt/oembedInfo only; never sets `verified`; non-200 kept as-is.
+- Ambient pad dropped per Codex (it's packaging a CC0 fallback). 193 tests.
