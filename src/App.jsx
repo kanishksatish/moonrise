@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { effectiveDusk, eveningDate, loadState, saveState } from './engine/index.js'
+import { effectiveDusk, eveningDate, loadState, moonPhase, saveState } from './engine/index.js'
 import { currentSky, eveningKey } from './components/eveningLog.js'
 import useNow from './components/useNow.js'
 import NavBar from './components/NavBar.jsx'
 import Brand from './components/Brand.jsx'
+import LaunchSequence from './components/LaunchSequence.jsx'
 import Setup from './screens/Setup.jsx'
 import Today from './screens/Today.jsx'
 import Moonrise from './screens/Moonrise.jsx'
@@ -22,6 +23,11 @@ function App() {
   const now = useNow()
   const evening = eveningKey(now)
   const visibleSky = profile ? currentSky(sky, profile, now) : null
+
+  useEffect(() => {
+    // Each screen starts at its heading, including inside a tablet preview.
+    ;(document.scrollingElement || document.documentElement).scrollTop = 0
+  }, [screen])
 
   // Every change to state is saved right away.
   function update(next) {
@@ -69,6 +75,10 @@ function App() {
     )
   }
 
+  if (screen === 'launch') {
+    return <LaunchSequence phase={moonPhase(now).phase} onComplete={() => setScreen('moonrise')} />
+  }
+
   if (screen === 'moonrise') {
     return (
       <Moonrise
@@ -86,10 +96,14 @@ function App() {
 
   return (
     <div className="app">
-      <div className="screen">
-        <Brand />
+      <div className={`screen screen-${screen}`}>
+        <header className="app-header no-print">
+          <Brand />
+          <div className="header-note"><span className="status-dot" aria-hidden="true"/>A little calm, every evening.</div>
+          <button className="profile-chip" onClick={() => setScreen('settings')} aria-label={`Settings for ${profile.name}`}><span aria-hidden="true">{profile.name.trim().slice(0, 1).toUpperCase()}</span><span className="profile-name">{profile.name}</span></button>
+        </header>
         {storageError && <p className="status" role="alert">This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>}
-        {screen === 'today' && <Today state={state} sky={visibleSky} onStart={() => setScreen('moonrise')} />}
+        {screen === 'today' && <Today state={state} sky={visibleSky} onStart={() => setScreen('launch')} onPersonalize={() => setScreen('settings')} />}
         {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
         {screen === 'report' && <Report state={state} />}
         {screen === 'settings' && (

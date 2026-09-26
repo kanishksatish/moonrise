@@ -1,0 +1,86 @@
+@media screen {
+  .launch-sequence {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    isolation: isolate;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 70% 25%, #eac39c0d, transparent 46%), #101316;
+    color: #f5f0e7;
+    animation: launch-arrive 240ms ease-out both;
+  }
+  .launch-star-field { position: absolute; inset: 0; pointer-events: none; }
+  .launch-star-field i { position: absolute; border-radius: 50%; background: #e5dfd1; opacity: .52; }
+  .launch-skip {
+    position: absolute;
+    right: max(24px, env(safe-area-inset-right));
+    top: max(24px, env(safe-area-inset-top));
+    z-index: 4;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    min-height: 52px;
+    padding: 10px 18px;
+    border: 1px solid #6d716c;
+    border-radius: 10px;
+    background: #191e21;
+    color: #f5f0e7;
+    font: inherit;
+    font-size: 20px;
+    cursor: pointer;
+  }
+  .launch-skip:hover { background: #2b302e; }
+  .launch-skip:focus-visible { outline: 2px solid #eac39c; outline-offset: 4px; }
+  .launch-art { position: absolute; width: min(calc(100% - 48px), 1000px); height: min(63svh, 570px); left: 50%; top: 43%; transform: translate(-50%, -50%); }
+  .launch-destination { position: absolute; z-index: 2; left: 74%; top: 18%; transform: translate(-50%, -50%); }
+  .launch-destination .moon-icon { width: clamp(120px, 22vw, 212px); height: clamp(120px, 22vw, 212px); display: block; filter: drop-shadow(0 0 45px #eac39c16); }
+  .launch-lunar-orbit { position: absolute; left: 74%; top: 18%; width: clamp(184px, 30vw, 310px); height: clamp(184px, 30vw, 310px); border: 1px solid #eac39c22; border-radius: 50%; transform: translate(-50%, -50%); }
+  .launch-flight-path { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .launch-flight-path path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: launch-trail 2.2s cubic-bezier(.48,.08,.58,1) both; }
+  .launch-rocket-carrier { position: absolute; inset: 0; animation: launch-flight 2.2s cubic-bezier(.48,.08,.58,1) both; z-index: 3; }
+  .launch-rocket { position: absolute; left: 20%; top: 86%; width: clamp(28px, 4vw, 44px); transform: translate(-50%, -50%) rotate(45deg); transform-origin: 50% 28%; animation: launch-recede 2.2s ease-in both; }
+  .launch-rocket svg { width: 100%; display: block; overflow: visible; filter: drop-shadow(0 0 9px #eac39c25); }
+  .launch-exhaust { transform-origin: 26px 72px; animation: launch-exhaust 2.2s ease-in both; }
+  .launch-horizon { position: absolute; width: 90%; height: 130px; left: -20%; top: 97%; border-radius: 50%; border-top: 1px solid #eac39c27; transform: rotate(-12deg); }
+  .launch-copy { position: absolute; left: 24px; right: 24px; bottom: max(42px, env(safe-area-inset-bottom)); text-align: center; z-index: 4; pointer-events: none; }
+  .launch-copy h1 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(38px, 5.3vw, 64px); line-height: 1.08; letter-spacing: -1.5px; font-weight: 400; margin: 0; text-shadow: 0 3px 22px #101316; }
+  .launch-copy h1 em { color: #eac39c; font-weight: 400; }
+  .launch-progress { position: absolute; bottom: max(19px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: 92px; height: 1px; background: #eac39c25; overflow: hidden; }
+  .launch-progress span { display: block; height: 100%; background: #eac39c; transform-origin: left; animation: launch-progress 2.4s linear both; }
+  @keyframes launch-arrive { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes launch-flight {
+    0% { transform: translate(0, 0); }
+    24% { transform: translate(4%, -6%); }
+    62% { transform: translate(26%, -32%); }
+    100% { transform: translate(54%, -68%); }
+  }
+  @keyframes launch-recede {
+    0% { opacity: 0; transform: translate(-50%, -50%) rotate(42deg) scale(1); }
+    8% { opacity: 1; }
+    70% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -50%) rotate(48deg) scale(.24); }
+  }
+  @keyframes launch-trail { 0% { stroke-dashoffset: 1; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { stroke-dashoffset: 0; opacity: .18; } }
+  @keyframes launch-exhaust { from { transform: scaleY(.65); } to { transform: scaleY(1.7); } }
+  @keyframes launch-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @media (max-width: 600px) {
+    .launch-skip { top: max(18px, env(safe-area-inset-top)); right: max(18px, env(safe-area-inset-right)); }
+    .launch-art { width: calc(100% - 36px); height: min(56svh, 480px); top: 45%; }
+    .launch-copy { bottom: max(46px, env(safe-area-inset-bottom)); }
+    .launch-destination .moon-icon { width: 120px; height: 120px; }
+    .launch-lunar-orbit { width: 172px; height: 172px; }
+    .launch-rocket { width: 30px; }
+  }
+  @media (max-height: 550px) and (min-width: 600px) {
+    .launch-art { width: 68%; left: 37%; top: 48%; height: 70svh; }
+    .launch-copy { left: 58%; right: 24px; bottom: 48px; }
+    .launch-copy h1 { font-size: 38px; }
+    .launch-destination .moon-icon { width: 110px; height: 110px; }
+    .launch-lunar-orbit { width: 154px; height: 154px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .launch-sequence, .launch-sequence * { animation: none !important; transition: none !important; }
+    .launch-rocket-carrier, .launch-flight-path, .launch-progress { display: none; }
+  }
+}
+@media print { .launch-sequence { display: none; } }

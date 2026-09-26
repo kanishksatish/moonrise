@@ -10,6 +10,7 @@ import {
 } from '../engine/index.js'
 import useNow from '../components/useNow.js'
 import MoonIcon from '../components/MoonIcon.jsx'
+import Brand from '../components/Brand.jsx'
 
 // A stylized, always-visible rise inside the art stage, separate from the controls.
 const MOON_RISE_MINUTES = 60
@@ -43,13 +44,15 @@ export default function Moonrise({ state, onPlayed, onExit }) {
   const [startedAt] = useState(() => Date.now())
   const [songs] = useState(() => playlist(profile.birthYear, logs))
   const [songIndex, setSongIndex] = useState(0)
+  const [promptOffset, setPromptOffset] = useState(0)
+  const [quiet, setQuiet] = useState(false)
   const song = songs.length ? songs[songIndex % songs.length] : null
 
   const sky = skyState(now, profile.lat, profile.lon)
   const moon = moonPhase(now)
   const elapsed = now.getTime() - startedAt
   const moonProgress = Math.max(0, Math.min(1, elapsed / (MOON_RISE_MINUTES * 60000)))
-  const prompt = promptAt(memoryPrompts(profile, { song, approved: state.approvedPrompts }), elapsed)
+  const prompt = promptAt(memoryPrompts(profile, { song, approved: state.approvedPrompts }), elapsed + promptOffset * 3 * 60000)
   // Warm lamp light rises from the bottom of the screen as the real sky darkens.
   const glow = 0.15 + 0.6 * sky.warmth
 
@@ -67,7 +70,7 @@ export default function Moonrise({ state, onPlayed, onExit }) {
 
   return (
     <div
-      className="moonrise"
+      className={`moonrise${quiet ? ' quiet-view' : ''}`}
       style={{ background: `linear-gradient(to bottom, ${sky.gradient.top}, ${sky.gradient.bottom})` }}
     >
       <div className="stars" style={{ opacity: Math.max(0, sky.darkness - 0.3) }} aria-hidden="true">
@@ -84,37 +87,48 @@ export default function Moonrise({ state, onPlayed, onExit }) {
         }}
       />
 
-      {document.documentElement.requestFullscreen && <button className="btn fullscreen-toggle" onClick={enterFullscreen}>Full screen</button>}
-      <button className="btn finish" onClick={onExit}>
-        Finish
-      </button>
+      <header className="session-header">
+        <Brand />
+        <div className="session-tools">
+          {document.documentElement.requestFullscreen && <button className="btn fullscreen-toggle" onClick={enterFullscreen}>Full screen</button>}
+          <button className="btn quiet-toggle" autoFocus aria-pressed={quiet} onClick={() => setQuiet(current => !current)}>{quiet ? 'Show conversation' : 'Quiet view'}</button>
+          <button className="btn finish" onClick={onExit}>Finish <span aria-hidden="true">↗</span></button>
+        </div>
+      </header>
 
       <div className="moonrise-content">
-        <div className="session-sky" aria-hidden="true">
-          <div className="session-moon" style={{ '--moon-progress': moonProgress }}><MoonIcon phase={moon.phase} decorative/></div>
-          <div className="session-orbit"/>
-          <p className="session-caption">A moment, together.</p>
+        <div className="session-scene">
+          <p className="eyebrow">An evening with {profile.name}</p>
+          <h1 className="session-title">A moment,<br/><em>together.</em></h1>
+          <div className="session-sky" aria-hidden="true">
+            <div className="session-moon" style={{ '--moon-progress': moonProgress }}><MoonIcon phase={moon.phase} decorative/></div>
+            <div className="session-orbit"/>
+          </div>
+          <p className="session-caption">No rush. Just be here.</p>
         </div>
-        <div className="session-cards">
+        {!quiet && <div className="session-cards">
         {prompt && (
           <div className="prompt">
+            <span className="prompt-quote" aria-hidden="true">“</span>
             <p className="prompt-label">{state.approvedPrompts?.includes(prompt) ? 'Read aloud · AI-written, reviewed by you' : 'Read aloud'}</p>
-            <p className="prompt-text">{prompt}</p>
+            <div aria-live="polite" aria-atomic="true"><p className="prompt-text" key={prompt}>{prompt}</p></div>
+            <button className="text-action" onClick={() => setPromptOffset(index => index + 1)}>Next prompt <span aria-hidden="true">→</span></button>
           </div>
         )}
 
         {song ? (
           <div className="song">
+            <div className="song-heading"><div className="record-art" aria-hidden="true"><span/></div><p className="eyebrow">From their years<br/><span>A song to share</span></p></div>
             <p className="song-title">{song.title}</p>
             <p className="song-artist">
               {song.artist}, {song.year}
             </p>
             <div className="song-actions">
               <a className="btn play" href={spotifySearchUrl(song)} onClick={() => onPlayed(song.id)} target="_blank" rel="noreferrer">
-                ▶ Spotify
+                Open Spotify <span aria-hidden="true">↗</span>
               </a>
               <a className="btn play" href={youtubeSearchUrl(song)} onClick={() => onPlayed(song.id)} target="_blank" rel="noreferrer">
-                ▶ YouTube
+                Open YouTube <span aria-hidden="true">↗</span>
               </a>
               <button className="btn" onClick={() => setSongIndex((i) => i + 1)}>
                 Next song
@@ -124,7 +138,7 @@ export default function Moonrise({ state, onPlayed, onExit }) {
         ) : (
           <p className="song-artist">No songs from their era in the list yet.</p>
         )}
-        </div>
+        </div>}
       </div>
     </div>
   )

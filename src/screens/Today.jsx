@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { moonPhase, moonriseStart, skyGradient, skyState } from '../engine/index.js'
+import { eraSongs, eraYears, eveningDate, moonPhase, moonriseStart, skyGradient, skyState } from '../engine/index.js'
 import { formatDuration, formatTime } from '../components/format.js'
 import { eveningKey } from '../components/eveningLog.js'
 import useNow from '../components/useNow.js'
@@ -28,7 +28,7 @@ function notify(text) {
   }
 }
 
-export default function Today({ state, sky, onStart }) {
+export default function Today({ state, sky, onStart, onPersonalize }) {
   const now = useNow()
   const firedRef = useRef(new Set())
   const [permission, setPermission] = useState(() =>
@@ -67,90 +67,79 @@ export default function Today({ state, sky, onStart }) {
     }
   }
 
+  const years = eraYears(profile.birthYear)
+  const hasEraSongs = eraSongs(profile.birthYear).length > 0
+  const approvedCount = state.approvedPrompts?.length ?? 0
+
   return (
     <div className="today">
-      <header className="today-head">
-        <p className="eyebrow">An evening, together</p>
-        <h1>Tonight for {profile.name}</h1>
-        {profile.city && <p className="muted">{profile.city}</p>}
+      <header className="today-head page-heading">
+        <div><p className="eyebrow">An evening, together</p><h1>A softer landing. <br/><em>For both of you.</em></h1></div>
+        <p className="today-date">{eveningDate(now).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       </header>
-      {logs.some(log => log.demo) && <p className="demo-flag">Demo data is included in the routine suggestions.</p>}
+      {logs.some(log => log.demo) && <p className="demo-flag"><span aria-hidden="true">◌ </span>Demo data is included in the routine suggestions.</p>}
+      {alertText && !tonightLog && <div className="alert" role="alert">{alertText}</div>}
 
-      {alertText && !tonightLog && (
-        <div className="alert" role="alert">
-          {alertText}
-        </div>
-      )}
-
-      <section
-        className="sky-card"
-        style={{ background: `linear-gradient(#0007, #0007), linear-gradient(to bottom, ${gradient.top}, ${gradient.bottom})` }}
-      >
-        {!sky ? (
-          <p className="big-number">Checking the sky…</p>
-        ) : (
-          <>
-            <div className="sky-row">
-              <div>
-                <p className="label">Your evening begins at</p>
-                <p className="big-number">{formatTime(schedule.start)}</p>
-                <p className="countdown">
-                  {now < schedule.start ? `in ${formatDuration(schedule.start - now)}` : duskPassed ? 'Dusk has passed' : 'Now'}
-                </p>
-              </div>
-              <div className="moon-box">
-                <MoonIcon name={moon.name} phase={moon.phase} />
-                <p className="small">{moon.name}</p>
-              </div>
+      <div className="evening-layout">
+        <div className="evening-primary">
+          <section className="evening-scene" aria-label={`Tonight for ${profile.name}`}
+            style={{ '--sky-top': gradient.top, '--sky-bottom': gradient.bottom }}>
+            <div className="scene-landscape" aria-hidden="true"/>
+            <div className="scene-topline"><span>Tonight for {profile.name}</span><span className="scene-mark" aria-hidden="true">✦</span></div>
+            <div className="scene-moon" aria-hidden="true">
+              <svg className="lunar-orbits" viewBox="0 0 400 400"><circle cx="200" cy="200" r="188"/><circle cx="200" cy="200" r="155"/><path d="M12 200H40M360 200H388M200 12V40M200 360V388"/><circle className="orbit-point" cx="333" cy="67" r="4"/></svg>
+              <MoonIcon phase={moon.phase} decorative/>
             </div>
+            <div className="scene-content">
+              <p className="label">Your suggested start</p>
+              <p className={sky ? 'scene-time' : 'scene-loading'}>{sky ? formatTime(schedule.start) : 'Checking the sky…'}</p>
+              <p className="scene-countdown">{!sky ? 'You can begin while we check.' : now < schedule.start ? `In ${formatDuration(schedule.start - now)}` : 'Ready whenever you are.'}</p>
+              <button className="btn primary start-routine" onClick={onStart}><span>Start Moonrise now</span><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>
+            </div>
+            <div className="scene-footer"><span>{profile.city || 'Your evening sky'}</span><span className="phase-label"><i aria-hidden="true"/>{moon.name}</span></div>
+          </section>
 
+          <div className="routine-path" aria-label="Your evening routine">
+            <div><span className="step-number">01</span><p>Settle in<span>A little space to slow down.</span></p></div>
+            <div><span className="step-number">02</span><p>Play a memory<span>Music. A story. A moment.</span></p></div>
+            <div><span className="step-number">03</span><p>Keep a little note<span>Every kind of evening counts.</span></p></div>
+          </div>
 
-          </>
-        )}
-      </section>
+          {sky && <details className="sky-facts">
+            <summary><span>Behind tonight’s timing</span><span className="sky-summary-time">Estimated dusk {formatTime(sky.effectiveDusk)}</span></summary>
+            <p>Estimated dusk <strong>{formatTime(sky.effectiveDusk)}</strong></p>
+            <p className="small">{sky.cached && 'Using the last available weather. '}{sky.source === 'offline'
+              ? `Sunset ${formatTime(sky.sunset)}. No weather data right now, so no cloud adjustment.`
+              : !Number.isFinite(sky.cloudCover) ? `Sunset ${formatTime(sky.sunset)}. Cloud data is unavailable, so no cloud adjustment.`
+              : sky.shiftMinutes > 0 ? `Sunset ${formatTime(sky.sunset)}. With ${Math.round(sky.cloudCover)}% cloud, our estimate moves dusk ${sky.shiftMinutes} min earlier.`
+              : `Sunset ${formatTime(sky.sunset)}. Clear sky, no adjustment.`}</p>
+            <p className="small">{schedule.basis === 'learned'
+              ? `Starting ${schedule.minutesBeforeDusk} min before dusk, based on ${schedule.episodesUsed} logged episode${schedule.episodesUsed === 1 ? '' : 's'}.`
+              : `Starting ${schedule.minutesBeforeDusk} min before dusk. After 3 logged evenings and at least one episode time, this suggestion can adjust.`}</p>
+          </details>}
+        </div>
 
-      <button className="btn primary huge start-routine" onClick={onStart}>
-        <span>Start Moonrise now</span><span aria-hidden="true">↗</span>
-      </button>
-      {sky && (
-            <details className="sky-facts">
-                <summary>Tonight’s sky · estimated dusk {formatTime(sky.effectiveDusk)}</summary>
-              <p>
-                Estimated dusk <strong>{formatTime(sky.effectiveDusk)}</strong>
-              </p>
-              <p className="small">
-                {sky.cached && 'Using the last available weather. '}
-                {sky.source === 'offline'
-                  ? `Sunset ${formatTime(sky.sunset)}. No weather data right now, so no cloud adjustment.`
-                  : !Number.isFinite(sky.cloudCover)
-                    ? `Sunset ${formatTime(sky.sunset)}. Cloud data is unavailable, so no cloud adjustment.`
-                  : sky.shiftMinutes > 0
-                    ? `Sunset ${formatTime(sky.sunset)}. With ${Math.round(sky.cloudCover)}% cloud, our estimate moves dusk ${sky.shiftMinutes} min earlier.`
-                    : `Sunset ${formatTime(sky.sunset)}. Clear sky, no adjustment.`}
-              </p>
-              <p className="small">
-                {schedule.basis === 'learned'
-                  ? `Starting ${schedule.minutesBeforeDusk} min before dusk, based on ${schedule.episodesUsed} logged episode${schedule.episodesUsed === 1 ? '' : 's'}.`
-                  : `Starting ${schedule.minutesBeforeDusk} min before dusk. After 3 logged evenings and at least one episode time, this suggestion can adjust.`}
-              </p>
-            </details>
-      )}
-      <div className="routine-steps" aria-label="Your evening routine"><span><b>01</b> Settle in</span><span><b>02</b> Play a memory</span><span><b>03</b> Log tonight</span></div>
-      <p className="muted small">A suggested routine based on the sky and your logs. Caregiver support, not a medical treatment.</p>
+        <aside className="evening-journal" aria-label="Your evening journal">
+          <Constellation logs={logs} now={now}/>
+          {tonightLog && <p className="logged"><span className="logged-star" aria-hidden="true">✦</span><span>Tonight is logged: <strong>{tonightLog.outcome}</strong>.<br/>A star for showing up.</span></p>}
+          <section className="personal-note">
+            <div className="record-art" aria-hidden="true"><span/></div>
+            <p className="eyebrow">Made for your person</p>
+            <h2>Old songs.<br/><em>New moments.</em></h2>
+            <p>{hasEraSongs ? `Music from ${years.from}–${years.to}, with space for their stories.` : 'Their era is not in our song collection yet. Conversation starters are still ready.'}</p>
+            <p className="muted">{approvedCount ? `${approvedCount} AI-written prompt${approvedCount === 1 ? '' : 's'}, selected by you.` : 'Built-in conversation starters, ready to go.'}</p>
+            {onPersonalize && <button className="text-action" onClick={onPersonalize}>Make it personal <span aria-hidden="true">↗</span></button>}
+          </section>
+        </aside>
+      </div>
 
-      {tonightLog && (
-        <p className="logged">
-          <span aria-hidden="true">✧ </span>Tonight is logged: <strong>{tonightLog.outcome}</strong>. A star for showing up.
-        </p>
-      )}
-
-      {permission === 'default' && (
-        <button className="btn" onClick={askPermission}>
-          Turn on alerts
-        </button>
-      )}
-      {(permission === 'default' || permission === 'granted') && <p className="small alert-hint">Keep Moonrise open to get the heads-up.</p>}
-      <Constellation logs={logs} now={now}/>
+      <footer className="today-footer">
+        <div className="reminder-line">
+          {permission === 'default' && <button className="btn" onClick={askPermission}>Turn on alerts</button>}
+          {(permission === 'default' || permission === 'granted') && <p className="small alert-hint">Keep Moonrise open for your evening heads-up.</p>}
+        </div>
+        <p className="small care-note">A suggested routine based on the sky and your logs.<br/>Caregiver support, not a medical treatment.</p>
+      </footer>
     </div>
   )
 }

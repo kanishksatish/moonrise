@@ -1,27 +1,47 @@
-# Moonrise visual direction
+# Moonrise visual direction · v2
 
-A quiet observatory for an evening together. Midnight blue, warm ivory, a restrained copper horizon, serif display type and clear system-font controls. The user's primary action is starting the routine; detailed weather sits behind an accessible disclosure. The app remains a caregiver tool.
+A quiet observatory for an evening together. Charcoal ink, warm ivory, apricot light and muted sage replace the earlier blue card layout. Large editorial typography carries the important decisions; small orbital details and original artwork create atmosphere. Caregiver tasks remain clear and close at hand.
 
-## Visual story
+## Design system
 
-| Scene | Visual story | Website copy |
+| Role | Actual token or source |
+|---|---|
+| Background / surface | `--bg: #101316` / `--surface: #1b2024` |
+| Primary text / secondary text | `--text: #f5f0e7` / `--muted: #b9c2c3` |
+| Action / action text | `--accent: #eac39c` / `--accent-text: #24201b` |
+| Outcome accents | Sage `#abc2af`, sand `#d0bf9f`, lavender `#c2b2cb`; words and distinct marks accompany color. |
+| Type | Georgia display headings; native system sans-serif controls and body. No external font service. |
+| Controls | Body text designed at 20px minimum; main controls at least 48px high. Visible focus rings; explicit button labels. Final validation is recorded separately. |
+| Layout | Desktop side navigation and a broad scene/journal composition; bottom navigation and a stacked routine on smaller screens. |
+
+## Visual story and actual behavior
+
+| Scene | Composition and behavior | Current copy / action |
 |---|---|---|
-| Welcome | Warm moon and generous typography introduce a personal routine. Enter a birth year and the real catalog appears. | Make room for a gentler evening. |
-| Tonight | An original lake horizon grounds a live-phase moon and a large start time. | Your evening begins at… / Start Moonrise now |
-| Into the routine | The moon occupies its own clear stage; the warm sky changes with the engine. Controls are on separate dark panels. No scroll-driven story blocks the task. | A moment, together. / Read aloud |
-| Music and memory | A familiar title and a prompt; opening a music link is the only event recorded as a song. | Spotify / YouTube / Next song |
-| Reflection | Three equally prominent choices, without a success or failure judgment. | Every evening is worth remembering. |
-| Constellation | One star per logged date in the last seven evenings. All outcomes count equally. Demo stars are explicitly labeled. No streak loss or patient score. | Every kind of evening counts. |
-| Share with a clinician | The report keeps the compact print layout and medical caution. | Songs from your evenings |
+| Welcome | Orbit artwork and a personal introduction sit beside three numbered setup sections. The entered birth year filters the real song catalog. | Make room for a gentler evening. / Their story. / Under your sky. |
+| Today | Live calculated timing and lunar phase sit in a cinematic lake scene. A separate journal rail holds the seven-evening constellation and music context. Weather details remain expandable. | A softer landing. For both of you. / Your suggested start / Start Moonrise now |
+| Launch | An original SVG rocket takes a 2.4-second flight only after the caregiver explicitly starts a routine. It is silent, can be skipped by button or Escape, and is bypassed when reduced motion is requested. It never starts on page load. | A little space for calm. / Skip launch |
+| Routine | One continuous landscape surrounds a slow illustrated moon, a readable conversation card and music links. Native fullscreen remains optional. | A moment, together. / Next prompt / Quiet view / Finish |
+| Quiet view | Hides the conversation and song cards; the moon scene and session controls remain. Restore with Show conversation. It does not start or stop external audio. | Quiet view / Show conversation |
+| Reflection | Three equally prominent choices use distinct line illustrations and plain language. Choosing Episode can be followed by an optional onset time. | How was tonight? / Calm / Restless / Episode |
+| Constellation | One star per logged date in the last seven evenings, using the 04:00 evening boundary. All outcomes count equally. Demo evenings are labeled. No score, streak penalty or promised benefit. | One star for each evening you record. Every kind of evening counts. |
+| Report | An editorial weekly journal shows actual recorded days, equally sized outcome marks, timing, weather and neutral song information. Missing data remains visible. Screen-only composition leaves the existing compact print report available. | A week of evenings. / The shape of your week / Songs from your evenings / Print report |
 
-## Editable source
+## Editable source and handoff
 
-- Design tokens and screen composition: `src/styles/visual.css`; supporting controls and print layout: `src/styles/app.css`.
-- Screen copy: `src/screens/`. Star-window calculation: `src/components/Constellation.jsx`.
-- Moon phase: engine `moonPhase()` -> SVG illumination mask in `MoonIcon.jsx`. Surface artwork is decorative, not a measured lunar image. The rising path is an illustration, not a prediction of local moon position.
-- Native system fonts and Georgia: no font service, tracking or added runtime dependency.
-- Slow halo and positional transitions respect reduced-motion preferences. Native fullscreen is opt-in; the routine already fills the browser viewport.
-- Both art files are Vite imports and HTML preloads so they belong to the committed offline shell. SVG shapes and CSS gradients remain functional if artwork is unavailable.
+- Shared tokens, navigation, Today and routine: `src/styles/visual.css`; base controls and print: `src/styles/app.css`.
+- Setup and Log: `src/styles/onboarding.css`. Report: `src/styles/report-visual.css` and `src/screens/Report.jsx`.
+- Rocket: `src/components/LaunchSequence.jsx` and `src/styles/launch-sequence.css`. No generated video, autoplay audio or added animation library is used.
+- Reusable native artwork: `MoonIcon.jsx`, `Brand.jsx`, `Constellation.jsx`, the CSS `.record-art` and inline SVG outcome marks. Their shapes are editable in source.
+- Lunar phase comes from engine `moonPhase()` and an SVG illumination mask. The lunar surface is decorative artwork, not a measured image; the rising path is an illustration, not local moon-position prediction.
+- Lake and lunar WebPs remain local imported assets, with HTML preloads for the offline shell. SVG moon shapes remain underneath the texture.
+- The handoff style tile embeds a snapshot of the actual CSS and server-rendered native components, with local copies of both WebPs. Its sample names, time and logs are explicitly illustrative. The running app remains the source of truth.
+
+## Product meaning and boundaries
+
+The schedule uses a documented prototype rule and stored episode times; it is not a clinical prediction. Song links open Spotify or YouTube externally; opening a link is the event recorded, not confirmed listening. Next song does not record a play. Next prompt advances the conversation manually. Optional Claude-written prompts enter a routine only after caregiver approval; approval and keyword filters do not establish clinical safety.
+
+The report describes observations, not cause and effect. The interface makes no claim to treat, prevent or reduce sundowning or agitation. A future hospice pilot needs clinical, ethics, privacy, security and usability review; the separate pilot-readiness memo describes the proposed gates. Browser verification, print pagination and test results are recorded in the project handoff after validation.
 
 ## Original artwork provenance
 
