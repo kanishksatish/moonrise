@@ -1,0 +1,284 @@
+[
+  {
+    "id": "chattanooga-choo-choo-1941",
+    "title": "Chattanooga Choo Choo",
+    "artist": "Glenn Miller",
+    "year": 1941
+  },
+  {
+    "id": "boogie-woogie-bugle-boy-1941",
+    "title": "Boogie Woogie Bugle Boy",
+    "artist": "The Andrews Sisters",
+    "year": 1941
+  },
+  {
+    "id": "white-christmas-1942",
+    "title": "White Christmas",
+    "artist": "Bing Crosby",
+    "year": 1942
+  },
+  {
+    "id": "as-time-goes-by-1942",
+    "title": "As Time Goes By",
+    "artist": "Dooley Wilson",
+    "year": 1942
+  },
+  {
+    "id": "paper-doll-1943",
+    "title": "Paper Doll",
+    "artist": "The Mills Brothers",
+    "year": 1943
+  },
+  {
+    "id": "i-ll-be-seeing-you-1944",
+    "title": "I'll Be Seeing You",
+    "artist": "Billie Holiday",
+    "year": 1944
+  },
+  {
+    "id": "moonlight-in-vermont-1944",
+    "title": "Moonlight in Vermont",
+    "artist": "Margaret Whiting",
+    "year": 1944
+  },
+  {
+    "id": "swinging-on-a-star-1944",
+    "title": "Swinging on a Star",
+    "artist": "Bing Crosby",
+    "year": 1944
+  },
+  {
+    "id": "sentimental-journey-1945",
+    "title": "Sentimental Journey",
+    "artist": "Doris Day",
+    "year": 1945
+  },
+  {
+    "id": "buttons-and-bows-1948",
+    "title": "Buttons and Bows",
+    "artist": "Dinah Shore",
+    "year": 1948
+  },
+  {
+    "id": "unforgettable-1951",
+    "title": "Unforgettable",
+    "artist": "Nat King Cole",
+    "year": 1951
+  },
+  {
+    "id": "earth-angel-1954",
+    "title": "Earth Angel",
+    "artist": "The Penguins",
+    "year": 1954
+  },
+  {
+    "id": "only-you-1955",
+    "title": "Only You",
+    "artist": "The Platters",
+    "year": 1955
+  },
+  {
+    "id": "rock-around-the-clock-1955",
+    "title": "Rock Around the Clock",
+    "artist": "Bill Haley & His Comets",
+    "year": 1955
+  },
+  {
+    "id": "que-sera-sera-1956",
+    "title": "Que Sera, Sera",
+    "artist": "Doris Day",
+    "year": 1956
+  },
+  {
+    "id": "blueberry-hill-1956",
+    "title": "Blueberry Hill",
+    "artist": "Fats Domino",
+    "year": 1956
+  },
+  {
+    "id": "love-me-tender-1956",
+    "title": "Love Me Tender",
+    "artist": "Elvis Presley",
+    "year": 1956
+  },
+  {
+    "id": "everyday-1957",
+    "title": "Everyday",
+    "artist": "Buddy Holly",
+    "year": 1957
+  },
+  {
+    "id": "johnny-b-goode-1958",
+    "title": "Johnny B. Goode",
+    "artist": "Chuck Berry",
+    "year": 1958
+  },
+  {
+    "id": "volare-1958",
+    "title": "Volare",
+    "artist": "Domenico Modugno",
+    "year": 1958
+  },
+  {
+    "id": "dream-lover-1959",
+    "title": "Dream Lover",
+    "artist": "Bobby Darin",
+    "year": 1959
+  },
+  {
+    "id": "put-your-head-on-my-shoulder-1959",
+    "title": "Put Your Head on My Shoulder",
+    "artist": "Paul Anka",
+    "year": 1959
+  },
+  {
+    "id": "georgia-on-my-mind-1960",
+    "title": "Georgia on My Mind",
+    "artist": "Ray Charles",
+    "year": 1960
+  },
+  {
+    "id": "stand-by-me-1961",
+    "title": "Stand by Me",
+    "artist": "Ben E. King",
+    "year": 1961
+  },
+  {
+    "id": "moon-river-1961",
+    "title": "Moon River",
+    "artist": "Henry Mancini",
+    "year": 1961
+  },
+  {
+    "id": "blue-moon-1961",
+    "title": "Blue Moon",
+    "artist": "The Marcels",
+    "year": 1961
+  },
+  {
+    "id": "can-t-help-falling-in-love-1961",
+    "title": "Can't Help Falling in Love",
+    "artist": "Elvis Presley",
+    "year": 1961
+  },
+  {
+    "id": "i-want-to-hold-your-hand-1963",
+    "title": "I Want to Hold Your Hand",
+    "artist": "The Beatles",
+    "year": 1963
+  },
+  {
+    "id": "fly-me-to-the-moon-1964",
+    "title": "Fly Me to the Moon",
+    "artist": "Frank Sinatra",
+    "year": 1964
+  },
+  {
+    "id": "my-girl-1964",
+    "title": "My Girl",
+    "artist": "The Temptations",
+    "year": 1964
+  },
+  {
+    "id": "unchained-melody-1965",
+    "title": "Unchained Melody",
+    "artist": "The Righteous Brothers",
+    "year": 1965
+  },
+  {
+    "id": "what-a-wonderful-world-1967",
+    "title": "What a Wonderful World",
+    "artist": "Louis Armstrong",
+    "year": 1967
+  },
+  {
+    "id": "sittin-on-the-dock-of-the-bay-1968",
+    "title": "(Sittin' On) The Dock of the Bay",
+    "artist": "Otis Redding",
+    "year": 1968
+  },
+  {
+    "id": "sweet-caroline-1969",
+    "title": "Sweet Caroline",
+    "artist": "Neil Diamond",
+    "year": 1969
+  },
+  {
+    "id": "bridge-over-troubled-water-1970",
+    "title": "Bridge over Troubled Water",
+    "artist": "Simon & Garfunkel",
+    "year": 1970
+  },
+  {
+    "id": "moondance-1970",
+    "title": "Moondance",
+    "artist": "Van Morrison",
+    "year": 1970
+  },
+  {
+    "id": "they-long-to-be-close-to-you-1970",
+    "title": "(They Long to Be) Close to You",
+    "artist": "Carpenters",
+    "year": 1970
+  },
+  {
+    "id": "take-me-home-country-roads-1971",
+    "title": "Take Me Home, Country Roads",
+    "artist": "John Denver",
+    "year": 1971
+  },
+  {
+    "id": "moonshadow-1971",
+    "title": "Moonshadow",
+    "artist": "Cat Stevens",
+    "year": 1971
+  },
+  {
+    "id": "let-s-stay-together-1971",
+    "title": "Let's Stay Together",
+    "artist": "Al Green",
+    "year": 1971
+  },
+  {
+    "id": "lean-on-me-1972",
+    "title": "Lean on Me",
+    "artist": "Bill Withers",
+    "year": 1972
+  },
+  {
+    "id": "rocket-man-1972",
+    "title": "Rocket Man",
+    "artist": "Elton John",
+    "year": 1972
+  },
+  {
+    "id": "top-of-the-world-1972",
+    "title": "Top of the World",
+    "artist": "Carpenters",
+    "year": 1972
+  },
+  {
+    "id": "annie-s-song-1974",
+    "title": "Annie's Song",
+    "artist": "John Denver",
+    "year": 1974
+  },
+  {
+    "id": "dancing-queen-1976",
+    "title": "Dancing Queen",
+    "artist": "ABBA",
+    "year": 1976
+  },
+  {
+    "id": "just-the-way-you-are-1977",
+    "title": "Just the Way You Are",
+    "artist": "Billy Joel",
+    "year": 1977
+  },
+  {
+    "id": "september-1978",
+    "title": "September",
+    "artist": "Earth, Wind & Fire",
+    "year": 1978
+  }
+]
