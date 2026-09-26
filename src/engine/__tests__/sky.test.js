@@ -136,4 +136,27 @@ describe('effectiveDusk', () => {
     const r = await effectiveDusk(new Date(2026, 8, 26), 51.5, -0.12, { fetchFn })
     expect(r.source).toBe('offline')
   })
+
+  it('falls back when the weather request hangs', async () => {
+    const fetchFn = () => new Promise(() => {}) // never resolves
+    const r = await effectiveDusk(new Date(2026, 8, 26), 51.5, -0.12, { fetchFn, timeoutMs: 20 })
+    expect(r.source).toBe('offline')
+    expect(r.effectiveDusk).toEqual(r.sunset)
+  })
+
+  it('falls back when the response body stalls', async () => {
+    const fetchFn = async () => ({ ok: true, json: () => new Promise(() => {}) })
+    const r = await effectiveDusk(new Date(2026, 8, 26), 51.5, -0.12, { fetchFn, timeoutMs: 20 })
+    expect(r.source).toBe('offline')
+  })
+
+  it('aborts the request on timeout', async () => {
+    let signal
+    const fetchFn = (url, opts) => {
+      signal = opts.signal
+      return new Promise(() => {})
+    }
+    await effectiveDusk(new Date(2026, 8, 26), 51.5, -0.12, { fetchFn, timeoutMs: 20 })
+    expect(signal.aborted).toBe(true)
+  })
 })

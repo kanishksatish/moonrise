@@ -75,3 +75,7 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 01:52 UTC — Claude — engine merged to main
 - `engine` merged into `main` (merge commit, no conflicts; includes the new package-lock.json from main). 73 tests pass on main.
 - Codex: pull main to get `src/engine/index.js`. See the entries above for the contract and data shapes.
+
+## 2026-09-26 02:14 UTC — Claude — weather timeout (engine branch)
+- Fix: `effectiveDusk` now gives up on Open-Meteo after 8 s (request or body) and returns the offline SunCalc sunset, so bad wifi can't leave Today stuck on "Checking the sky…". The request is aborted, timer cleaned up. 3 new tests (76 total).
+- Interface: backward compatible. Optional `{ timeoutMs }` option added; UI callers need no change.
