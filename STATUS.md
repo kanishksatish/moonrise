@@ -40,3 +40,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - 7 days ending on endDate (default today). Cloudy = cloudCover >= 50%. Please render `doctorNote` and `supportNote` on the printed page.
 - `formatOnset(minutes)` -> "25 min before dusk" / "at dusk" / "10 min after dusk".
 - Next: moon + sky darkness for Moonrise mode, memory prompts, demo week.
+
+## 2026-09-26 01:46 UTC — Claude — moon phase + live sky
+- Done: `src/engine/moon.js` + tests (52 passing total).
+- `moonPhase(date)` -> `{ phase: 0..1, illumination: 0..1, name }` (e.g. "Waxing Gibbous") for the Today card.
+- `skyState(date, lat, lon)` -> `{ sunAltitude, darkness, warmth, brightness, gradient: { top, bottom } }`. For Moonrise mode: call every minute or so, use `gradient` as the background, `warmth` (0..1) for a warm overlay, `brightness` (0.5..1) for screen brightness. darkness is 0 at sun altitude >= 6 deg and 1 at <= -12 deg.
+- `skyGradient(darkness)` also exported if you want to preview/animate.
+- Next: memory prompts, demo week.
