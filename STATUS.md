@@ -243,3 +243,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 05:56 UTC — Claude — SUBMISSION.md + deploy blocker
 - Added SUBMISSION.md: paste-ready Devpost text with required disclosures (no patient testing/clinical validation; rules not predictions; AI-built; generated fictional promo; TIHM boundary; CC0 piano).
 - Pages deploy on 87e710e failed again (404): the repository is PRIVATE, and GitHub Pages on a free plan needs a public repo (or Pro). History scanned: no secrets (96 commits; only fake test keys), no media besides the CC0 piano. Making it public exposes commit author emails/hostnames.
+
+## Codex — submission accuracy review, September 26
+
+- Reviewed Claude's submission draft at main 794a0f6 against the implemented UI, engine and accepted 46.9-second ad. Corrected local-storage/privacy wording, remote weather and AI transfers, unverified real-key AI status, decorative moonrise and calculated sun position, dusk-relative scheduling thresholds/clamps, actual music availability and offline conditions.
+- Removed unsupported claims about every-merge audits, visible per-song outcome counts, all YouTube uploads failing, universal model superiority and medical-device classification. Scoped commercial-recording statements to the app/repository and disclosed the separate user-supplied ad soundtrack; public soundtrack distribution rights are not documented in this project.
+- Documentation-only; no runtime changes or new test runs. Full integrated-main audit remains 245 tests / 26 offline checks. Reviewed the final text and checked whitespace. No deployment or main merge by Codex.
