@@ -15,7 +15,7 @@ const CONTRACT = [
   'loadState', 'saveState', 'addLog', 'addDemoLogs', 'clearDemoLogs', 'emptyState',
   'loadAiKey', 'saveAiKey', 'clearAiKey',
   'generateMemoryPrompts', 'AiPromptError',
-  'songStats', 'progress',
+  'songEvidence', 'evidenceText', 'progress',
 ]
 
 describe('engine contract', () => {

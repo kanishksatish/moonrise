@@ -74,9 +74,12 @@ describe('weeklyReport', () => {
     expect(r.topSongs.map((s) => s.id).slice(0, 2)).toEqual(['s1', 's4'])
     expect(r.topSongs.find((s) => s.id === 's3')).toBeUndefined()
     expect(r.topSongs[0]).toMatchObject({ score: 2, plays: 3 })
+    // s1: calm on 20th, restless on 22nd, calm on 24th
+    expect(r.topSongs[0]).toMatchObject({ calm: 2, restless: 1, episode: 0 })
+    expect(r.topSongs[0].evidenceText).toBe('Opened on 3 logged evenings: 2 calm, 1 restless.')
     for (const s of r.topSongs) {
-      expect(['untried', 'learning', 'promising', 'unpromising']).toContain(s.status)
-      expect(s.calmRate).toBeGreaterThan(0)
+      expect(s).not.toHaveProperty('calmRate')
+      expect(s).not.toHaveProperty('status')
     }
   })
 

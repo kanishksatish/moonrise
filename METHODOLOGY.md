@@ -1,122 +1,105 @@
-# How Moonrise learns (and how we checked)
+# How Moonrise adapts (and what we checked)
 
-Moonrise adapts to one family using nothing but that family's own logged evenings. Every
-number it shows is computed from those logs, the real sky and the weather forecast. The same
-logs always give the same numbers; the only randomness is the order of equally ranked
-songs, and the clearly labelled demo week, which uses a fixed seed.
+Moonrise adapts to one family using nothing but that family's own logged evenings, the real
+sky and the weather forecast. The same logs always give the same numbers. The only
+randomness is the order of equally ranked songs, and the clearly labelled demo week, which
+uses a fixed seed.
 
-It is caregiver support, not a medical tool. Nothing here shows that any song or routine
-helps people with dementia. The studies below test whether the **estimators** find
-patterns that we deliberately put into simulated data.
+It is caregiver support, not a medical tool.
 
-## Why not "train a model"?
+## Evidence boundary
 
-A family produces roughly 7 to 30 logged evenings. That is far too little data to train a
-neural network or any large model, and claiming one would be misleading. What does work with
-this little data is simple, transparent estimators that improve with every logged evening
-and say how sure they are. We tried a more sophisticated (Bayesian) version of each rule,
-measured both on simulated families, and **kept whichever did better**. In both cases that
-was the simple rule, and the Bayesian maths now does something else: it tells the
-caregiver how much evidence there is.
+- **No model has been trained, and nothing has been clinically validated.** No patient
+  testing, no clinician involvement, no clinical data in this repository.
+- **Why no training.** A family produces roughly 7 to 30 logged evenings, far too little to
+  train a model, and claiming one would be misleading. The team also looked for public data
+  to learn onset times from. Codex audited the public TIHM dataset's `Labels.csv` locally:
+  608 records from 49 participants, 135 agitation labels from 27 participants. Those labels
+  cover six-hour windows, not minute-level onset times, and the licence notes restrict
+  commercial use. So no model was trained on it, and no raw records are in this repository.
+- **What the simulations do and don't show.** They check that the rules behave sensibly on
+  synthetic data built from our stated assumptions. They say nothing about real people.
 
-## The rules
+## The rules the app uses
 
-**Suggested start time.** Onset = when an episode began, minus that evening's estimated
-dusk. After 3+ logged evenings with at least one timed episode:
+**Suggested start time** (from AGENTS.md). Onset = when an episode began, minus that
+evening's estimated dusk. After 3+ logged evenings with at least one timed episode:
 `start = estimated dusk + median(onsets) − 20 minutes`, kept between 90 and 15 minutes before
-dusk. Before that it is 45 minutes before dusk.
-The range shown next to it is `median ± 1.1 × 1.2533 × sd / √n`. Here `1.2533 × sd / √n` is the
-standard error of a median, and `sd` pools the observed spread with a prior spread of 20
-minutes, worth one evening, so a single episode can't produce a falsely narrow range. The
-factor 1.1 was chosen by simulation so the range contains the ideal start about 80% of the
-time (study 2). Confidence reads **high** at ±8 min or less, **medium** at ±13 or less,
-and **low** otherwise.
+dusk. Before that it is 45 minutes before dusk. The median means one unusual night can't pull
+the time far.
 
-**Song ranking.** Each song's score is +1 for every calm evening its link was opened on and
-−1 for every episode evening (restless: 0). The playlist is sorted by score, with ties in
+**Song ranking** (from AGENTS.md). Score = +1 for each calm evening a song's link was opened,
+−1 for each episode evening, 0 for restless. The playlist is sorted by score, with ties in
 random order.
 
-**Song evidence (for display only).** For each song we estimate the chance of a calm
-evening when its link is opened, as a Beta–Bernoulli posterior:
-- An evening's value is calm 1, restless 0.5, episode 0.
-- The prior is `Beta(4·p₀, 4·(1−p₀))`, where `p₀` is the family's own calm rate. Every song
-  starts as "an average evening for this family", worth 4 evenings of evidence.
-- The posterior mean is `(4·p₀ + Σ values) / (4 + plays)`, with a range of mean ± 1.645
-  posterior standard deviations.
-- Status: **untried** (no plays), **promising** (the whole range is above `p₀`),
-  **unpromising** (the whole range is below `p₀`), otherwise **learning**.
+**Song evidence, shown as plain counts.** For example: "Opened on 5 logged evenings: 3 calm,
+1 restless, 1 episode." This is not a probability, a rating or a claim that a song helps.
+Several songs can be opened on the same evening, repeated evenings aren't independent, and
+an opened link doesn't confirm the music was actually played.
 
-**Progress milestones (light gamification).** First evening logged · first song tried ·
-start time adapting (3 evenings with a timed episode) · a song worth trying again (a
-"promising" song) · a week of evenings · start time well established (confidence high).
-Each one is unlocked only by the logs themselves. There are no streaks to lose, no score for
-the person with dementia, and an episode evening moves learning forward exactly like a calm
-one. A milestone reached only because of demo evenings is marked as demo.
+**Progress milestones (light, process-only gamification).**
+- First evening logged.
+- First song link opened.
+- Start time based on your logs (3 evenings including a timed episode).
+- A week of evenings recorded.
 
-## Study 1: finding the songs that help
+They mark steps in *using* Moonrise. They never reward a calm evening or a particular song,
+there are no streaks to lose, nothing scores the person with dementia, and an episode
+evening counts exactly like any other. A milestone reached only because of demo evenings is
+marked as demo.
+
+## What we tried and why we didn't use it
+
+We built a "smarter" alternative to each rule and compared them on seeded simulated families.
+Run `node scripts/simulate-learning.mjs` (about 1 second) to reproduce the tables below.
+
+### Study 1: ranking songs
 
 1,000 simulated families. Each has 40 era songs, 3 of which are secretly "helpful", and 3
 songs are opened each evening. A normal evening is 35% calm, 35% restless and 30% episode.
-Each helpful song opened that evening shifts it toward calm (+18 points calm, −12
-episode). Each method chooses the 3 songs to open from what it has learned so far.
+Each helpful song opened that evening shifts it toward calm (+18 points calm, −12 episode).
 
-<!-- generated by: node scripts/simulate-learning.mjs -->
-| Method | Helpful songs in its top 3 after 7 evenings | after 14 | after 30 | Calm evenings, nights 15–30 | Episode evenings, nights 15–30 | "Promising" flags that are truly helpful (night 30) |
+| Method | Helpful songs in its top 3 after 7 evenings | after 14 | after 30 | Calm evenings, nights 15–30 | Episode evenings, nights 15–30 | "Helpful" flags that would be right (night 30) |
 |---|---|---|---|---|---|---|
 | random (no learning) | 7.3% | 7.3% | 7.3% | 38.9% | 27.5% | 48.3% |
-| **+1/−1 score (used)** | **12.2%** | **14.7%** | **18.4%** | **44.0%** | **24.1%** | **38.8%** |
-| Bayesian calm rate (rejected) | 11.5% | 12.0% | 12.6% | 41.8% | 25.5% | 46.2% |
+| **+1/−1 score (used)** | **12.2%** | **14.7%** | **18.4%** | **44.0%** | **24.1%** | 38.8% |
+| smoothed calm rate (rejected) | 11.6% | 12.2% | 12.7% | 41.9% | 25.5% | 41.7% |
 
 Chance level for a song in the top 3 being truly helpful is 7.5%.
 
-**What this means**
-- The simple score learns. By 30 evenings its top 3 contains about 2.5× as many truly
-  helpful songs as chance, and it gives the most calm evenings (44.0% against 38.9% with no
-  learning). The Bayesian ranking was more cautious and lost, so it was not used.
-- **This kind of learning has a real limit.** Songs share each evening's outcome, so a song
-  that keeps being opened alongside a helpful one looks good too. Only about 39% of songs
-  flagged "promising" were truly helpful. That is well above chance, but most flags are
-  still wrong. So the app never says a song *helps*. It says "worth trying again", with the
-  actual counts: "Moon River: opened on 6 evenings (5 calm, 1 restless)".
-- (Random choice gets a higher flag precision because it spreads plays evenly, which
-  separates songs better. It just doesn't produce calmer evenings.)
+- **The simple score did best** at what matters in this simulation: calm evenings on nights
+  15–30. The smoothed alternative was a Beta-style average with calm = 1, restless = 0.5 and
+  episode = 0 (an arbitrary weighting, so a score rather than a probability). It was more
+  cautious and did worse, so it isn't used.
+- **Why the app doesn't label songs "helpful".** If we flagged songs whose smoothed range sat
+  above the family's usual evenings, only about 40% of flags would be right in this
+  simulation. That's above chance, but most would be wrong, because songs share each
+  evening's outcome. So the app shows counts and makes no claims.
 
-## Study 2: learning the start time
+### Study 2: learning the start time
 
 1,000 simulated families per row. Each has a true typical onset, uniform between 70 minutes
 before dusk and dusk itself. Each episode's onset varies by 15 minutes (standard
 deviation), and 10% are outliers with 45 minutes of spread. The ideal start is 20 minutes
-before the typical onset.
+before the typical onset. The alternative "shrinks" the estimate toward the 45-minute
+default, as if the default were worth 3 evenings.
 
-| Timed episodes logged | Median rule (used): average error | Shrinkage toward 45 min (rejected): average error | Range shown | Range contains the ideal start |
-|---|---|---|---|---|
-| 1 | 11.8 min | 14.4 min | ±19.5 min | 81.9% |
-| 2 | 9.2 min | 11.9 min | ±14.7 min | 79.7% |
-| 3 | 8.0 min | 10.0 min | ±13.1 min | 79.4% |
-| 5 | 6.5 min | 8.0 min | ±10.6 min | 77.7% |
-| 10 | 4.7 min | 5.6 min | ±8.0 min | 78.3% |
-| 20 | 3.3 min | 3.8 min | ±5.9 min | 83.1% |
+| Timed episodes logged | Median rule (used): average error | Shrinkage toward 45 min (rejected): average error |
+|---|---|---|
+| 1 | 11.8 min | 14.4 min |
+| 2 | 9.2 min | 11.9 min |
+| 3 | 8.0 min | 10.0 min |
+| 5 | 6.5 min | 8.0 min |
+| 10 | 4.7 min | 5.6 min |
+| 20 | 3.3 min | 3.8 min |
 
-**What this means**
-- The median rule from the original brief is more accurate at every sample size than
-  shrinking toward the 45-minute default, so the default was not used as a prior.
-- The range the app shows is calibrated. It contains the ideal start about 80% of the
-  time, from the first logged episode onward, and narrows as evidence builds up.
+The median rule from the original brief was more accurate at every sample size, so it stays.
+We also experimented with showing an uncertainty range around the start time. Its coverage
+depends entirely on the simulated assumptions and isn't calibrated clinical uncertainty, so
+the app doesn't show one.
 
-## Limits and assumptions
+## Other limits
 
-- The simulations encode our assumptions: effect sizes, onset spread, and how often
-  episodes happen. Real families will differ. The studies show the estimators behave
-  sensibly under those assumptions, not that Moonrise changes outcomes.
-- Song "evidence" is an association within the family's own logs. It can't separate a song
-  from everything else that happened that evening.
-- Moonrise records a song only when its link is opened; it can't confirm the music played.
 - Estimated dusk is a prototype rule (sunset shifted earlier by forecast cloud cover), not a
   measured light level.
-
-## Reproduce
-
-```bash
-node scripts/simulate-learning.mjs   # prints both tables (seeded, about 1 s)
-npm test                             # includes the unit tests for every formula above
-```
+- Everything above describes one family's own logs. Nothing generalises to other people.

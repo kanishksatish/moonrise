@@ -56,11 +56,11 @@ the optional demo week is explicitly labelled.
   about loss, illness or conflict are discouraged and some keywords are filtered. These
   checks cannot guarantee suitability: caregiver review is required. Generation needs a
   connection and API credits; approved prompts remain available offline.
-- **How sure it is.** The start time shows a calibrated range (about 80%), and each song
-  shows its evidence ("opened on 6 evenings: 5 calm, 1 restless"). A song is only ever
-  called "worth trying again", never "helps". Light progress milestones unlock only from real
-  logs, with no streaks and no scoring of the person. The maths, and a simulation study that
-  tested each rule against a fancier alternative (the simple rules won), are in
+- **Plain evidence, light progress.** Each song shows plain counts ("Opened on 5 logged
+  evenings: 3 calm, 1 restless, 1 episode"), never a rating or a claim that it helps. Light,
+  process-only milestones (first evening logged, first song opened, start time based on your
+  logs, a week recorded) never reward outcomes. No model has been trained or clinically
+  validated. What we tried instead of these simple rules, and why they stayed, is in
   [METHODOLOGY.md](METHODOLOGY.md).
 - **Evenings after midnight.** Anything logged before 4 AM counts toward the previous
   evening, so late-night logs land on the right day.

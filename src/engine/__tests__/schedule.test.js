@@ -89,28 +89,4 @@ describe('moonriseStart', () => {
     const b = moonriseStart(dusk, withOutlier).minutesBeforeDusk
     expect(Math.abs(b - a)).toBeLessThanOrEqual(3)
   })
-
-  it('gives a range that narrows as consistent evidence builds up', () => {
-    const few = moonriseStart(dusk, [log(20, 'episode', -30), log(21, 'episode', -30), log(22, 'calm')])
-    const many = moonriseStart(dusk, Array.from({ length: 12 }, (_, i) => log(String(10 + i), 'episode', -30)))
-    expect(few.halfWidthMinutes).toBeGreaterThan(many.halfWidthMinutes)
-    expect(few.range.earliest < few.start && few.start < few.range.latest).toBe(true)
-    expect(many.confidence).toBe('high')
-  })
-
-  it('reports the default honestly, with a wide range', () => {
-    // no episodes: 1.1 * 20 = 22 min either side of 45 min before dusk
-    const r = moonriseStart(dusk, [])
-    expect(r.confidence).toBe('default')
-    expect(r.halfWidthMinutes).toBe(22)
-    expect(r.range.earliest.toISOString()).toBe('2026-09-26T17:23:00.000Z')
-    expect(r.range.latest.toISOString()).toBe('2026-09-26T18:07:00.000Z')
-  })
-
-  it('keeps the range inside the 15..90 minute window', () => {
-    const logs = [log(20, 'episode', 60), log(21, 'episode', 60), log(22, 'episode', 60)]
-    const r = moonriseStart(dusk, logs)
-    expect(r.minutesBeforeDusk).toBe(15)
-    expect(r.range.latest.getTime()).toBeLessThanOrEqual(dusk.getTime() - 15 * 60000)
-  })
 })

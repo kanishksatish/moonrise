@@ -202,3 +202,8 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - New (additive): `songStats(logs)` (Beta-Bernoulli evidence per song: plays/calm/restless/episode/score/calmRate/low/high/status untried|learning|promising|unpromising); `playlist()` and `weeklyReport().topSongs` items gain calmRate/status (ordering unchanged); `moonriseStart()` gains `range {earliest, latest}`, `halfWidthMinutes`, `confidence` (calibrated ~80% in simulation); `progress(logs)` milestones with `usesDemo`.
 - Honesty rule for UI: "promising" songs were truly helpful only ~39% of the time in simulation. Show "worth trying again" + counts, never "helps".
 - 194 tests.
+
+## 2026-09-26 04:10 UTC — Claude — learning narrowed per Codex review
+- Supersedes the previous entry. Public contract is now narrow and descriptive: `songEvidence(logs)` -> { [id]: { plays, calm, restless, episode, score } }; `evidenceText(e)` -> "Opened on 5 logged evenings: 3 calm, 1 restless, 1 episode."; `weeklyReport().topSongs` items gain calm/restless/episode/evidenceText; `progress(logs)` = 4 process-only milestones (first-evening, first-song, start-from-logs, week) with usesDemo.
+- Removed: songStats/calmRate/status labels, moonriseStart range/confidence, outcome milestones. playlist() and moonriseStart() are exactly the AGENTS.md contract again.
+- METHODOLOGY.md rewritten: evidence boundary (no trained model, no clinical validation; Codex's TIHM audit: 6-hour labels, license restrictions), rules, and the simulation of what was tried and rejected. 184 tests.

@@ -17,8 +17,6 @@
 //   The start is clamped to between 90 and 15 minutes before effective dusk.
 //   `range` is an ~80% interval for the start; `confidence` summarises its width.
 
-import { startRange } from './learning.js'
-
 const MINUTE = 60 * 1000
 export const DEFAULT_LEAD_MINUTES = 45
 export const BUFFER_MINUTES = 20
@@ -41,38 +39,22 @@ export function onsetMinutes(log) {
 }
 
 // Returns { start: Date, minutesBeforeDusk: number, basis: 'default' | 'learned', episodesUsed: number }.
-function clampLead(lead) {
-  return Math.min(MAX_LEAD_MINUTES, Math.max(MIN_LEAD_MINUTES, lead))
-}
-
-function confidenceFor(basis, halfWidth) {
-  if (basis === 'default') return 'default'
-  if (halfWidth <= 8) return 'high'
-  if (halfWidth <= 13) return 'medium'
-  return 'low'
-}
-
-// Returns { start, minutesBeforeDusk, basis: 'default' | 'learned', episodesUsed,
-//           range: { earliest, latest }, halfWidthMinutes, confidence }.
+// Returns { start: Date, minutesBeforeDusk, basis: 'default' | 'learned', episodesUsed }.
 export function moonriseStart(effectiveDusk, logs = []) {
   const onsets = logs.map(onsetMinutes).filter((m) => m !== null)
-  const learned = logs.length >= MIN_LOGGED_EVENINGS && onsets.length > 0
-  const basis = learned ? 'learned' : 'default'
-  const range = startRange(learned ? onsets.map((o) => -o + BUFFER_MINUTES) : [])
+  let lead = DEFAULT_LEAD_MINUTES
+  let basis = 'default'
 
-  const lead = Math.round(clampLead(learned ? range.median : DEFAULT_LEAD_MINUTES))
-  const halfWidth = Math.max(1, Math.round(range.halfWidth))
-  // The range never goes outside the allowed window either.
-  const earliestLead = Math.round(clampLead(lead + halfWidth))
-  const latestLead = Math.round(clampLead(lead - halfWidth))
-  const at = (minutes) => new Date(effectiveDusk.getTime() - minutes * MINUTE)
+  if (logs.length >= MIN_LOGGED_EVENINGS && onsets.length > 0) {
+    lead = -(median(onsets) - BUFFER_MINUTES)
+    basis = 'learned'
+  }
+
+  lead = Math.round(Math.min(MAX_LEAD_MINUTES, Math.max(MIN_LEAD_MINUTES, lead)))
   return {
-    start: at(lead),
+    start: new Date(effectiveDusk.getTime() - lead * MINUTE),
     minutesBeforeDusk: lead,
     basis,
-    episodesUsed: learned ? onsets.length : 0,
-    range: { earliest: at(earliestLead), latest: at(latestLead) },
-    halfWidthMinutes: halfWidth,
-    confidence: confidenceFor(basis, halfWidth),
+    episodesUsed: basis === 'learned' ? onsets.length : 0,
   }
 }

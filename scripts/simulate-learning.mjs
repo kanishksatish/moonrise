@@ -10,10 +10,39 @@
 // This tests the estimators under stated assumptions; it is not evidence that any song or
 // routine helps real people with dementia.
 
-import { songStats, familyCalmRate, startRange } from '../src/engine/learning.js'
 import { seededRandom } from '../src/engine/random.js'
 
 const FAMILIES = 1000
+
+// ---- The alternatives we tried (not used in the app) ----------------------------------
+// Smoothed calm rate per song: Beta-style posterior mean with calm = 1, restless = 0.5,
+// episode = 0, starting from the family's own weighted calm rate with a weight of 4 evenings.
+// Note this is a weighted outcome score, not a probability of a calm evening.
+function smoothed(logs) {
+  const V = { calm: 1, restless: 0.5, episode: 0 }
+  let sum = 0.5
+  let n = 1
+  const t = {}
+  for (const l of logs) {
+    sum += V[l.outcome]
+    n += 1
+    for (const id of new Set(l.songIds)) {
+      const x = (t[id] ??= { plays: 0, value: 0 })
+      x.plays += 1
+      x.value += V[l.outcome]
+    }
+  }
+  const p0 = sum / n
+  const k = 4
+  return (id) => {
+    const x = t[id] ?? { plays: 0, value: 0 }
+    const a = k * p0 + x.value
+    const b = k * (1 - p0) + x.plays - x.value
+    const mean = a / (a + b)
+    const sd = Math.sqrt((a * b) / ((a + b) ** 2 * (a + b + 1)))
+    return { mean, low: mean - 1.645 * sd, p0, plays: x.plays }
+  }
+}
 
 function normal(rand) {
   const u = Math.max(rand(), 1e-12)
@@ -50,11 +79,10 @@ const policies = {
     const s = rawScore(logs)
     return shuffle(ids, rand).sort((a, b) => (s[b] ?? 0) - (s[a] ?? 0)).slice(0, PER_NIGHT)
   },
-  // Tried and rejected: rank by Bayesian calm rate (Beta posterior mean), ties shuffled.
-  'Bayesian calm rate (rejected)': (logs, ids, rand) => {
-    const st = songStats(logs)
-    const p0 = familyCalmRate(logs)
-    const rate = (id) => st[id]?.calmRate ?? p0
+  // Tried and rejected: rank by the smoothed calm rate, ties shuffled.
+  'smoothed calm rate (rejected)': (logs, ids, rand) => {
+    const f = smoothed(logs)
+    const rate = (id) => f(id).mean
     return shuffle(ids, rand).sort((a, b) => rate(b) - rate(a)).slice(0, PER_NIGHT)
   },
 }
@@ -99,9 +127,12 @@ function songStudy() {
           top3At[n] += next.filter((id) => helpful.has(id)).length / PER_NIGHT
         }
       }
-      const st = songStats(logs)
-      for (const [id, x] of Object.entries(st)) {
-        if (x.status === 'promising') {
+      // Could we label songs as "helpful"? Flag songs whose smoothed range sits wholly above
+      // the family's usual rate, and check how many flags are right.
+      const sm = smoothed(logs)
+      for (const id of ids) {
+        const x = sm(id)
+        if (x.plays > 0 && x.low > x.p0) {
           flags++
           if (helpful.has(id)) flagsRight++
         }
@@ -126,16 +157,13 @@ function songStudy() {
 // (sd 45 min). The ideal lead is -typical + 20. After n timed episodes we compare:
 //   median rule (AGENTS.md, used):   lead = median(targets)
 //   shrinkage (tried, rejected):     lead = (3 * 45 + n * median) / (3 + n)
-// both clamped to 15..90, and how often the range Moonrise shows (startRange) contains
-// the ideal lead.
+// both clamped to 15..90.
 function startStudy() {
   const clamp = (x) => Math.min(90, Math.max(15, x))
   const rows = []
   for (const n of [1, 2, 3, 5, 10, 20]) {
     let errMedian = 0
     let errShrink = 0
-    let covered = 0
-    let width = 0
     for (let f = 0; f < FAMILIES; f++) {
       const rand = seededRandom(20000 + f)
       const typical = -70 * rand()
@@ -143,15 +171,12 @@ function startStudy() {
       const targets = Array.from({ length: n }, () => {
         const sd = rand() < 0.1 ? 45 : 15
         return -(typical + sd * normal(rand)) + 20
-      })
-      const r = startRange(targets)
-      const median = clamp(r.median)
-      errMedian += Math.abs(median - ideal)
-      errShrink += Math.abs(clamp((3 * 45 + n * r.median) / (3 + n)) - ideal)
-      width += r.halfWidth
-      if (Math.abs(median - ideal) <= r.halfWidth) covered++
+      }).sort((a, b) => a - b)
+      const med = n % 2 ? targets[(n - 1) / 2] : (targets[n / 2 - 1] + targets[n / 2]) / 2
+      errMedian += Math.abs(clamp(med) - ideal)
+      errShrink += Math.abs(clamp((3 * 45 + n * med) / (3 + n)) - ideal)
     }
-    rows.push({ n, median: errMedian / FAMILIES, shrink: errShrink / FAMILIES, coverage: covered / FAMILIES, width: width / FAMILIES })
+    rows.push({ n, median: errMedian / FAMILIES, shrink: errShrink / FAMILIES })
   }
   return rows
 }
@@ -160,7 +185,7 @@ const pct = (x) => `${(100 * x).toFixed(1)}%`
 const min = (x) => `${x.toFixed(1)} min`
 
 console.log(`## Study 1: finding the songs that help (${FAMILIES} simulated families, ${SONGS} era songs, ${HELPFUL} truly helpful, ${PER_NIGHT} opened per evening)\n`)
-console.log('| Method | Helpful songs in its top 3 after 7 evenings | after 14 | after 30 | Calm evenings, nights 15-30 | Episode evenings, nights 15-30 | "Promising" flags that are truly helpful (night 30) |')
+console.log('| Method | Helpful songs in its top 3 after 7 evenings | after 14 | after 30 | Calm evenings, nights 15-30 | Episode evenings, nights 15-30 | "Helpful" flags that would be right (night 30) |')
 console.log('|---|---|---|---|---|---|---|')
 for (const r of songStudy()) {
   const flag = r.flagPrecision === null ? 'n/a' : pct(r.flagPrecision)
@@ -168,8 +193,8 @@ for (const r of songStudy()) {
 }
 console.log(`\n(Chance level for "a song in the top 3 is truly helpful": ${pct(HELPFUL / SONGS)}.)`)
 console.log(`\n## Study 2: learning the start time (${FAMILIES} simulated families per row)\n`)
-console.log('| Timed episodes logged | Median rule (used): average error | Shrinkage (rejected): average error | Range shown: +/- | Range contains the ideal start |')
-console.log('|---|---|---|---|---|')
+console.log('| Timed episodes logged | Median rule (used): average error | Shrinkage toward 45 min (rejected): average error |')
+console.log('|---|---|---|')
 for (const r of startStudy()) {
-  console.log(`| ${r.n} | ${min(r.median)} | ${min(r.shrink)} | ${min(r.width)} | ${pct(r.coverage)} |`)
+  console.log(`| ${r.n} | ${min(r.median)} | ${min(r.shrink)} |`)
 }
