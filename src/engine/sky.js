@@ -7,13 +7,14 @@
 // So a fully overcast evening pulls dusk 30 minutes earlier; a clear one leaves it at sunset.
 
 import { getTimes } from 'suncalc'
+import { DEFAULT_TIMEOUT_MS, fetchJson } from './net.js'
 
 const MINUTE = 60 * 1000
 const MAX_CLOUD_SHIFT_MINUTES = 30
 const CLOUD_WINDOW_MINUTES = 120
 // Give up on the weather after this long and use the offline sunset, so a slow
 // connection never leaves the caregiver staring at a loading screen.
-export const WEATHER_TIMEOUT_MS = 8000
+export const WEATHER_TIMEOUT_MS = DEFAULT_TIMEOUT_MS
 
 // YYYY-MM-DD from the device's local calendar date.
 export function localDateString(date) {
@@ -108,24 +109,9 @@ export async function effectiveDusk(
   lon,
   { fetchFn = globalThis.fetch, timeoutMs = WEATHER_TIMEOUT_MS } = {}
 ) {
-  const controller = new AbortController()
-  let timer
-
-  async function fetchWeather() {
-    const res = await fetchFn(openMeteoUrl(date, lat, lon), { signal: controller.signal })
-    if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`)
-    return parseOpenMeteo(await res.json())
-  }
-
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => {
-      controller.abort()
-      reject(new Error('Open-Meteo timed out'))
-    }, timeoutMs)
-  })
-
   try {
-    const { sunset, hourly } = await Promise.race([fetchWeather(), timeout])
+    const json = await fetchJson(openMeteoUrl(date, lat, lon), { fetchFn, timeoutMs })
+    const { sunset, hourly } = parseOpenMeteo(json)
     const result = { ...computeEffectiveDusk(sunset, hourly), source: 'open-meteo' }
     lastGood.set(cacheKey(date, lat, lon), result)
     return result
@@ -136,7 +122,5 @@ export async function effectiveDusk(
     const noon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12)
     const sunset = getTimes(noon, lat, lon).sunset
     return { ...computeEffectiveDusk(sunset, []), source: 'offline' }
-  } finally {
-    clearTimeout(timer)
   }
 }

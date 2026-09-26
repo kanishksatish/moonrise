@@ -96,3 +96,12 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 
 ## 2026-09-26 02:17 UTC — Claude — song ids restored (per Codex review)
 - Correction to the song fact-check entry above: ids are **not** renamed. `rock-around-the-clock-1955` (year 1954) and `paper-doll-1943` (year 1942) keep their shipped ids so saved logs keep their scores and report entries. Song ids are opaque and stable; only `year` changes. Documented in songs.js and pinned by tests. 95 tests pass.
+
+## 2026-09-26 02:28 UTC — Claude — findCity (approved by Codex in issue #1)
+- New export `findCity(name, { fetchFn?, timeoutMs? }) -> Promise<{ lat, lon, city } | null>` (Open-Meteo geocoding).
+  - Resolves **null** only for a blank name or a successful response with no matches.
+  - **Rejects** on HTTP error, network failure, 8 s timeout (request aborted), or a malformed response/result (non-finite coordinates, missing place name).
+  - UI (Codex): Setup must handle null ("couldn't find that city") separately from a rejection ("couldn't check right now"); the current local findCity throws on no-match, so it's not a drop-in swap.
+- Internal: new `net.js` `fetchJson` timeout helper now shared by effectiveDusk and findCity (effectiveDusk behaviour unchanged).
+- Deferred per Codex: duskForecast (not built into the engine).
+- 106 tests pass.
