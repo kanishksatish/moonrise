@@ -5,12 +5,13 @@ import {
   playlist,
   promptAt,
   skyState,
-  spotifySearchUrl,
-  youtubeSearchUrl,
+  songVideo,
 } from '../engine/index.js'
 import useNow from '../components/useNow.js'
 import MoonIcon from '../components/MoonIcon.jsx'
 import Brand from '../components/Brand.jsx'
+import MusicPlayer from '../components/MusicPlayer.jsx'
+import { eveningKey } from '../components/eveningLog.js'
 
 // A stylized, always-visible rise inside the art stage, separate from the controls.
 const MOON_RISE_MINUTES = 60
@@ -47,6 +48,8 @@ export default function Moonrise({ state, onPlayed, onExit }) {
   const [promptOffset, setPromptOffset] = useState(0)
   const [quiet, setQuiet] = useState(false)
   const song = songs.length ? songs[songIndex % songs.length] : null
+  const video = song ? songVideo(song.id) : null
+  const playedSongIds = state.tonight?.date === eveningKey(now) && Array.isArray(state.tonight.songIds) ? state.tonight.songIds : []
 
   const sky = skyState(now, profile.lat, profile.lon)
   const moon = moonPhase(now)
@@ -116,28 +119,11 @@ export default function Moonrise({ state, onPlayed, onExit }) {
           </div>
         )}
 
-        {song ? (
-          <div className="song">
-            <div className="song-heading"><div className="record-art" aria-hidden="true"><span/></div><p className="eyebrow">From their years<br/><span>A song to share</span></p></div>
-            <p className="song-title">{song.title}</p>
-            <p className="song-artist">
-              {song.artist}, {song.year}
-            </p>
-            <div className="song-actions">
-              <a className="btn play" href={spotifySearchUrl(song)} onClick={() => onPlayed(song.id)} target="_blank" rel="noreferrer">
-                Open Spotify <span aria-hidden="true">↗</span>
-              </a>
-              <a className="btn play" href={youtubeSearchUrl(song)} onClick={() => onPlayed(song.id)} target="_blank" rel="noreferrer">
-                Open YouTube <span aria-hidden="true">↗</span>
-              </a>
-              <button className="btn" onClick={() => setSongIndex((i) => i + 1)}>
-                Next song
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="song-artist">No songs from their era in the list yet.</p>
-        )}
+        <MusicPlayer
+          song={song} youtubeId={video?.youtubeId} onPlayed={onPlayed}
+          onNext={songs.length > 1 ? () => setSongIndex(i => i + 1) : undefined}
+          sessionId={startedAt} playedSongIds={playedSongIds}
+        />
         </div>}
       </div>
     </div>

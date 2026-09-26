@@ -5,6 +5,9 @@
 //     references (Vite's hashed JS/CSS, the manifest, the icon).
 //   - Files under the build's assets/ folder that are only reached from JS/CSS (e.g. lazy
 //     chunks), and only for script/style/image/font requests.
+//   - The single bundled CC0 piano MP3 is explicitly referenced by the HTML and cached
+//     in full with the shell. Its cached bytes can satisfy media Range requests offline.
+//     Other audio, including all remote music, is never intercepted or cached.
 // NEVER CACHED: fetch()/XHR requests (API calls, same-origin or not), cross-origin requests,
 // non-GET requests, and anything outside the app's scope. fetch()/XHR requests are not
 // intercepted at all.
@@ -30,7 +33,7 @@
 //   - No committed shell (first visit was offline, or site data was cleared): the start page
 //     is a short "connect once" page (HTTP 503) instead of a browser error.
 
-const SW_VERSION = 'v2'
+const SW_VERSION = 'v3'
 const SHELL_PREFIX = 'moonrise-shell-' // not versioned: a committed shell survives worker updates
 const META_CACHE = 'moonrise-meta'
 const RUNTIME_CACHE = `moonrise-assets-${SW_VERSION}`
@@ -70,6 +73,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(navigate(event))
     return
   }
+  if (req.destination === 'audio' && isBundledPiano(req.url)) {
+    event.respondWith(bundledPiano(req))
+    return
+  }
   // fetch()/XHR (destination '') and anything that isn't a static file: not intercepted.
   if (!STATIC_DESTINATIONS.has(req.destination)) return
   event.respondWith(staticFile(req))
@@ -100,6 +107,58 @@ async function staticFile(req) {
   return res
 }
 
+function isBundledPiano(url) {
+  // Only this owned recording is permitted, including its Vite content hash.
+  // Exact membership in the committed shell is checked before serving cached bytes.
+  if (!url.startsWith(ASSET_DIR)) return false
+  return /^fur-elise-v-gao-[A-Za-z0-9_-]+\.mp3$/.test(url.slice(ASSET_DIR.length))
+}
+
+async function bundledPiano(req) {
+  const full = await matchShell(req.url)
+  // Preserve the original Range request on network misses. Never cache a streamed
+  // partial response, and never opportunistically cache an uncommitted audio URL.
+  if (!full || full.status !== 200) return fetch(req)
+  const bytes = await full.arrayBuffer()
+  const size = bytes.byteLength
+  const headers = new Headers(full.headers)
+  headers.delete('Content-Encoding')
+  headers.delete('Content-Range')
+  headers.set('Accept-Ranges', 'bytes')
+  headers.set('Content-Length', String(size))
+  const entire = () => new Response(bytes, { status: 200, headers })
+  const range = req.headers.get('Range')
+  if (!range) return entire()
+
+  // Conservatively return the entire representation unless a conditional request
+  // exactly matches a strong ETag. Weak/date/unknown validators are not assumed safe.
+  const validator = req.headers.get('If-Range')
+  if (validator && (validator.startsWith('W/') || validator !== full.headers.get('ETag') || !validator.startsWith('"'))) return entire()
+  const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim())
+  if (!match || (!match[1] && !match[2])) return entire() // includes unsupported multi-range
+
+  let start
+  let end
+  if (!match[1]) {
+    const suffix = Number(match[2])
+    start = suffix > 0 ? Math.max(0, size - suffix) : size
+    end = size - 1
+  } else {
+    start = Number(match[1])
+    end = match[2] ? Number(match[2]) : size - 1
+    if (match[2] && end < start) return entire() // syntactically invalid interval
+    end = Math.min(end, size - 1)
+  }
+  if (start >= size || size === 0) {
+    headers.set('Content-Range', `bytes */${size}`)
+    headers.set('Content-Length', '0')
+    return new Response(null, { status: 416, headers })
+  }
+  headers.set('Content-Range', `bytes ${start}-${end}/${size}`)
+  headers.set('Content-Length', String(end - start + 1))
+  return new Response(bytes.slice(start, end + 1), { status: 206, headers })
+}
+
 // ---- Committed shell -------------------------------------------------------------------
 
 async function readPointer() {
@@ -121,7 +180,14 @@ async function writePointer(pointer) {
 async function isComplete(pointer) {
   if (!pointer || !(await caches.has(pointer.name))) return false
   for (const url of pointer.urls) {
-    if (!(await caches.match(url, { cacheName: pointer.name }))) return false
+    const res = await caches.match(url, { cacheName: pointer.name })
+    if (!res) return false
+    if (isBundledPiano(url)) {
+      // A static host may return its HTML fallback with status 200 for a missing
+      // MP3. Do not commit that, a partial response, or an empty audio response.
+      if (res.status !== 200 || res.headers.has('Content-Range') || !/^audio\/mpeg(?:;|$)/i.test(res.headers.get('Content-Type') || '')) return false
+      if (!(await res.arrayBuffer()).byteLength) return false
+    }
   }
   return true
 }
