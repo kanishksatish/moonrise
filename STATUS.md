@@ -120,3 +120,7 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - DEMO.md: night-before checklist, the 3-minute script mapped to real taps, what to say when the sky is clear or weather is down, say/don't-say (no treatment claims), and sources.
 - Opening stat: Alzheimer's Association 2026 Facts and Figures (12M+ unpaid caregivers, 19.6B hours in 2025). Seen via search snippets only (primary pages blocked in the sandbox): a human must click through before presenting.
 - Honest limitation: the app tracks the real sky, so a morning demo shows daytime and the 10-min alert can't fire live. Recommendation: record a real evening run tonight as the dusk/alert footage. No staged or faked sky.
+
+## 2026-09-26 02:44 UTC — Claude — CI + more memory prompts
+- `.github/workflows/ci.yml`: npm ci, npm test, npm run build on every push and PR (all branches). Deploys nothing.
+- memoryPrompts: 24 unique prompts for a full profile (was 15), enough for an hour at one per 3 min without repeating. Added: evenings in the hometown, radio in their teenage decade, the 1957 satellite (age-gated like other era events), and six gentle general prompts (night sky where they grew up, a pet, outdoor games, Saturdays, kitchen smells, who taught them to cook). Same function signature. 109 tests pass.

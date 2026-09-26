@@ -13,6 +13,7 @@ export const PROMPT_EVERY_MINUTES = 3
 
 const ERA_EVENTS = [
   { year: 1969, text: 'Where were you when they landed on the moon in 1969?' },
+  { year: 1957, text: 'Do you remember when the first satellite crossed the night sky in 1957?' },
   { year: 1956, text: 'Do you remember the first time you heard Elvis on the radio?' },
   { year: 1964, text: 'Do you remember when the Beatles first came on television?' },
   { year: 1955, text: 'What was the first thing you remember watching on television?' },
@@ -23,6 +24,12 @@ const GENERAL = [
   'What was your favorite meal when you were young?',
   'Tell me about your best friend growing up.',
   'What did you do on summer evenings when you were young?',
+  'What did the night sky look like where you grew up?',
+  'Tell me about a pet you loved.',
+  'What games did you play outside as a child?',
+  'What was your favorite place to go on a Saturday?',
+  'What did your kitchen smell like when you were small?',
+  'Who taught you to cook your favorite dish?',
 ]
 
 function clean(value) {
@@ -43,6 +50,7 @@ export function memoryPrompts(profile = {}, { song = null } = {}) {
   if (hometown) {
     prompts.push(`Tell me about ${hometown} when you were young.`)
     prompts.push(`What was your street like in ${hometown}?`)
+    prompts.push(`What did the evenings feel like in ${hometown}?`)
   }
   if (spouse) {
     prompts.push(`How did you and ${spouse} meet?`)
@@ -57,6 +65,7 @@ export function memoryPrompts(profile = {}, { song = null } = {}) {
     const { to } = eraYears(profile.birthYear)
     const decade = Math.floor((profile.birthYear + 15) / 10) * 10
     prompts.push(`What did you wear to go out in the ${decade}s?`)
+    prompts.push(`What songs were on the radio in the ${decade}s?`)
     for (const event of ERA_EVENTS) {
       if (event.year - profile.birthYear >= MIN_AGE_AT_EVENT && event.year <= to + 10) {
         prompts.push(event.text)
