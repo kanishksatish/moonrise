@@ -3,12 +3,14 @@
 // Covers the 7 calendar days ending on endDate (inclusive).
 // endDate defaults to the most recent logged evening, or today if there are no logs.
 // Cloudy evening = cloudCover >= 50%. Clear = below 50%. Unknown cloud cover is left out of both.
-// Top songs = songs played this week, ranked by score this week (calm +1, episode -1), then plays.
+// Top songs = songs opened this week, ranked by score this week (calm +1, episode -1), then
+// plays. Each also carries this week's evidence (calmRate, status) from songStats.
 
 import seedSongs from '../data/songs.json'
 import { localDateString } from './sky.js'
 import { median, onsetMinutes } from './schedule.js'
 import { songScore } from './songs.js'
+import { songStats } from './learning.js'
 
 export const CLOUDY_THRESHOLD = 50
 export const REPORT_DAYS = 7
@@ -59,10 +61,13 @@ export function weeklyReport(logs = [], { endDate = latestLogDate(logs), songs =
 
   const plays = new Map()
   for (const l of week) for (const id of l.songIds ?? []) plays.set(id, (plays.get(id) ?? 0) + 1)
+  const weekStats = songStats(week)
   const topSongs = [...plays.keys()]
     .map((id) => {
       const song = songs.find((s) => s.id === id)
-      return song ? { ...song, score: songScore(id, week), plays: plays.get(id) } : null
+      if (!song) return null
+      const st = weekStats[id]
+      return { ...song, score: songScore(id, week), plays: plays.get(id), calmRate: st.calmRate, status: st.status }
     })
     .filter(Boolean)
     .sort((a, b) => b.score - a.score || b.plays - a.plays || a.title.localeCompare(b.title))

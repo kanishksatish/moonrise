@@ -68,12 +68,16 @@ describe('weeklyReport', () => {
     expect(r.clear).toEqual({ evenings: 3, episodes: 0 })
   })
 
-  it('lists the top 5 songs by weekly score', () => {
+  it('lists the top 5 songs by weekly score, with their evidence', () => {
     expect(r.topSongs).toHaveLength(5)
     // s1: calm, restless, calm = +2 (3 plays). s4: calm, calm = +2 (2 plays). s3: two episodes = -2.
     expect(r.topSongs.map((s) => s.id).slice(0, 2)).toEqual(['s1', 's4'])
     expect(r.topSongs.find((s) => s.id === 's3')).toBeUndefined()
     expect(r.topSongs[0]).toMatchObject({ score: 2, plays: 3 })
+    for (const s of r.topSongs) {
+      expect(['untried', 'learning', 'promising', 'unpromising']).toContain(s.status)
+      expect(s.calmRate).toBeGreaterThan(0)
+    }
   })
 
   it('always includes the doctor note', () => {

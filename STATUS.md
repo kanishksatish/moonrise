@@ -196,3 +196,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - SDK chunk load failure (e.g. first use while offline) now rejects with `AiPromptError` code `offline`; error mapping no longer re-imports the SDK (uses the already-loaded classes / HTTP status), so nothing escapes the documented contract. Timeouts map to `offline`.
 - Privacy wording corrected everywhere: we send birth year/era and the three anchor answers as typed; never the profile name, saved location or logs (an answer can itself contain a name or place).
 - 164 tests; live fake-key call still maps to bad_key.
+
+## 2026-09-26 04:06 UTC — Claude — learning evidence + milestones (METHODOLOGY.md)
+- Kanishk asked for trained, not random, scores and light gamification. Built Bayesian alternatives, then tested them with a seeded simulation (`node scripts/simulate-learning.mjs`): the simple AGENTS.md rules won both studies, so ranking and start time are unchanged. Full write-up: METHODOLOGY.md.
+- New (additive): `songStats(logs)` (Beta-Bernoulli evidence per song: plays/calm/restless/episode/score/calmRate/low/high/status untried|learning|promising|unpromising); `playlist()` and `weeklyReport().topSongs` items gain calmRate/status (ordering unchanged); `moonriseStart()` gains `range {earliest, latest}`, `halfWidthMinutes`, `confidence` (calibrated ~80% in simulation); `progress(logs)` milestones with `usesDemo`.
+- Honesty rule for UI: "promising" songs were truly helpful only ~39% of the time in simulation. Show "worth trying again" + counts, never "helps".
+- 194 tests.

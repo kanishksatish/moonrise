@@ -30,3 +30,5 @@ export {
   clearAiKey,
 } from './storage.js'
 export { generateMemoryPrompts, AiPromptError, AI_MODEL } from './ai.js'
+export { songStats } from './learning.js'
+export { progress } from './progress.js'
