@@ -13,11 +13,15 @@ const CONTRACT = [
   'memoryPrompts', 'promptAt',
   'generateDemoWeek',
   'loadState', 'saveState', 'addLog', 'addDemoLogs', 'clearDemoLogs', 'emptyState',
+  'loadAiKey', 'saveAiKey', 'clearAiKey',
+  'generateMemoryPrompts', 'AiPromptError',
 ]
 
 describe('engine contract', () => {
   it('exports exactly the documented functions', () => {
-    expect(Object.keys(engine).sort()).toEqual([...CONTRACT].sort())
+    // AI_MODEL is a constant (the model id shown in Settings), not a function.
+    expect(Object.keys(engine).sort()).toEqual([...CONTRACT, 'AI_MODEL'].sort())
     for (const name of CONTRACT) expect(typeof engine[name]).toBe('function')
+    expect(typeof engine.AI_MODEL).toBe('string')
   })
 })

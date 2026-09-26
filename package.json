@@ -10,9 +10,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "suncalc": "^2.0.2"
+    "suncalc": "^2.0.2",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",

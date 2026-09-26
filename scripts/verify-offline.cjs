@@ -90,7 +90,7 @@ async function scenario(browser, { base, port, dir, label, root }) {
 
   // 1. First online load of build A registers the worker and caches the shell.
   await page.goto(start)
-  await page.getByText('Welcome to Moonrise').waitFor()
+  await page.getByLabel('Their first name').waitFor()
   // Ready = a committed shell (pointer written last) with every one of its files present.
   const shellHasStart = async () =>
     page.evaluate(async (scope) => {
@@ -113,11 +113,11 @@ async function scenario(browser, { base, port, dir, label, root }) {
   // 2. Offline reload and offline navigation.
   await offline(port)
   await page.reload()
-  const offlineOk = await page.getByText('Welcome to Moonrise').isVisible()
+  const offlineOk = await page.getByLabel('Their first name').isVisible()
   const title = await page.title()
   check(`${label}: offline reload renders the app`, offlineOk, `title="${title}"`)
   await page.goto(start)
-  check(`${label}: offline navigation to start URL renders the app`, await page.getByText('Welcome to Moonrise').isVisible())
+  check(`${label}: offline navigation to start URL renders the app`, await page.getByLabel('Their first name').isVisible())
   // Cross-origin API is not intercepted: the page's own fetch fails normally.
   const apiBypassed = await page.evaluate(async () => {
     try {
@@ -141,7 +141,7 @@ async function scenario(browser, { base, port, dir, label, root }) {
     // 3. Deploy build B. Online load gets B; the new shell replaces A only once complete.
     deploy('buildB', dir)
     await page.goto(start)
-    await page.getByText('Welcome to Moonrise').waitFor()
+    await page.getByLabel('Their first name').waitFor()
     check('update: online load serves build B', (await page.title()) === 'Moonrise B', await page.title())
     const swapped = await waitFor(async () => {
       const k = await shellCaches(page)
@@ -150,7 +150,7 @@ async function scenario(browser, { base, port, dir, label, root }) {
     check('update: new shell cached and old shell removed', swapped, (await shellCaches(page)).join(','))
     await offline(port)
     await page.reload()
-    const bOk = await page.getByText('Welcome to Moonrise').isVisible()
+    const bOk = await page.getByLabel('Their first name').isVisible()
     check('update: offline reload renders build B', bOk && (await page.title()) === 'Moonrise B', await page.title())
     const scripts = await page.evaluate(() => [...document.scripts].map((s) => s.src).join(' '))
     check('update: offline page uses build B assets', scripts.includes('b.js'), scripts)
@@ -187,7 +187,7 @@ async function scenario(browser, { base, port, dir, label, root }) {
     check('bad deploy: committed shell unchanged', JSON.stringify(await shellCaches(page)) === JSON.stringify(committedBefore), (await shellCaches(page)).join(','))
     await offline(port)
     await page.reload()
-    check('bad deploy: offline reload still renders build B', (await page.getByText('Welcome to Moonrise').isVisible()) && (await page.title()) === 'Moonrise B', await page.title())
+    check('bad deploy: offline reload still renders build B', (await page.getByLabel('Their first name').isVisible()) && (await page.title()) === 'Moonrise B', await page.title())
     await online(port, root)
     deploy('buildB', dir)
 
@@ -200,7 +200,7 @@ async function scenario(browser, { base, port, dir, label, root }) {
     await online(port, root)
     // Going online again recovers and re-caches.
     await page.goto(start)
-    await page.getByText('Welcome to Moonrise').waitFor()
+    await page.getByLabel('Their first name').waitFor()
     const recached = await waitFor(shellHasStart)
     check('no shell yet: next online load re-caches the shell', recached)
   }

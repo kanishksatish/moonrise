@@ -147,3 +147,27 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Songs now enter the evening log only when a music link is opened, not merely displayed. Report language describes association rather than causation; sky timing is labeled an estimate, and caregiver-support disclaimer appears on Today. No main merge/deployment by Codex.
 ## 2026-09-26 02:52 UTC — Claude — sky gradient contrast (L5 review, engine-side fix)
 - skyGradient day/dusk stops darkened so white text is >= 4.5:1 (WCAG AA) on every color the gradient passes through, top and bottom (was as low as 1.43:1 on the daytime horizon). Day is still blue, dusk deep orange, night unchanged. Pinned by a new test that checks 101 points. 111 tests pass. No interface change.
+
+## 2026-09-26 03:12 UTC — Claude — loadState hardening
+- loadState now cleans stored data instead of passing it through: logs without a valid 'YYYY-MM-DD' date or known outcome are dropped; optional fields are repaired (bad episodeStart/effectiveDusk -> null, non-numeric cloudCover -> null, songIds filtered to strings, episodeStart cleared on non-episode evenings); one log per date (later wins), sorted; extra fields (demo) kept.
+- A profile without an integer birthYear and finite lat/lon loads as null (back to Setup) instead of producing NaN times. Non-object JSON loads as empty state.
+- Same signature. 143 tests pass (UI tests included).
+
+## 2026-09-26 03:20 UTC — Claude — loadState follow-up (Codex review)
+- Dates must be real calendar dates (logs and tonight). Profile needs a non-blank text name or it loads as null (Setup); city/anchors always strings (valid values kept, missing ones become ''). tonight kept only with a real date, songIds always string[]. Demo flags and valid values untouched. 149 tests; 150 when test-merged with claude-ui d3d1845.
+
+## 2026-09-26 03:24 UTC — Claude — README/DEMO wording (Codex submission review)
+- README and DEMO.md no longer overstate: "estimated dusk" and "suggested start time" (prototype rules, not measurements or clinical predictions); songs are "linked with calmer evenings" via opened links (association, not proven benefit or confirmed playback); alerts only while the app is open.
+- README now discloses how it was built (two AI coding agents), the Higgsfield artwork (see DESIGN.md), the outcome-neutral constellation, and that the app runs no AI model at runtime.
+- DEMO.md steps updated for the redesign ("Your evening begins at", "Tonight's sky · estimated dusk", constellation).
+- Open question for Kanishk: the hackathon page reportedly lists "a working AI-powered project"; the app has no runtime AI.
+
+## 2026-09-26 03:29 UTC — Claude — runtime AI: caregiver-reviewed memory prompts (engine side)
+- Kanishk asked to add runtime AI now (hackathon lists "a working AI-powered project"). Key stays on the device (pasted in Settings); cheapest option, no hosting.
+- New `src/engine/ai.js`: `generateMemoryPrompts(profile, { apiKey, existing?, count? }) -> Promise<string[]>`, rejects with `AiPromptError` (`.code`: no_key | bad_key | rate_limited | offline | refused | bad_output | service). Official @anthropic-ai/sdk, loaded lazily (not in the startup bundle/offline shell), `claude-opus-5`, effort low, Zod structured output, server-side refusal fallback. Sends only birth year/era + non-blank anchors; never the name, location or logs. Output cleaned (length, dupes, upsetting topics) before caregiver review.
+- `memoryPrompts(profile, { song, approved })`: approved prompts come right after the song prompt, deduped. `state.approvedPrompts` cleaned on load. Key: `loadAiKey/saveAiKey/clearAiKey` under its own localStorage key, never in app state.
+- Verified: 163 tests; a live call with a fake key reaches the API and maps to bad_key (Node). In headless Chromium the SDK loads and sends the browser-access header, but the sandbox proxy's certificate isn't trusted by Chromium, so browser->API is unverified here.
+- UI needed (Codex): Settings key field + Generate + review/approve list; pass approvedPrompts to memoryPrompts.
+
+## 2026-09-26 03:32 UTC — Claude — AI prompts switched to Haiku 4.5
+- Kanishk chose Claude Haiku 4.5 (`claude-haiku-4-5`) over Opus 5 for cost/speed (~0.3¢ vs ~1-2¢ per Generate). Now `client.messages.parse` with `zodOutputFormat`; no effort, thinking, fallbacks or betas (Haiku 4.5 rejects effort; tests pin their absence). Interface unchanged. 163 tests; live fake-key call still maps to bad_key.

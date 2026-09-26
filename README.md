@@ -3,11 +3,13 @@
 **A calm evening routine for people with dementia, timed to the real sky.**
 
 Many people living with dementia become more confused or agitated as daylight fades, often
-called *sundowning*. Moonrise helps family caregivers get ahead of it. It works out when
-it will actually get dark today, reminds the caregiver before then, and runs a gentle
-full-screen routine: warm light that brightens as the sky darkens, music from the person's
-youth, and simple memory prompts. After each evening, one tap records how it went, and
-Moonrise learns the best start time and which songs help.
+called *sundowning*. Moonrise helps family caregivers plan ahead for it. It **estimates** this
+evening's dusk from local sunset and cloud cover, suggests a time to start a calming routine,
+and reminds the caregiver while the app is open. The routine is gentle and full-screen:
+warm light that brightens as the sky darkens, music from the person's youth, and simple
+memory prompts. After each evening, one tap records how it went. Moonrise then adjusts its
+suggested start time from the logged evenings, and shows which songs have been linked with
+calmer evenings. That's an association in the caregiver's own logs, not proof a song helps.
 
 > Moonrise supports caregivers. It is **not** a medical treatment and does not diagnose,
 > treat or prevent anything. Sudden changes in evening behaviour can have medical causes
@@ -20,28 +22,37 @@ No hardware, no account, no backend. It is a web app (PWA) that runs on any tabl
 | Step | What Moonrise does |
 | --- | --- |
 | Setup | Name, birth year, location (browser location or city search) and up to three optional memory anchors: hometown, spouse, job. |
-| Today | Shows today's **effective dusk**, the **Moonrise start time**, the moon phase and a countdown. A heads-up alert appears 10 minutes before the start. |
+| Today | The suggested **start time** with a countdown, the moon phase, and an **estimated dusk** (tap to see sunset and cloud details). A heads-up appears 10 minutes before the start while the app is open. A small "constellation" shows one star per logged evening in the last week. Every outcome counts the same, and there are no streaks or scores. |
 | Moonrise mode | A full-screen sky that follows the real sky (blue → dusk → night), a slowly rising moon, warm light that increases as it gets dark, a song from the person's era with a play link, and one memory prompt at a time for the caregiver to read aloud. |
 | Log | Three big buttons: **Calm**, **Restless**, **Episode**, plus an optional "episode started at" time. |
-| Report | A one-page printable weekly summary to share with family or a doctor. |
+| Report | A one-page printable weekly summary to share with family or a doctor, including "songs linked with calmer evenings" (logged associations, not proven benefit). |
 
 ### The formulas
 
-All results are computed from real data (the sky, the weather and the caregiver's own logs).
-Nothing is hardcoded.
+These are simple, transparent **prototype rules**, not measurements or clinical predictions.
+Every result is computed from real inputs (the sun's position, the weather forecast and the
+caregiver's own logs). Nothing is hardcoded.
 
-- **Effective dusk.** Sunset from [Open-Meteo](https://open-meteo.com/) (free, no key),
-  moved earlier by the cloud cover over the 2 hours before sunset:
-  `shift = average cloud cover % / 100 × 30 minutes`. A fully overcast evening gets dark
-  30 minutes sooner. If the weather service can't be reached within 8 seconds, Moonrise
-  uses the astronomical sunset ([SunCalc](https://github.com/mourner/suncalc)) with no shift.
-- **Start time.** 45 minutes before effective dusk by default. After 3+ logged evenings
-  with timed episodes, it's the median time episodes began (relative to dusk) minus a
-  20-minute buffer, kept between 90 and 15 minutes before dusk.
-- **Era music.** Songs from the person's ages 10 to 30 (the "reminiscence bump").
-  Each song scores +1 when it played on a calm evening and −1 on an episode evening. The
-  playlist plays the best-scoring songs first, in random order among ties. Songs open as
-  Spotify or YouTube searches; Moonrise doesn't host audio.
+- **Estimated dusk.** Sunset from [Open-Meteo](https://open-meteo.com/) (free, no key),
+  moved earlier by the forecast cloud cover over the 2 hours before sunset:
+  `shift = average cloud cover % / 100 × 30 minutes`. It's a prototype rule of thumb
+  (overcast evenings get dim sooner), not a measured light level. If the weather service
+  can't be reached within 8 seconds, Moonrise uses the astronomical sunset
+  ([SunCalc](https://github.com/mourner/suncalc)) with no shift.
+- **Suggested start time.** 45 minutes before estimated dusk by default. After 3+ logged
+  evenings with at least one timed episode, it's the median time episodes began (relative
+  to dusk) minus a 20-minute buffer, kept between 90 and 15 minutes before dusk.
+- **Era music.** Songs from the person's ages 10 to 30 (the "reminiscence bump"). A song
+  counts as played on an evening only if the caregiver opened its Spotify or YouTube link,
+  and Moonrise can't confirm it was actually played. Each song scores +1 per calm evening and
+  −1 per episode evening it was opened on. The best-scoring songs are suggested first, in
+  random order among ties. Moonrise doesn't host audio.
+- **AI-written memory prompts (optional).** In Settings, a caregiver can add their own
+  Anthropic API key and tap Generate. Claude Haiku 4.5 (`claude-haiku-4-5`) then drafts a few gentle,
+  personal memory prompts from the person's birth year and the optional anchors (hometown,
+  spouse's first name, job). The caregiver reviews them and approves the ones they like;
+  only approved prompts appear in Moonrise mode, alongside the built-in templates. Prompts
+  about loss, illness or conflict are steered away from and filtered out.
 - **Evenings after midnight.** Anything logged before 4 AM counts toward the previous
   evening, so late-night logs land on the right day.
 
@@ -54,9 +65,13 @@ logs are clearly labelled and can be removed in one tap. Real evenings are never
 ## Privacy
 
 Everything stays on the device, in the browser's local storage. There is no server and
-no login. The only network calls are the weather and city lookups (Open-Meteo, which
-receives coordinates or a city name) and the song search links the caregiver chooses
-to open.
+no login. The network calls are the weather and city lookups (Open-Meteo, which receives
+coordinates or a city name), the song search links the caregiver chooses to open, and,
+only if the caregiver sets up AI prompts and taps Generate, one request to the Anthropic
+API with the birth year and the three optional anchors (never the person's name, location
+or logs). The API key is stored only on that device, separately from the app data.
+Because the browser calls the API directly, this is a prototype setup; a public release
+would route the request through a small server that holds the key.
 
 ## Run it
 
@@ -86,5 +101,13 @@ src/styles/     Plain CSS: 20px+ text, 48px+ tap targets, high contrast, dark-ro
 ## Built with
 
 Vite, React, plain CSS, SunCalc, the Open-Meteo forecast and geocoding APIs, and Vitest.
-It was built overnight at a hackathon ("Fly me to the moon") by two humans working with two AI coding
-agents (Claude Code on the engine, Codex on the UI) coordinating through a GitHub issue.
+
+**How it was made, and what AI was used.** Moonrise was built overnight at a hackathon ("Fly me
+to the moon") by two people working with two AI coding agents: Claude Code on the engine and
+integrations, and Codex on the UI. The agents coordinated through a GitHub issue. The two
+illustrations (a night lake and a lunar-surface texture) are original images generated with
+Higgsfield; `DESIGN.md` records the prompts, job IDs and where they're used. The moon's
+phase on screen is computed live, and the artwork is decorative. At runtime, the only AI is
+the optional caregiver-reviewed memory prompts (Claude, via the Anthropic API). The dusk
+estimate, start time, song ranking and built-in prompts are the rules and templates
+described above, not a model.
