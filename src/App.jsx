@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { effectiveDusk, eveningDate, loadState, moonPhase, saveState } from './engine/index.js'
 import { currentSky, eveningKey } from './components/eveningLog.js'
 import useNow from './components/useNow.js'
@@ -13,6 +13,7 @@ import Report from './screens/Report.jsx'
 import Settings from './screens/Settings.jsx'
 
 const SKY_REFRESH_MS = 30 * 60 * 1000
+const SCREEN_NAMES = { today: 'Today', log: 'Evening log', report: 'Evening report', settings: 'Caregiver settings' }
 
 function App() {
   const [state, setState] = useState(loadState)
@@ -24,11 +25,15 @@ function App() {
   const now = useNow()
   const evening = eveningKey(now)
   const visibleSky = profile ? currentSky(sky, profile, now) : null
+  const screenContent = useRef(null)
+  const visibleScreen = !profile || screen === 'setup' ? 'setup' : screen
 
   useEffect(() => {
-    // Each screen starts at its heading, including inside a tablet preview.
+    // Move keyboard/screen-reader entry ahead of the new controls. Background
+    // clock, sky and record updates must not move the caregiver's focus.
     ;(document.scrollingElement || document.documentElement).scrollTop = 0
-  }, [screen])
+    screenContent.current?.focus({ preventScroll: true })
+  }, [visibleScreen])
 
   // Every change to state is saved right away.
   function update(next) {
@@ -72,6 +77,7 @@ function App() {
     return (
       <Setup
         profile={profile}
+        focusRef={screenContent}
         onDone={(p) => {
           update({ ...state, profile: p })
           setScreen('today')
@@ -110,12 +116,14 @@ function App() {
           <button className="profile-chip" onClick={() => setScreen('settings')} aria-label={`Settings for ${profile.name}`}><span aria-hidden="true">{profile.name.trim().slice(0, 1).toUpperCase()}</span><span className="profile-name">{profile.name}</span></button>
         </header>
         {storageError && <div className="status" role="alert"><p>This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>{storageRetryAvailable && screen !== 'log' && <button className="btn" onClick={() => update(state)}>Retry saving changes</button>}</div>}
+        <main ref={screenContent} tabIndex={-1} aria-label={SCREEN_NAMES[screen]}>
         {screen === 'today' && <Today state={state} sky={visibleSky} saveError={storageError} onStart={() => setScreen('launch')} onPersonalize={() => setScreen('settings')} />}
         {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
         {screen === 'report' && <Report state={state} />}
         {screen === 'settings' && (
           <Settings state={state} update={update} onEditProfile={() => setScreen('setup')} />
         )}
+        </main>
       </div>
       <NavBar current={screen} onChange={setScreen} />
     </div>

@@ -7,7 +7,7 @@ import '../styles/onboarding.css'
 
 const THIS_YEAR = new Date().getFullYear()
 
-export default function Setup({ profile, onDone, onCancel }) {
+export default function Setup({ profile, onDone, onCancel, focusRef }) {
   const [name, setName] = useState(profile?.name ?? '')
   const [birthYear, setBirthYear] = useState(profile?.birthYear ? String(profile.birthYear) : '')
   const [place, setPlace] = useState(
@@ -81,7 +81,7 @@ export default function Setup({ profile, onDone, onCancel }) {
 
   return (
     <div className="app onboarding-app">
-      <form className="screen setup onboarding-page" onSubmit={save}>
+      <form className="screen setup onboarding-page" onSubmit={save} ref={focusRef} tabIndex={-1} aria-label="Caregiver setup">
         <div className="onboarding-brand"><Brand /><span className="onboarding-note">A little light. A familiar song.</span></div>
         <header className="onboarding-intro">
           <p className="eyebrow">A place to begin</p>

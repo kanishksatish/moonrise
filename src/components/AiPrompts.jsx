@@ -14,7 +14,18 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
   const [error, setError] = useState('')
   const request = useRef(0)
   const inFlight = useRef(false)
+  const promptHeading = useRef(null)
+  const draftList = useRef(null)
+  const approvedList = useRef(null)
+  const pendingFocus = useRef(null)
   const approved = state.approvedPrompts ?? []
+  const approvedOccurrences = new Map()
+  const approvedRows = approved.map(text => {
+    // Legacy data can contain duplicates. Other removals must not remount a row.
+    const occurrence = approvedOccurrences.get(text) ?? 0
+    approvedOccurrences.set(text, occurrence + 1)
+    return { text, key: `${occurrence}:${text}` }
+  })
 
   useEffect(() => {
     let live = true
@@ -31,6 +42,17 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     return () => { live = false; request.current += 1; window.removeEventListener('focus', refresh) }
   }, [])
   const canGenerate = connectionChecked && (local ? local.configured : Boolean(savedKey))
+
+  useEffect(() => {
+    if (!pendingFocus.current) return
+    const { list, action, index } = pendingFocus.current
+    const container = list === 'draft' ? draftList.current : approvedList.current
+    const actions = container?.querySelectorAll(`[data-prompt-action="${action}"]`)
+    // The next row takes this index; after the last row, use the previous one.
+    const target = actions?.[Math.min(index, actions.length - 1)]
+    pendingFocus.current = null
+    ;(target ?? promptHeading.current)?.focus()
+  }, [drafts, approved])
 
   function saveKey(event) {
     event.preventDefault()
@@ -85,7 +107,8 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     }
   }
 
-  function review(text, keep) {
+  function review(text, keep, index) {
+    pendingFocus.current = { list: 'draft', action: keep ? 'approve' : 'skip', index }
     if (keep) update({ ...state, approvedPrompts: [...new Set([...approved, text])] })
     setDrafts(current => current.filter(draft => draft !== text))
     setMessage(keep ? 'Prompt approved for your next routine.' : 'Prompt skipped.')
@@ -94,7 +117,7 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
   return (
     <section className="card ai-prompts" aria-labelledby="ai-heading">
       <p className="eyebrow">Words worth sharing</p>
-      <h2 id="ai-heading">Conversation starters</h2>
+      <h2 id="ai-heading" ref={promptHeading} tabIndex={-1}>Conversation starters</h2>
       <p>A familiar place. A favorite sound. Choose the invitations that feel right for your person.</p>
       <p className="muted">Optional suggestions, always reviewed by you. Built-in starters are ready without a connection.</p>
 
@@ -129,12 +152,12 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
       {drafts.length > 0 && <div className="ai-review">
         <h3>Review before sharing</h3>
         <p className="muted">These generated drafts can get things wrong. Skip anything inaccurate, uncomfortable or likely to feel like a memory test. Only your selections enter the routine.</p>
-        <ul className="ai-prompt-list">
+        <ul className="ai-prompt-list" ref={draftList}>
           {drafts.map((text, index) => <li key={text}>
             <p>{text}</p>
             <div className="ai-actions">
-              <button className="btn primary" onClick={() => review(text, true)} aria-label={`Approve prompt ${index + 1}`}>Approve</button>
-              <button className="btn" onClick={() => review(text, false)} aria-label={`Skip prompt ${index + 1}`}>Skip</button>
+              <button className="btn primary" data-prompt-action="approve" onClick={() => review(text, true, index)} aria-label={`Approve prompt ${index + 1}`}>Approve</button>
+              <button className="btn" data-prompt-action="skip" onClick={() => review(text, false, index)} aria-label={`Skip prompt ${index + 1}`}>Skip</button>
             </div>
           </li>)}
         </ul>
@@ -143,11 +166,12 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
       {approved.length > 0 && <div className="ai-approved">
         <h3>Your selected starters ({approved.length})</h3>
         <p className="muted">Reviewed by you, saved on this device and available offline.</p>
-        <ul className="ai-prompt-list">
-          {approved.map((text, index) => <li key={`${index}-${text}`}>
+        <ul className="ai-prompt-list" ref={approvedList}>
+          {approvedRows.map(({ text, key }, index) => <li key={key}>
             <p>{text}</p>
-            <button className="btn" disabled={busy} aria-label={`Remove approved prompt ${index + 1}`}
+            <button className="btn" data-prompt-action="remove" disabled={busy} aria-label={`Remove approved prompt ${index + 1}`}
               onClick={() => {
+                pendingFocus.current = { list: 'approved', action: 'remove', index }
                 update({ ...state, approvedPrompts: approved.filter((_, i) => i !== index) })
                 setMessage('Approved prompt removed.')
               }}>Remove</button>

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import AiPrompts from '../AiPrompts.jsx'
@@ -9,6 +10,11 @@ const draft = 'What flowers grew near your childhood home?'
 const state = { profile: { name: 'Private Person', birthYear: 1942, city: 'Dallas', lat: 32, lon: -96, anchors: { hometown: 'Dayton' } }, logs: [] }
 beforeEach(() => { localStorage.clear(); vi.clearAllMocks(); local.localAiStatus.mockResolvedValue({ configured: true }); local.generateLocalPrompts.mockResolvedValue([draft]) })
 afterEach(cleanup)
+
+function EditablePrompts({ initialState = state }) {
+  const [current, update] = useState(initialState)
+  return <AiPrompts state={current} update={update} />
+}
 
 it('uses the local connection without displaying, saving or sending an OpenAI key in the browser', async () => {
   const update = vi.fn(), anthropic = vi.fn()
@@ -119,4 +125,53 @@ it('discarding or leaving local drafts does not approve them', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Skip prompt 1' }))
   expect(update).not.toHaveBeenCalled()
   expect(screen.queryByText(draft)).toBeNull()
+})
+
+it.each(['Approve', 'Skip'])('keeps focus on the next or previous %s action, then the section heading', async action => {
+  local.generateLocalPrompts.mockResolvedValue([
+    draft,
+    'Tell me about a favourite weekend breakfast.',
+    'What music did you enjoy at home?',
+  ])
+  await act(async () => render(<EditablePrompts />))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Generate prompts' })))
+  const previous = screen.getByRole('button', { name: `${action} prompt 1` })
+  const middle = screen.getByRole('button', { name: `${action} prompt 2` })
+  const next = screen.getByRole('button', { name: `${action} prompt 3` })
+
+  middle.focus()
+  fireEvent.click(middle)
+  expect(document.activeElement).toBe(next)
+  expect(next.getAttribute('aria-label')).toBe(`${action} prompt 2`)
+
+  fireEvent.click(next)
+  expect(document.activeElement).toBe(previous)
+
+  fireEvent.click(previous)
+  expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Conversation starters' }))
+  expect(screen.queryByRole('button', { name: /^(Approve|Skip) prompt/ })).toBeNull()
+})
+
+it('keeps surviving approved rows mounted and focuses the next removal, previous removal, or heading', async () => {
+  await act(async () => render(<EditablePrompts initialState={{ ...state, approvedPrompts: [
+    draft,
+    'Tell me about a favourite weekend breakfast.',
+    'What music did you enjoy at home?',
+  ] }} />))
+  const previous = screen.getByRole('button', { name: 'Remove approved prompt 1' })
+  const middle = screen.getByRole('button', { name: 'Remove approved prompt 2' })
+  const next = screen.getByRole('button', { name: 'Remove approved prompt 3' })
+
+  middle.focus()
+  fireEvent.click(middle)
+  expect(document.activeElement).toBe(next)
+  expect(next.getAttribute('aria-label')).toBe('Remove approved prompt 2')
+
+  fireEvent.click(next)
+  expect(document.activeElement).toBe(previous)
+
+  fireEvent.click(previous)
+  expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Conversation starters' }))
+  expect(screen.queryByRole('button', { name: /^Remove approved prompt/ })).toBeNull()
+  expect(local.generateLocalPrompts).not.toHaveBeenCalled()
 })

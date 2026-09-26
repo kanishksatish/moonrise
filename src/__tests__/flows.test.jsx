@@ -47,6 +47,37 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
+it('moves focus into a new screen and optional onset step without stealing it during refresh', async () => {
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  const navigation = screen.getByRole('button', { name: 'Log', exact: true })
+  navigation.focus()
+  fireEvent.click(navigation)
+  expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Evening log' }))
+  const episode = screen.getByRole('button', { name: 'Episode', exact: true })
+  episode.focus()
+  fireEvent.click(episode)
+  expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'When did it start?' }))
+  const time = screen.getByLabelText('Episode started at')
+  time.focus()
+  await act(async () => vi.advanceTimersByTime(15000))
+  expect(document.activeElement).toBe(time)
+  click('Skip')
+  expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Today' }))
+})
+
+it('focuses Today when first setup completes even though the initial screen was already today', async () => {
+  findCity.mockResolvedValue({ city: 'Dallas', lat: 32.78, lon: -96.8 })
+  await act(async () => render(<App />))
+  expect(document.activeElement).toBe(screen.getByRole('form', { name: 'Caregiver setup' }))
+  fireEvent.change(screen.getByLabelText('Their first name'), { target: { value: 'Fictional Avery' } })
+  fireEvent.change(screen.getByLabelText('Year they were born'), { target: { value: '1942' } })
+  fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Dallas' } })
+  await act(async () => click('Find'))
+  await act(async () => click('Start'))
+  expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Today' }))
+})
+
 it('keeps a failed note visibly unsaved after navigation and retries the complete state', async () => {
   localStorage.setItem('moonrise:v1', JSON.stringify(initial))
   await act(async () => render(<App />))

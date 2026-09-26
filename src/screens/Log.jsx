@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { addLog } from '../engine/index.js'
 import { prettyDate } from '../components/format.js'
 import { eveningKey, makeEveningLog } from '../components/eveningLog.js'
@@ -32,6 +32,7 @@ export default function Log({ state, sky, update, onDone }) {
   const existing = state.logs.find((l) => l.date === today && !l.demo)
   const savedContext = cleanCareContext(existing?.careContext)
   const [askTime, setAskTime] = useState(false)
+  const timeHeading = useRef(null)
   const [error, setError] = useState('')
   const [errorLocation, setErrorLocation] = useState('outcome')
   const [deviceSaveFailed, setDeviceSaveFailed] = useState(false)
@@ -56,6 +57,10 @@ export default function Log({ state, sky, update, onDone }) {
     setSavedEpisodeStart(existing?.episodeStart ?? null)
     setTime(existing?.episodeStart ? timeValue(new Date(existing.episodeStart)) : timeValue(new Date()))
   }, [today])
+
+  useEffect(() => {
+    if (askTime) timeHeading.current?.focus()
+  }, [askTime])
 
   function save(outcome, episodeTime, location = 'outcome') {
     setErrorLocation(location)
@@ -117,7 +122,7 @@ export default function Log({ state, sky, update, onDone }) {
       <div className="log evening-journal log-time">
         <header className="journal-heading">
           <p className="eyebrow">{deviceSaveFailed ? 'Time change not saved to device' : 'Episode saved · optional detail'}</p>
-          <h1>When did it start?</h1>
+          <h1 ref={timeHeading} tabIndex={-1}>When did it start?</h1>
           <p className="lead">Evening of {prettyDate(today)}. After-midnight times count toward this evening.</p>
         </header>
         <div className="journal-time-entry">
