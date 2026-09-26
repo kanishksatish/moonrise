@@ -49,7 +49,7 @@ export default function Moonrise({ state, onPlayed, onExit }) {
   const moon = moonPhase(now)
   const elapsed = now.getTime() - startedAt
   const moonProgress = Math.max(0, Math.min(1, elapsed / (MOON_RISE_MINUTES * 60000)))
-  const prompt = promptAt(memoryPrompts(profile, { song }), elapsed)
+  const prompt = promptAt(memoryPrompts(profile, { song, approved: state.approvedPrompts }), elapsed)
   // Warm lamp light rises from the bottom of the screen as the real sky darkens.
   const glow = 0.15 + 0.6 * sky.warmth
 
@@ -98,7 +98,7 @@ export default function Moonrise({ state, onPlayed, onExit }) {
         <div className="session-cards">
         {prompt && (
           <div className="prompt">
-            <p className="prompt-label">Read aloud</p>
+            <p className="prompt-label">{state.approvedPrompts?.includes(prompt) ? 'Read aloud · AI-written, reviewed by you' : 'Read aloud'}</p>
             <p className="prompt-text">{prompt}</p>
           </div>
         )}

@@ -1,7 +1,8 @@
 # Moonrise demo runbook (3 minutes)
 
-Everything on screen is computed live from the real sky, the weather and the stored logs.
-**Nothing is staged or hardcoded.** That's a rule from the brief, and it's also the pitch.
+Times and lunar phase come from the real sky, forecast and stored logs. The lake and lunar
+texture are decorative AI artwork; the visible rise is an illustration, not the moon's
+astronomical path. The optional sample week is always labelled demo data.
 This runbook shows what to tap and what to say, and what to do when the real world doesn't cooperate.
 
 ## The night before
@@ -22,19 +23,18 @@ This runbook shows what to tap and what to say, and what to do when the real wor
 
 ### 1. The problem in one sentence, one stat (≈20 s)
 
-> "Last year, over 12 million unpaid US caregivers gave 19.6 billion hours of care to
+> "In 2025, 12.7 million unpaid US caregivers gave 19.6 billion hours of care to
 > people with dementia, and for many of them evening is the hardest part of the day.
 > It's called sundowning."
 
 Source: Alzheimer's Association, *2026 Alzheimer's Disease Facts and Figures* (hours and
-caregivers are 2025 data). See "Sources" below, and **click through to confirm the exact
-wording before presenting**.
+caregivers are 2025 data). Verified in the primary report, printed page 52; see Sources.
 
 ### 2. Setup for a person born in 1942 (≈30 s)
 
 1. Name: a fictional first name (e.g. "Rose"). **Never a real patient's name or details.**
 2. Birth year: **1942**. The "Their songs: 1952 to 1972" card appears with era songs.
-   *Say:* "Music from ages 10 to 30, the 'reminiscence bump', tends to be the most familiar."
+   *Say:* "We start with music from ages 10 to 30; the caregiver decides what feels familiar."
 3. **Use my location** (or type the backup city → Find).
 4. Anchors (optional): hometown, spouse's name, job. These become memory prompts.
 5. **Start**.
@@ -58,10 +58,11 @@ demo. Show the recorded clip, or point at "Turn on alerts".
 
 ### 4. Moonrise mode (≈40 s)
 
-Tap **Start Moonrise now**. Full screen:
-- The sky gradient follows the **real** sky right now, so in the morning it's daytime blue.
-  *Say:* "At dusk this deepens to night, the moon rises, and the screen gets warmer and
-  brighter as the room gets darker." Then **play the recorded dusk clip** to show it.
+Tap **Start Moonrise now**. The routine fills the browser; native **Full screen** is optional:
+- The surrounding gradient follows the real sun position; the lake remains a decorative
+  night scene. *Say:* "The background and warm glow follow sunset. This illustrated moon
+  rises slowly through the routine." Reduced-motion settings keep it still. Use the
+  recorded evening clip to show the change over time.
 - Big song title with Spotify / YouTube links (Moonrise doesn't host audio). **Open one of the
   links**: only songs whose link was opened are recorded for tonight's log, and so only those
   count toward "Songs from your evenings".
@@ -71,7 +72,7 @@ Tap **Start Moonrise now**. Full screen:
 
 Tap **Finish** → Log.
 
-### 5. The learning: demo week and the report (≈40 s)
+### 5. The pattern: demo week and the report (≈40 s)
 
 1. On Log, tap **Episode** (one tap), then optionally set a time (a time in the future is
    refused). Or skip logging and go on.
@@ -87,15 +88,29 @@ Tap **Finish** → Log.
    anything), and the note to mention sudden changes to a doctor. Tap **Print** to show
    it's one page.
 
+### Optional AI demonstration (≈30 s; shorten other steps to fit)
+
+Before presenting, enter a dedicated API key privately in Settings. Never show or paste
+a real key in a recording, repository or GitHub issue. With the fictional profile, tap
+**Generate prompts**, wait for the live reply, then **Approve** one and **Skip** another.
+Show the "Approved for your routine" list. Only approved text enters Moonrise mode; it
+follows the first song prompt at the next three-minute rotation.
+
+Say: "Claude drafts these conversation starters; the caregiver reviews each one before
+using it. The dusk estimate and song ranking are simple rules." If the request fails, show
+the error honestly and continue with built-in prompts. Previously approved text is saved,
+but must not be presented as a new live generation. A successful real-key request is a
+required pre-demo check; mocked tests and an invalid-key response do not establish it.
+
 ### 6. Close (≈10 s)
 
 > "Every evening, we fly them back to the moon."
 
 ## Why it looks like daytime
 
-Moonrise mode and the Today card use the real sun position for your location. That's the
-point: the routine is timed to *this* evening's sky. We don't fake a dusk for the stage,
-which is why the dusk footage is a recording of a real evening run.
+The surrounding gradient in Moonrise mode uses the real sun position. Today's time and
+lunar phase also use real inputs. The lake artwork stays moonlit and is not a live image
+of the user's location. Use a recording of a real evening to demonstrate the dusk change.
 
 ## Say / don't say
 
@@ -106,25 +121,14 @@ which is why the dusk footage is a recording of a real evening run.
   prompts written by Claude.
 - ❌ "Treats", "prevents", "reduces sundowning", or any clinical outcome claim. Moonrise
   makes no medical claims.
-- ✅ "All data stays on the tablet. No account, no server."
+- ✅ "Profiles and logs are stored on this device. Weather lookups send a location;
+  chosen music links open their provider. Optional AI generation sends birth year and
+  memory answers to Anthropic after the caregiver taps Generate."
 
 ## Sources
 
-Checked from search results during the build. The primary pages were not reachable from
-the build sandbox, so confirm each one before presenting.
-
-- **Caregiver burden (used in the opening).** Alzheimer's Association, *2026 Alzheimer's
-  Disease Facts and Figures*, Alzheimer's & Dementia (2026), doi:10.1002/alz.71345.
-  "More than 12 million family members and other unpaid caregivers provided an estimated
-  19.6 billion hours of care" in 2025.
-  <https://www.alz.org/alzheimers-dementia/facts-figures>. Don't mix in numbers from the
-  2025 edition (it says "nearly 13 million" / "more than 19 billion hours").
-- **How common sundowning is (if asked).** Estimates vary widely: 2.5% to 66% depending on
-  setting and definition. Canevelli M. et al., "Sundowning in Dementia: Clinical Relevance,
-  Pathophysiological Determinants, and Therapeutic Approaches," *Frontiers in Medicine*,
-  2016. <https://www.frontiersin.org/journals/medicine/articles/10.3389/fmed.2016.00073/full>.
-  The same review links sundowning with greater caregiver burden and institutionalisation.
-  Say "up to two in three" only with the "up to".
-- **Community vs care homes (UK charity estimate).** About 20% of people with dementia
-  living at home, up to about 80% in residential care. Alzheimer's Society, "Sundowning and
-  dementia." <https://www.alzheimers.org.uk/about-dementia/stages-and-symptoms/dementia-symptoms/sundowning>
+The opening numbers were verified directly on September 25, 2026 in the Alzheimer's
+Association's [2026 Facts and Figures report](https://www.alz.org/getmedia/ef8f48f9-ad36-48ea-87f9-b74034635c1e/alzheimers-facts-and-figures.pdf),
+printed page 52 (PDF page 54), "Hours of Unpaid Care and Economic Value of Caregiving".
+They describe 2025, not a forecast. DOI: 10.1002/alz.71345. Avoid adding a sundowning
+prevalence percentage to the stage pitch: estimates depend heavily on definitions and setting.
