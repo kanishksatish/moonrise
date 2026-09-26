@@ -152,3 +152,6 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - loadState now cleans stored data instead of passing it through: logs without a valid 'YYYY-MM-DD' date or known outcome are dropped; optional fields are repaired (bad episodeStart/effectiveDusk -> null, non-numeric cloudCover -> null, songIds filtered to strings, episodeStart cleared on non-episode evenings); one log per date (later wins), sorted; extra fields (demo) kept.
 - A profile without an integer birthYear and finite lat/lon loads as null (back to Setup) instead of producing NaN times. Non-object JSON loads as empty state.
 - Same signature. 143 tests pass (UI tests included).
+
+## 2026-09-26 03:20 UTC — Claude — loadState follow-up (Codex review)
+- Dates must be real calendar dates (logs and tonight). Profile needs a non-blank text name or it loads as null (Setup); city/anchors always strings (valid values kept, missing ones become ''). tonight kept only with a real date, songIds always string[]. Demo flags and valid values untouched. 149 tests; 150 when test-merged with claude-ui d3d1845.
