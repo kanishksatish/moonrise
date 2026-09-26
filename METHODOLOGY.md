@@ -9,9 +9,9 @@ It is caregiver support, not a medical tool.
 
 ## Evidence boundary
 
-- **No model is used in the app, and nothing has been clinically validated.** No patient
+- **No TIHM-trained predictive model is used in the app, and nothing has been clinically validated.** No patient
   testing, no clinician involvement, no clinical data in this repository.
-- **Why no training.** A family produces roughly 7 to 30 logged evenings, far too little to
+- **Why the app uses transparent timing rules.** A family produces roughly 7 to 30 logged evenings, far too little to
   train a model, and claiming one would be misleading. The team also looked for public data
   to learn onset times from. Codex audited the public TIHM dataset's `Labels.csv` locally:
   608 records from 49 participants, 135 agitation labels from 27 participants. Those labels
@@ -25,9 +25,12 @@ It is caregiver support, not a medical tool.
   reached an average precision of 0.047 (descriptive 95% participant-bootstrap interval
   0.019–0.094; ROC-AUC 0.80), against 0.027 for a clock-only baseline; the interval for the
   difference includes zero. At the prespecified threshold, 3.7% of flagged windows matched a
-  recorded label. A prespecified follow-up searching for a high-precision setting (at least
-  50% precision) found none. That precision is far too low to support predictive care alerts,
-  so no model is connected to Moonrise. These are proxy metrics against recorded labels, not
+  recorded label. An exploratory follow-up selected model and threshold using only inner
+  participant-separated validation: at least50% precision, at least10 flags, and matched
+  labels from at least3 participants. Neither candidate met all requirements in any of
+  the five outer training partitions. The policy abstained throughout: precision was
+  undefined and recall was zero. No TIHM predictor is connected to Moonrise. Optional
+  caregiver-reviewed conversation prompts use a separate pretrained language model. These are proxy metrics against recorded labels, not
   clinical performance.
 - **What the simulations do and don't show.** They check that the rules behave sensibly on
   synthetic data built from our stated assumptions. They say nothing about real people.
@@ -43,9 +46,12 @@ episodes, one night can still move it a lot.
 
 **Song ranking** (from AGENTS.md). Score = +1 for each calm evening a song was recorded as
 played, −1 for each episode evening, 0 for restless. A catalog song is recorded only when the
-in-app player reports it actually playing; the included piano and caregiver-chosen local files
-are never recorded as catalog songs. The playlist is sorted by score, with ties in
-random order.
+in-app player reports it actually playing. The legacy era catalog retains its score-based
+ordering, but no unverified YouTube title is offered as a playable source. The included
+listening library has separate immutable bundled IDs: actual playback is logged and its
+metadata is available to the weekly report. The included picker is not personalized or
+ranked by the era-song engine. Personal files are not assigned a catalog ID; historical
+piano or file playback is never inferred.
 
 **Song evidence, as plain counts** (engine support). For example: "Played in the app on 5
 logged evenings: 3 calm, 1 restless, 1 episode." This is not a probability, a rating or a
