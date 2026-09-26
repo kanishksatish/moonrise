@@ -207,3 +207,8 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Supersedes the previous entry. Public contract is now narrow and descriptive: `songEvidence(logs)` -> { [id]: { plays, calm, restless, episode, score } }; `evidenceText(e)` -> "Opened on 5 logged evenings: 3 calm, 1 restless, 1 episode."; `weeklyReport().topSongs` items gain calm/restless/episode/evidenceText; `progress(logs)` = 4 process-only milestones (first-evening, first-song, start-from-logs, week) with usesDemo.
 - Removed: songStats/calmRate/status labels, moonriseStart range/confidence, outcome milestones. playlist() and moonriseStart() are exactly the AGENTS.md contract again.
 - METHODOLOGY.md rewritten: evidence boundary (no trained model, no clinical validation; Codex's TIHM audit: 6-hour labels, license restrictions), rules, and the simulation of what was tried and rejected. 184 tests.
+
+## 2026-09-26 04:15 UTC — Claude — engine fixes from Codex review
+- Report per-song plays count distinct evenings (Set per evening), matching songEvidence; regression added.
+- schedule.js is byte-identical to the original AGENTS.md version again (stale shrinkage/range header removed).
+- METHODOLOGY: median robustness claim now qualified by sample size. 187 tests.

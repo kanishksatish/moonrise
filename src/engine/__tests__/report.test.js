@@ -104,3 +104,12 @@ describe('weeklyReport default window', () => {
     expect(r.evenings).toBe(7)
   })
 })
+
+describe('per-song counts refer to distinct evenings', () => {
+  it('counts a repeated song id once per evening, matching songEvidence', () => {
+    const damaged = [log(24, 'calm', { songIds: ['s1', 's1'] }), log(25, 'restless', { songIds: ['s1'] })]
+    const [top] = weeklyReport(damaged, { endDate, songs }).topSongs
+    expect(top).toMatchObject({ id: 's1', plays: 2, calm: 1, restless: 1 })
+    expect(top.evidenceText).toBe('Opened on 2 logged evenings: 1 calm, 1 restless.')
+  })
+})

@@ -25,8 +25,9 @@ It is caregiver support, not a medical tool.
 **Suggested start time** (from AGENTS.md). Onset = when an episode began, minus that
 evening's estimated dusk. After 3+ logged evenings with at least one timed episode:
 `start = estimated dusk + median(onsets) − 20 minutes`, kept between 90 and 15 minutes before
-dusk. Before that it is 45 minutes before dusk. The median means one unusual night can't pull
-the time far.
+dusk. Before that it is 45 minutes before dusk. Once several episodes are logged, the
+median keeps a single unusual night from pulling the time far; with only one or two timed
+episodes, one night can still move it a lot.
 
 **Song ranking** (from AGENTS.md). Score = +1 for each calm evening a song's link was opened,
 −1 for each episode evening, 0 for restless. The playlist is sorted by score, with ties in

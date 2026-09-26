@@ -61,7 +61,8 @@ export function weeklyReport(logs = [], { endDate = latestLogDate(logs), songs =
   const clear = withCloud.filter((l) => l.cloudCover < CLOUDY_THRESHOLD)
 
   const plays = new Map()
-  for (const l of week) for (const id of l.songIds ?? []) plays.set(id, (plays.get(id) ?? 0) + 1)
+  // Each song counts once per evening, like songEvidence, even if stored data repeats an id.
+  for (const l of week) for (const id of new Set(l.songIds ?? [])) plays.set(id, (plays.get(id) ?? 0) + 1)
   const weekEvidence = songEvidence(week)
   const topSongs = [...plays.keys()]
     .map((id) => {
