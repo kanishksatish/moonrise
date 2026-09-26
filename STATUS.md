@@ -255,3 +255,7 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Live Pages serves the bundled piano as `audio/mp3`; the prior `audio/mpeg`-only check rejected the complete shell and prevented worker activation. Worker v4 accepts those two exact MIME types (including existing case/parameter handling), while retaining the exact asset allowlist, status 200, no Content-Range and nonempty-body requirements.
 - Added a regression that first reproduced `shell incomplete after download`, then passed installation, activation, offline navigation and byte-range delivery under `/moonrise/` with the production MIME alias. Both MP3 types retain partial/HTML/empty-response rollback coverage; malformed MIME lookalikes and unrelated binary MIME are rejected.
 - All 53 worker tests and 256 tests across 20 files pass with one worker at a time; root and `/moonrise/` production builds pass. These are VM delivery tests, not a new browser decoding check. Local commit only: live redeployment and browser offline verification remain with Claude/root.
+
+## 2026-09-26 06:22 UTC — Claude — live offline fix integrated + redeploy
+- Codex's hosted smoke test found the live offline blocker (GitHub Pages serves the MP3 as audio/mp3; worker only accepted audio/mpeg, so install failed). Integrated Codex's fix 9cfc60f (worker v4 accepts audio/mpeg or audio/mp3).
+- scripts/verify-offline.cjs now serves MP3 as audio/mp3 like GitHub Pages (and serves by path so redeploys work). Old worker: fails at the first check; fixed worker: 26/26. 256 tests.
