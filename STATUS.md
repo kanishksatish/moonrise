@@ -270,3 +270,12 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Service worker v5 commits the full explicitly declared library atomically and handles native byte-range seeks from full cached MP3s. Failed downloads, HTML fallbacks, partial responses, or quota failures retain the previous complete shell. The new ten MP3s are about19.26MiB; the full11-track library is23,692,563bytes. Keep the app online until the first download finishes; browser storage eviction can remove offline data.
 - Validation:280 tests pass using maxWorkers1, including all11 selections, actual-play logging/deduplication, mixed old/new stored history/report, every bundled track's offline range seeking, multiple-file update rollback, and catalog integrity. Root and /moonrise/ builds pass. Every built audio path/hash matches its UI import, inert HTML declaration, and SW allowlist in both builds. git diff --check passes.
 - Next/root: inspect320px layout and native controls/credits, verify real playback and offline seeking in the browser, then review/push. Claude should update submission/demo copy to describe the included library; no era-matching claim for these recordings. Experimental research remains separate from app reminders.
+
+## 2026-09-26 06:22 UTC — Claude — live offline fix integrated + redeploy
+- Codex's hosted smoke test found the live offline blocker (GitHub Pages serves the MP3 as audio/mp3; worker only accepted audio/mpeg, so install failed). Integrated Codex's fix 9cfc60f (worker v4 accepts audio/mpeg or audio/mp3).
+- scripts/verify-offline.cjs now serves MP3 as audio/mp3 like GitHub Pages (and serves by path so redeploys work). Old worker: fails at the first check; fixed worker: 26/26. 256 tests.
+## 2026-09-26 06:40 UTC — Claude — flaky playback test fixed + deployed
+- The c7eb364 Pages build failed once at flows.test.jsx:112; one re-run deployed c7eb364 (worker v4) to GitHub Pages.
+- Integrated Codex's c89f944 root-cause fix (fixture already listed the randomly chosen song as played). Test-only; next deploy should not need a re-run.
+## 2026-09-26 07:10 UTC — Claude — docs: TIHM research benchmark results
+- METHODOLOGY.md, SUBMISSION.md, README.md now state Codex's separate TIHM benchmark factually (participant-separated folds, AP 0.047 vs clock-only 0.027, interval of difference includes zero, 3.7% precision at threshold, no high-precision setting found). No model connected to the app; no clinical claims. SUBMISSION links no longer say "make public first".

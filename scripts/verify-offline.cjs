@@ -46,7 +46,18 @@ const check = (name, ok, detail = '') => {
   results.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`)
 }
 const deploy = (build, dir) => execSync(`rm -rf ${dir} && mkdir -p ${dir} && cp -r ${P}/${build}/. ${dir}/`)
-const serve = (root, port) => spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], { cwd: root, stdio: 'ignore' })
+// Static server that labels MP3s the way GitHub Pages does (audio/mp3, not audio/mpeg), so a
+// content-type assumption in the service worker fails here instead of only on the live site.
+const PAGES_LIKE_SERVER = [
+  'import functools, http.server, sys',
+  'class H(http.server.SimpleHTTPRequestHandler):',
+  '    extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map, ".mp3": "audio/mp3", ".webmanifest": "application/manifest+json"}',
+  '    def log_message(self, *a): pass',
+  // Serve by path, not the process cwd: deploy() deletes and recreates the folder.
+  'handler = functools.partial(H, directory=sys.argv[2])',
+  'http.server.ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), handler).serve_forever()',
+].join('\n')
+const serve = (root, port) => spawn('python3', ['-c', PAGES_LIKE_SERVER, String(port), root], { stdio: 'ignore' })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 async function shellCaches(page) {
