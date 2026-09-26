@@ -36,13 +36,31 @@ describe('darknessFromAltitude', () => {
 
 describe('skyGradient', () => {
   it('hits the day, dusk and night stops', () => {
-    expect(skyGradient(0)).toEqual({ top: '#4a90d9', bottom: '#bcdcf5' })
-    expect(skyGradient(0.5)).toEqual({ top: '#3b3a78', bottom: '#f28c50' })
+    expect(skyGradient(0)).toEqual({ top: '#2b64a8', bottom: '#3f78b8' })
+    expect(skyGradient(0.5)).toEqual({ top: '#3b3a78', bottom: '#a4522a' })
     expect(skyGradient(1)).toEqual({ top: '#0b1030', bottom: '#26204a' })
   })
   it('blends between stops and clamps', () => {
     expect(skyGradient(0.25).top).toMatch(/^#[0-9a-f]{6}$/)
     expect(skyGradient(2)).toEqual(skyGradient(1))
+  })
+})
+
+describe('sky contrast', () => {
+  const luminance = (hex) => {
+    const c = [1, 3, 5]
+      .map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+  }
+  const whiteContrast = (hex) => 1.05 / (luminance(hex) + 0.05)
+
+  it('keeps white text at 4.5:1 or better on every color of the gradient', () => {
+    for (let i = 0; i <= 100; i++) {
+      const { top, bottom } = skyGradient(i / 100)
+      expect(whiteContrast(top)).toBeGreaterThanOrEqual(4.5)
+      expect(whiteContrast(bottom)).toBeGreaterThanOrEqual(4.5)
+    }
   })
 })
 
