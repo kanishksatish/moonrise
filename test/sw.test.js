@@ -20,7 +20,8 @@ class FakeCache {
   async put(req, res) {
     const url = typeof req === 'string' ? req : req.url
     this.storage.faults.beforePut?.(this.name, url)
-    const body = await res.clone().text()
+    if (res.status === 206) throw new TypeError('Cache.put cannot store a partial response')
+    const body = new Uint8Array(await res.clone().arrayBuffer())
     this.entries.set(url, { body, status: res.status, headers: [...res.headers] })
   }
   async match(req) {
@@ -32,7 +33,7 @@ class FakeCache {
     const fetched = []
     for (const url of urls) {
       const res = await this.storage.fetch(url)
-      if (!res.ok) throw new TypeError(`addAll: ${res.status} ${url}`)
+      if (!res.ok || res.status === 206) throw new TypeError(`addAll: ${res.status} ${url}`)
       fetched.push([url, res])
     }
     for (const [url, res] of fetched) await this.put(url, res)
@@ -77,11 +78,13 @@ function makeServer() {
     server.files = new Map(Object.entries(build).map(([p, body]) => [ORIGIN + p, body]))
   }
   server.fetch = async (input) => {
+    server.lastInput = input
     const url = typeof input === 'string' ? input : input.url
     server.requests.push(url)
     if (server.down) throw new TypeError('Failed to fetch')
+    const stored = server.files.get(url)
     const res = server.files.has(url)
-      ? new Response(server.files.get(url), { status: 200 })
+      ? stored instanceof Response ? stored.clone() : new Response(stored, { status: 200, headers: url.endsWith('.mp3') ? { 'Content-Type': 'audio/mpeg' } : {} })
       : new Response('not found', { status: 404 })
     // Same-origin responses in a browser have type "basic"; Node's Response says "default".
     Object.defineProperty(res, 'type', { value: 'basic' })
@@ -105,10 +108,10 @@ function build(tag) {
 }
 
 // Load a fresh copy of the worker (a new worker version or a restarted worker) over shared caches.
-function loadWorker(caches, server) {
+function loadWorker(caches, server, scope = SCOPE) {
   const handlers = {}
   const self = {
-    registration: { scope: SCOPE },
+    registration: { scope },
     location: { origin: ORIGIN },
     addEventListener: (type, fn) => (handlers[type] = fn),
     skipWaiting: async () => {},
@@ -120,6 +123,7 @@ function loadWorker(caches, server) {
     fetch: server.fetch,
     Response,
     Request,
+    Headers,
     URL,
     TextEncoder,
     crypto: globalThis.crypto,
@@ -150,15 +154,15 @@ function loadWorker(caches, server) {
       return p
     },
     // Returns { intercepted, response, background } for a request.
-    async request(path, { mode = 'no-cors', destination = '', method = 'GET', url } = {}) {
-      const request = { url: url ?? ORIGIN + path, mode, destination, method }
+    async request(path, { mode = 'no-cors', destination = '', method = 'GET', url, headers = {} } = {}) {
+      const request = { url: url ?? ORIGIN + path, mode, destination, method, headers: new Headers(headers) }
       let responded
       const background = []
       handlers.fetch({ request, respondWith: (p) => (responded = p), waitUntil: (p) => background.push(p) })
       if (!responded) return { intercepted: false }
       const response = await responded
       await Promise.all(background)
-      return { intercepted: true, response, text: await response.text(), status: response.status }
+      return { intercepted: true, response, text: await response.clone().text(), bytes: new Uint8Array(await response.clone().arrayBuffer()), status: response.status }
     },
     navigate(path = '/') {
       return this.request(path, { mode: 'navigate', destination: 'document' })
@@ -403,7 +407,7 @@ describe('base path', () => {
       skipWaiting: async () => {},
       clients: { claim: async () => {} },
     }
-    const ctx = vm.createContext({ self, caches: subCaches, fetch: sub.fetch, Response, URL, TextEncoder, crypto: globalThis.crypto, setTimeout, clearTimeout })
+    const ctx = vm.createContext({ self, caches: subCaches, fetch: sub.fetch, Response, Headers, URL, TextEncoder, crypto: globalThis.crypto, setTimeout, clearTimeout })
     vm.runInContext(SW_SOURCE, ctx)
     let p
     handlers.install({ waitUntil: (x) => (p = x) })
@@ -412,4 +416,147 @@ describe('base path', () => {
     expect(pointer.urls).toContain(`${ORIGIN}/moonrise/assets/index-S.js`)
     expect(pointer.urls).toContain(`${ORIGIN}/moonrise/`)
   })
+})
+
+// Includes bytes that are not valid UTF-8, so a text-based cache fake would fail.
+const AUDIO_BYTES = new Uint8Array([73, 68, 51, 0, 255, 128, 1, 254, 7, 0, 192, 175, 250, 21, 22, 23])
+const audioPath = tag => `/assets/fur-elise-v-gao-${tag}.mp3`
+function audioBuild(tag) {
+  const files = build(tag)
+  files['/'] = files['/'].replace('</head>', `<link rel="prefetch" as="audio" crossorigin="anonymous" href="${audioPath(tag)}"></head>`)
+  files[audioPath(tag)] = new Response(AUDIO_BYTES, {
+    headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(AUDIO_BYTES.length), ETag: '"piano-v1"' },
+  })
+  return files
+}
+
+describe('bundled piano offline playback', () => {
+  let sw
+  beforeEach(async () => {
+    server.deploy(audioBuild('A'))
+    sw = loadWorker(caches, server)
+    await sw.install()
+    server.down = true
+  })
+
+  it('precaches the entire binary recording during install, before anyone plays it', async () => {
+    const pointer = await committed(caches)
+    expect(pointer.urls).toContain(ORIGIN + audioPath('A'))
+    const reply = await sw.request(audioPath('A'), { destination: 'audio' })
+    expect(reply.status).toBe(200)
+    expect(reply.bytes).toEqual(AUDIO_BYTES)
+    expect(reply.response.headers.get('Accept-Ranges')).toBe('bytes')
+    expect(reply.response.headers.get('Content-Type')).toBe('audio/mpeg')
+    expect(reply.response.headers.get('Content-Length')).toBe(String(AUDIO_BYTES.length))
+  })
+
+  it.each([
+    ['bytes=0-1', 0, 1], // Safari commonly checks the first two bytes.
+    ['bytes=4-7', 4, 7],
+    ['bytes=12-', 12, 15],
+    ['bytes=-4', 12, 15],
+    ['bytes=12-999999999999999999999999', 12, 15],
+    ['bytes=-999999999999999999999999', 0, 15],
+  ])('serves exact offline bytes for %s', async (range, first, last) => {
+    const reply = await sw.request(audioPath('A'), { destination: 'audio', headers: { Range: range } })
+    expect(reply.status).toBe(206)
+    expect(reply.bytes).toEqual(AUDIO_BYTES.slice(first, last + 1))
+    expect(reply.response.headers.get('Content-Range')).toBe(`bytes ${first}-${last}/16`)
+    expect(reply.response.headers.get('Content-Length')).toBe(String(last - first + 1))
+    expect(reply.response.headers.get('Accept-Ranges')).toBe('bytes')
+    // The range reply must not replace the full cached recording.
+    expect((await sw.request(audioPath('A'), { destination: 'audio' })).bytes).toEqual(AUDIO_BYTES)
+  })
+
+  it.each(['bytes=16-', 'bytes=999999999999999999999999-', 'bytes=-0'])('returns 416 for unsatisfiable %s', async range => {
+    const reply = await sw.request(audioPath('A'), { destination: 'audio', headers: { Range: range } })
+    expect(reply.status).toBe(416)
+    expect(reply.bytes).toHaveLength(0)
+    expect(reply.response.headers.get('Content-Range')).toBe('bytes */16')
+  })
+
+  it.each(['bytes=0-1,4-5', 'bytes=nope', 'bytes=8-3', 'bytes=-', 'items=0-1'])('ignores unsupported or malformed %s', async range => {
+    const reply = await sw.request(audioPath('A'), { destination: 'audio', headers: { Range: range } })
+    expect(reply.status).toBe(200)
+    expect(reply.bytes).toEqual(AUDIO_BYTES)
+  })
+
+  it('honors a matching strong If-Range and serves full bytes for other validators', async () => {
+    for (const validator of ['W/"piano-v1"', '"other"', 'Sat, 26 Sep 2026 05:00:00 GMT']) {
+      const reply = await sw.request(audioPath('A'), { destination: 'audio', headers: { Range: 'bytes=0-1', 'If-Range': validator } })
+      expect(reply.status).toBe(200)
+      expect(reply.bytes).toEqual(AUDIO_BYTES)
+    }
+    const reply = await sw.request(audioPath('A'), { destination: 'audio', headers: { Range: 'bytes=0-1', 'If-Range': '"piano-v1"' } })
+    expect(reply.status).toBe(206)
+    expect(reply.bytes).toEqual(AUDIO_BYTES.slice(0, 2))
+  })
+
+  it('removes stale encoding when constructing a partial response from decoded bytes', async () => {
+    const pointer = await committed(caches)
+    const cache = await caches.open(pointer.name)
+    await cache.put(ORIGIN + audioPath('A'), new Response(AUDIO_BYTES, { headers: { 'Content-Type': 'audio/mpeg', 'Content-Encoding': 'gzip' } }))
+    const reply = await sw.request(audioPath('A'), { destination: 'audio', headers: { Range: 'bytes=0-1' } })
+    expect(reply.response.headers.has('Content-Encoding')).toBe(false)
+    expect(reply.bytes).toEqual(AUDIO_BYTES.slice(0, 2))
+  })
+
+  it('never intercepts remote music, other audio, fetch/XHR, or asset URL queries', async () => {
+    for (const request of [
+      { url: 'https://youtube.com/audio.mp3', destination: 'audio' },
+      { url: 'https://other.test' + audioPath('A'), destination: 'audio' },
+      { url: ORIGIN + '/assets/some-other-audio.mp3', destination: 'audio' },
+      { url: ORIGIN + audioPath('A') + '?private=1', destination: 'audio' },
+      { url: ORIGIN + audioPath('A'), destination: '' },
+    ]) expect((await sw.request('', request)).intercepted).toBe(false)
+  })
+
+  it('passes a network miss through unchanged without trying to cache partial audio', async () => {
+    server.down = false
+    const path = audioPath('notCommitted')
+    server.files.set(ORIGIN + path, new Response(AUDIO_BYTES.slice(0, 2), { status: 206, headers: { 'Content-Type': 'audio/mpeg', 'Content-Range': 'bytes 0-1/16' } }))
+    const reply = await sw.request(path, { destination: 'audio', headers: { Range: 'bytes=0-1' } })
+    expect(reply.status).toBe(206)
+    expect(server.lastInput.headers.get('Range')).toBe('bytes=0-1')
+    expect(await caches.match(ORIGIN + path)).toBeUndefined()
+  })
+})
+
+describe('bundled piano update failures', () => {
+  it.each(['missing', 'partial', 'html', 'empty', 'content-range', 'quota'])('keeps the old complete shell after %s audio failure', async failure => {
+    server.deploy(audioBuild('A'))
+    const sw = loadWorker(caches, server)
+    await sw.install()
+    const previous = await committed(caches)
+    const next = audioBuild('B')
+    if (failure === 'missing') delete next[audioPath('B')]
+    if (failure === 'partial') next[audioPath('B')] = new Response(AUDIO_BYTES.slice(0, 2), { status: 206, headers: { 'Content-Type': 'audio/mpeg' } })
+    if (failure === 'html') next[audioPath('B')] = new Response('<html>Fallback</html>', { headers: { 'Content-Type': 'text/html' } })
+    if (failure === 'empty') next[audioPath('B')] = new Response(null, { headers: { 'Content-Type': 'audio/mpeg' } })
+    if (failure === 'content-range') next[audioPath('B')] = new Response(AUDIO_BYTES.slice(0, 2), { headers: { 'Content-Type': 'audio/mpeg', 'Content-Range': 'bytes 0-1/16' } })
+    if (failure === 'quota') caches.faults.beforePut = (_name, url) => { if (url.endsWith(audioPath('B'))) throw new Error('Audio quota exceeded') }
+    server.deploy(next)
+    await expect(sw.install()).rejects.toThrow()
+    expect(await committed(caches)).toEqual(previous)
+    expect(await shellNames(caches)).toEqual([previous.name])
+    server.down = true
+    expect((await sw.request(audioPath('A'), { destination: 'audio', headers: { Range: 'bytes=0-1' } })).bytes).toEqual(AUDIO_BYTES.slice(0, 2))
+  })
+})
+
+it('serves the committed piano range offline under a subpath', async () => {
+  const sub = makeServer()
+  const buildFiles = audioBuild('sub')
+  sub.files = new Map(Object.entries(buildFiles).map(([path, value]) => [
+    `${ORIGIN}/moonrise${path}`,
+    path === '/' ? value.replaceAll('"/', '"/moonrise/') : value,
+  ]))
+  const subCaches = new FakeCacheStorage(sub.fetch)
+  const sw = loadWorker(subCaches, sub, `${ORIGIN}/moonrise/`)
+  await sw.install()
+  sub.down = true
+  const reply = await sw.request(`/moonrise${audioPath('sub')}`, { destination: 'audio', headers: { Range: 'bytes=2-6' } })
+  expect(reply.status).toBe(206)
+  expect(reply.bytes).toEqual(AUDIO_BYTES.slice(2, 7))
+  expect((await sw.request(audioPath('sub'), { destination: 'audio' })).intercepted).toBe(false)
 })

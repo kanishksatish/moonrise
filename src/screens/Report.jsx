@@ -123,9 +123,9 @@ export default function Report({ state }) {
           <section className="report-section report-songs">
             <p className="report-section-index no-print">03 / Familiar sounds</p>
             <h2>Songs from your evenings</h2>
-            <p className="small">Based on your logs and opened song links; this does not show that a song caused a change.</p>
+            <p className="small">Based on recorded song activity and your evening notes; this does not show that a song caused a change.</p>
             {r.topSongs.length === 0 ? (
-              <p>No song links recorded this week.</p>
+              <p>No song activity recorded this week.</p>
             ) : (
               <ol className="top-songs">
                 {r.topSongs.map((s) => (

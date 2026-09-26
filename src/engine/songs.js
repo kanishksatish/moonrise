@@ -58,7 +58,8 @@ export function findSong(songId, songs = seedSongs) {
   return songs.find((s) => s.id === songId) ?? null
 }
 
-// We do not host audio. Songs open as search links.
+// Legacy search helpers remain available. The UI now uses songVideo for embeds
+// and includes a separately licensed piano recording, outside this era catalog.
 export function spotifySearchUrl(song) {
   return `https://open.spotify.com/search/${encodeURIComponent(`${song.title} ${song.artist}`)}`
 }

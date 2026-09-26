@@ -6,7 +6,7 @@
 // ONLY once `verified: true`, which is set by hand after real playback in the app.
 // Unverified or missing songs return null, so the player shows its "unavailable" state.
 // Even verified videos can fail later; the UI keeps its unavailable/next-song states.
-// We never download or rehost recordings, and availability (region, ads, removal) is up to
+// We never download or rehost YouTube recordings; availability (region, ads, removal) is up to
 // YouTube; a verified video can still fail to play later.
 
 import videos from '../data/videos.json'

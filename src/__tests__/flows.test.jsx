@@ -5,28 +5,41 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App.jsx'
 import Setup from '../screens/Setup.jsx'
 import Moonrise from '../screens/Moonrise.jsx'
-import { effectiveDusk, findCity } from '../engine/index.js'
+import { effectiveDusk, findCity, songVideo } from '../engine/index.js'
 
 vi.mock('../engine/index.js', async (original) => ({
-  ...await original(), effectiveDusk: vi.fn(), findCity: vi.fn(),
+  ...await original(), effectiveDusk: vi.fn(), findCity: vi.fn(), songVideo: vi.fn(),
 }))
 
 const profile = { name: 'Test', birthYear: 1942, city: 'Dallas', lat: 32.78, lon: -96.8, anchors: {} }
 const initial = { profile, logs: [], tonight: { date: '2026-09-26', songIds: ['earth-angel-1954'] } }
 const saved = () => JSON.parse(localStorage.getItem('moonrise:v1'))
 const click = (name) => fireEvent.click(screen.getByRole('button', { name, exact: true }))
+let players
 
 beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(2026, 8, 27, 0, 30))
   localStorage.clear()
   vi.clearAllMocks()
+  songVideo.mockReturnValue(null)
+  players = []
+  vi.stubGlobal('YT', { Player: class {
+    constructor(frame, options) {
+      this.events = options.events
+      this.pauseVideo = vi.fn()
+      this.destroy = vi.fn()
+      players.push(this)
+    }
+  } })
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
   effectiveDusk.mockImplementation(async (date) => {
     const sunset = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 19, 15)
     return { sunset, effectiveDusk: sunset, cloudCover: null, shiftMinutes: 0, source: 'offline' }
   })
 })
-afterEach(() => { cleanup(); vi.useRealTimers() })
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
 describe('App midnight integration', () => {
   it('saves a 23:30 episode after midnight with the previous evening’s sky and songs', async () => {
@@ -86,17 +99,35 @@ describe('Setup city lookup', () => {
   })
 })
 
-it('records songs only when a play link is opened, not when a suggestion is displayed', () => {
+it('records a song only after the integrated player observes playback', async () => {
+  songVideo.mockReturnValue({ youtubeId: 'TJx9E-rUqhg' })
   const onPlayed = vi.fn()
   render(<Moonrise state={initial} onPlayed={onPlayed} onExit={() => {}} />)
   expect(onPlayed).not.toHaveBeenCalled()
   click('Next song')
   expect(onPlayed).not.toHaveBeenCalled()
-  const link = screen.getByRole('link', { name: /Spotify/ })
-  link.addEventListener('click', event => event.preventDefault())
-  fireEvent.click(link)
+  await act(async () => click('Load YouTube player'))
+  expect(onPlayed).not.toHaveBeenCalled()
+  act(() => players[0].events.onStateChange({ data: 1 }))
   expect(onPlayed).toHaveBeenCalledOnce()
   expect(typeof onPlayed.mock.calls[0][0]).toBe('string')
+  click('Quiet view')
+  expect(players[0].destroy).toHaveBeenCalledOnce()
+  expect(document.querySelector('iframe')).toBeNull()
+})
+
+it('keeps unverified candidates unavailable and offers in-app piano without logging an era song', () => {
+  const onPlayed = vi.fn()
+  render(<Moonrise state={initial} onPlayed={onPlayed} onExit={() => {}} />)
+  expect(screen.queryByRole('link', { name: /Spotify|YouTube/ })).toBeNull()
+  expect(screen.queryByRole('button', { name: /Load YouTube/ })).toBeNull()
+  click('Choose piano instead')
+  const audio = screen.getByLabelText('Für Elise, piano performed by V Gao')
+  fireEvent.playing(audio)
+  expect(onPlayed).not.toHaveBeenCalled()
+  click('Quiet view')
+  expect(document.querySelector('audio')).toBeNull()
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
 })
 
 it('counts all logged outcomes equally in the constellation and labels demo stars', async () => {
@@ -116,16 +147,17 @@ it('counts all logged outcomes equally in the constellation and labels demo star
 })
 
 it('recovers a damaged stored session through a complete song-and-log flow', async () => {
+  songVideo.mockReturnValue({ youtubeId: 'TJx9E-rUqhg' })
   localStorage.setItem('moonrise:v1', JSON.stringify({
     ...initial, logs: [{ date: '2026-99-99', outcome: 'calm' }],
     tonight: { date: '2026-09-26', songIds: null },
   }))
   await act(async () => render(<App />))
   click('Start Moonrise now'); click('Skip launch')
-  const link = screen.getByRole('link', { name: /Spotify/ })
-  link.addEventListener('click', event => event.preventDefault())
-  fireEvent.click(link)
+  await act(async () => click('Load YouTube player'))
+  act(() => players[0].events.onStateChange({ data: 1 }))
   click('Finish'); click('Calm')
+  expect(players[0].destroy).toHaveBeenCalledOnce()
   expect(saved().logs).toHaveLength(1)
   expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', outcome: 'calm' })
   expect(saved().logs[0].songIds).toHaveLength(1)
@@ -153,14 +185,14 @@ it('lets the caregiver change the prompt and hide conversation without losing th
   render(<Moonrise state={{ ...initial, approvedPrompts: ['An approved memory question.'] }} onPlayed={() => {}} onExit={onExit} />)
   click('Next prompt')
   expect(screen.getByText('An approved memory question.')).toBeTruthy()
-  const song = document.querySelector('.song-title').textContent
+  const song = document.querySelector('.music-player-title').textContent
   click('Quiet view')
   expect(screen.queryByText('An approved memory question.')).toBeNull()
-  expect(screen.queryByRole('link', { name: /Spotify/ })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Choose piano instead' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Show conversation' }).getAttribute('aria-pressed')).toBe('true')
   click('Show conversation')
   expect(screen.getByText('An approved memory question.')).toBeTruthy()
-  expect(document.querySelector('.song-title').textContent).toBe(song)
+  expect(document.querySelector('.music-player-title').textContent).toBe(song)
   click('Finish')
   expect(onExit).toHaveBeenCalledOnce()
 })

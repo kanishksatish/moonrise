@@ -34,9 +34,9 @@ Tap **Make it personal** to open Settings. With the prepared fictional profile a
 
 Return to Today and tap **Start Moonrise now**. The silent rocket flight lasts 2.4 seconds and can be bypassed with **Skip launch**, Escape, or reduced-motion settings. It occurs only after an explicit start.
 
-In the routine, show the music title and **Next prompt**. A newly approved AI prompt follows the initial song prompt, so one tap can reveal it when a song is present. Only approved AI text enters this view; its label identifies it. Open **Spotify** or **YouTube** if demonstrating music: the app opens a search and records the link opening, not confirmed listening. **Next song** alone does not log a play.
+In the routine, show the song suggestion and **Next prompt**. A newly approved AI prompt follows the initial song prompt; only approved AI text enters this view. Choose **piano instead** and use its native Play control, or select a prepared familiar recording through **Play a music file**. It plays here without uploading. Neither option is counted as the suggested era song. All current YouTube candidates remain unverified; do not promise they play. **Next song** alone does not log a play.
 
-Tap **Quiet view**, then **Show conversation**. Say, “The caregiver can put the controls aside for a moment.” Quiet view hides the cards; it does not pause audio in another app. **Full screen** is optional on supported desktop layouts. Tap **Finish** to reach Log.
+Tap **Quiet view**, then **Show conversation**. Say, “The caregiver can put the controls aside for a moment.” Quiet view stops this app’s audio and hides the cards. A local recording must be selected again afterward. **Full screen** is optional on supported desktop layouts. Tap **Finish** to reach Log.
 
 **2:15–2:45 · Every evening counts**
 
@@ -50,11 +50,11 @@ Open Report: **A week of evenings.** Show the daily marks, timing and weather co
 
 ## Honest fallback and wording
 
-If live weather, AI or external music is unavailable, explain the visible limitation and continue with the supported offline or built-in flow. After an online visit, the app is designed to retain its shell, artwork, saved profile, logs and approved prompts. Fresh AI generation and external music still require connectivity. Alerts require the app to remain open; do not promise background notifications.
+If live weather, AI or YouTube is unavailable, continue with the included piano or a local recording. After a successful online production install, the app caches its shell, artwork and complete piano file; saved profile, logs and approved prompts remain in local storage. Confirm offline playback on the presentation device before the demo. Fresh AI and YouTube require connectivity. Alerts require the app to remain open; do not promise background notifications.
 
 Use “caregiver support,” “suggested routine,” “prototype rule,” and “recorded evenings.” Avoid “treats,” “prevents,” “reduces agitation,” “predicts sundowning,” “learned the best treatment,” “clinically proven,” or “hospice-ready.” A good-looking demo and public-data evaluation do not establish clinical effectiveness.
 
-Profiles and logs are stored in this browser. Weather requests use location; chosen music links open their providers. Optional AI sends birth year and hometown/spouse/job answers to Anthropic after Generate; those free-text answers can identify a person. A future hospice partner must review clinical oversight, ethics, consent, privacy, security and usability before a patient-facing pilot.
+Profiles and logs are stored in this browser. Weather requests use location. Loading an available YouTube player sends playback/device information to that provider; the included piano and local-file choice do not. Selected local audio is not uploaded or retained after the routine. Optional AI sends birth year and hometown/spouse/job answers to Anthropic after Generate; those answers can identify a person. A future hospice partner must review clinical oversight, ethics, consent, privacy, security and usability before a patient-facing pilot.
 
 ## Public-data evidence, accurately stated
 
