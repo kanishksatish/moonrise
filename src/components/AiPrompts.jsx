@@ -3,7 +3,7 @@ import { AiPromptError, clearAiKey, generateMemoryPrompts, loadAiKey, saveAiKey 
 import { generateLocalPrompts, localAiStatus } from './localAi.js'
 
 // Drafts stay in this screen's memory. Only an explicit approval enters app state.
-export default function AiPrompts({ state, update, generatePrompts = generateMemoryPrompts }) {
+export default function AiPrompts({ state, update, saveError = false, generatePrompts = generateMemoryPrompts }) {
   const [savedKey, setSavedKey] = useState(loadAiKey)
   const [local, setLocal] = useState(null)
   const [connectionChecked, setConnectionChecked] = useState(false)
@@ -11,6 +11,7 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
   const [drafts, setDrafts] = useState([])
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const [promptChange, setPromptChange] = useState(null)
   const [error, setError] = useState('')
   const request = useRef(0)
   const inFlight = useRef(false)
@@ -19,6 +20,11 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
   const approvedList = useRef(null)
   const pendingFocus = useRef(null)
   const approved = state.approvedPrompts ?? []
+  const statusMessage = promptChange === 'approved'
+    ? (saveError ? 'Prompt approved for this open session. Changes still need to be saved.' : 'Prompt approved and saved for your next routine.')
+    : promptChange === 'removed'
+      ? (saveError ? 'Prompt removed from this open session. Changes still need to be saved.' : 'Approved prompt removed and saved.')
+      : message
   const approvedOccurrences = new Map()
   const approvedRows = approved.map(text => {
     // Legacy data can contain duplicates. Other removals must not remount a row.
@@ -65,6 +71,7 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     setSavedKey(key)
     setKeyDraft('')
     setError('')
+    setPromptChange(null)
     setMessage('Key saved. Nothing is sent until you tap Generate prompts.')
   }
 
@@ -76,6 +83,7 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     setSavedKey('')
     setKeyDraft('')
     setError('')
+    setPromptChange(null)
     setMessage('Key removed. Your approved prompts are still available.')
   }
 
@@ -85,6 +93,7 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     const id = ++request.current
     setBusy(true)
     setError('')
+    setPromptChange(null)
     setMessage('Writing a few prompts for you to review…')
     try {
       const prompts = local
@@ -111,7 +120,8 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
     pendingFocus.current = { list: 'draft', action: keep ? 'approve' : 'skip', index }
     if (keep) update({ ...state, approvedPrompts: [...new Set([...approved, text])] })
     setDrafts(current => current.filter(draft => draft !== text))
-    setMessage(keep ? 'Prompt approved for your next routine.' : 'Prompt skipped.')
+    setPromptChange(keep ? 'approved' : null)
+    setMessage(keep ? '' : 'Prompt skipped.')
   }
 
   return (
@@ -146,8 +156,12 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
       <button className="btn primary" onClick={generate} disabled={!canGenerate || busy || drafts.length > 0}
         aria-describedby="ai-privacy">{busy ? 'Writing prompts…' : 'Generate prompts'}</button>
       {!canGenerate && <p className="muted">{!connectionChecked ? 'Checking the optional connection…' : local ? 'Connect a key above to generate prompts.' : 'Add a key above to generate prompts.'}</p>}
-      {message && <p className="status" role="status">{message}</p>}
+      {statusMessage && <p className="status" role="status">{statusMessage}</p>}
       {error && <p className="status" role="alert">{error}</p>}
+      {saveError && <div className="status">
+        <p>Selected starters are available in this open session. Keep this page open until your changes are saved; reloading may bring back earlier selections.</p>
+        <button className="btn" onClick={() => update(state)}>Retry saving selections</button>
+      </div>}
 
       {drafts.length > 0 && <div className="ai-review">
         <h3>Review before sharing</h3>
@@ -165,7 +179,7 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
 
       {approved.length > 0 && <div className="ai-approved">
         <h3>Your selected starters ({approved.length})</h3>
-        <p className="muted">Reviewed by you, saved on this device and available offline.</p>
+        <p className="muted">{saveError ? 'Reviewed by you. Device save is pending.' : 'Reviewed by you, saved on this device and available offline.'}</p>
         <ul className="ai-prompt-list" ref={approvedList}>
           {approvedRows.map(({ text, key }, index) => <li key={key}>
             <p>{text}</p>
@@ -173,7 +187,8 @@ export default function AiPrompts({ state, update, generatePrompts = generateMem
               onClick={() => {
                 pendingFocus.current = { list: 'approved', action: 'remove', index }
                 update({ ...state, approvedPrompts: approved.filter((_, i) => i !== index) })
-                setMessage('Approved prompt removed.')
+                setPromptChange('removed')
+                setMessage('')
               }}>Remove</button>
           </li>)}
         </ul>

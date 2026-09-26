@@ -17,6 +17,13 @@ const profile = { name: 'Test', birthYear: 1942, city: 'Dallas', lat: 32.78, lon
 const initial = { profile, logs: [], tonight: { date: '2026-09-26', songIds: ['earth-angel-1954'] } }
 const saved = () => JSON.parse(localStorage.getItem('moonrise:v1'))
 const click = (name) => fireEvent.click(screen.getByRole('button', { name, exact: true }))
+const failStateWrites = () => {
+  const originalSetItem = Storage.prototype.setItem
+  return vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+    if (key === 'moonrise:v1') throw new DOMException('Storage full', 'QuotaExceededError')
+    return originalSetItem.call(this, key, value)
+  })
+}
 const chooseYouTube = () => {
   screen.getByText('Optional YouTube song').closest('details').open = true
   fireEvent.click(screen.getByRole('button', { name: /Load YouTube player/ }))
@@ -76,6 +83,90 @@ it('focuses Today when first setup completes even though the initial screen was 
   await act(async () => click('Find'))
   await act(async () => click('Start'))
   expect(document.activeElement).toBe(screen.getByRole('main', { name: 'Today' }))
+})
+
+it('retains first-setup details and the form after a failed write, then completes an explicit retry', async () => {
+  findCity.mockResolvedValue({ city: 'Dallas', lat: 32.78, lon: -96.8 })
+  await act(async () => render(<App />))
+  fireEvent.change(screen.getByLabelText('Their first name'), { target: { value: 'Fictional Avery' } })
+  fireEvent.change(screen.getByLabelText('Year they were born'), { target: { value: '1942' } })
+  fireEvent.change(screen.getByLabelText('City'), { target: { value: 'Dallas' } })
+  await act(async () => click('Find'))
+  const hometown = screen.getByLabelText('Hometown')
+  hometown.closest('details').open = true
+  fireEvent.change(hometown, { target: { value: 'Dayton' } })
+  const storageWrite = failStateWrites()
+  await act(async () => click('Start'))
+
+  expect(saved()).toBeNull()
+  expect(screen.getByRole('form', { name: 'Caregiver setup' })).toBeTruthy()
+  expect(screen.queryByRole('main', { name: 'Today' })).toBeNull()
+  expect(screen.getByLabelText('Their first name').value).toBe('Fictional Avery')
+  expect(screen.getByLabelText('Year they were born').value).toBe('1942')
+  expect(screen.getByLabelText('Hometown').value).toBe('Dayton')
+  expect(screen.getByText('Dallas')).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('not saved to this device')
+  expect(screen.getByRole('alert').closest('.onboarding-actions')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Save', exact: true }).disabled).toBe(false)
+  expect(screen.getByRole('button', { name: 'Leave for now (not saved)' })).toBeTruthy()
+
+  storageWrite.mockRestore()
+  await act(async () => click('Save'))
+  expect(screen.queryByRole('form', { name: 'Caregiver setup' })).toBeNull()
+  expect(screen.getByRole('main', { name: 'Today' })).toBeTruthy()
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(saved().profile).toMatchObject({ name: 'Fictional Avery', birthYear: 1942, city: 'Dallas', lat: 32.78, lon: -96.8, anchors: { hometown: 'Dayton' } })
+})
+
+it('keeps an edited profile retryable without changing the stored profile or losing other records', async () => {
+  const original = { ...initial, logs: [{ date: '2026-09-25', outcome: 'calm' }], approvedPrompts: ['Tell me about a favorite garden.'] }
+  localStorage.setItem('moonrise:v1', JSON.stringify(original))
+  await act(async () => render(<App />))
+  click('Settings'); click('Edit details')
+  fireEvent.change(screen.getByLabelText('Their first name'), { target: { value: 'Fictional Rowan' } })
+  const storageWrite = failStateWrites()
+  await act(async () => click('Save'))
+  expect(saved()).toEqual(original)
+  expect(screen.getByRole('form', { name: 'Caregiver setup' })).toBeTruthy()
+  expect(screen.getByLabelText('Their first name').value).toBe('Fictional Rowan')
+  expect(screen.getByRole('alert').textContent).toContain('not saved to this device')
+  expect(screen.getByRole('button', { name: 'Save', exact: true }).disabled).toBe(false)
+  expect(screen.queryByRole('button', { name: 'Cancel', exact: true })).toBeNull()
+
+  storageWrite.mockRestore()
+  await act(async () => click('Save'))
+  expect(screen.getByRole('main', { name: 'Today' })).toBeTruthy()
+  expect(saved().profile.name).toBe('Fictional Rowan')
+  expect(saved().logs).toMatchObject(original.logs)
+  expect(saved().approvedPrompts).toEqual(original.approvedPrompts)
+  expect(screen.queryByRole('alert')).toBeNull()
+})
+
+it('keeps an earlier outstanding save visible in profile editing and preserves it when leaving for now', async () => {
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  const storageWrite = failStateWrites()
+  click('Log'); click('Calm')
+  click('Settings'); click('Edit details')
+  expect(screen.getByRole('form', { name: 'Caregiver setup' })).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain('not saved to this device')
+  expect(saved().logs).toEqual([])
+  click('Leave for now (not saved)')
+  expect(screen.getByRole('main', { name: 'Caregiver settings' })).toBeTruthy()
+  storageWrite.mockRestore()
+  click('Retry saving changes')
+  expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', outcome: 'calm' })
+  expect(saved().profile.name).toBe(profile.name)
+})
+
+it('accepts a legacy standalone Setup completion callback that returns undefined', () => {
+  const completeProfile = { ...profile, anchors: { hometown: '', spouse: '', job: '' } }
+  const onDone = vi.fn()
+  render(<Setup profile={completeProfile} onDone={onDone} onCancel={vi.fn()} />)
+  click('Save')
+  expect(onDone).toHaveBeenCalledExactlyOnceWith(completeProfile)
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(screen.getByRole('button', { name: 'Cancel', exact: true })).toBeTruthy()
 })
 
 it('delivers routine reminders from Settings without repeating them when screens change', async () => {

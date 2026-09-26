@@ -7,7 +7,7 @@ import '../styles/onboarding.css'
 
 const THIS_YEAR = new Date().getFullYear()
 
-export default function Setup({ profile, onDone, onCancel, focusRef }) {
+export default function Setup({ profile, onDone, onCancel, focusRef, saveError = false }) {
   const [name, setName] = useState(profile?.name ?? '')
   const [birthYear, setBirthYear] = useState(profile?.birthYear ? String(profile.birthYear) : '')
   const [place, setPlace] = useState(
@@ -18,6 +18,8 @@ export default function Setup({ profile, onDone, onCancel, focusRef }) {
   const [locating, setLocating] = useState(false)
   const lookupId = useRef(0)
   const [anchors, setAnchors] = useState(profile?.anchors ?? { hometown: '', spouse: '', job: '' })
+  const [localSaveFailed, setLocalSaveFailed] = useState(false)
+  const unsaved = saveError || localSaveFailed
 
   const year = Number(birthYear)
   const yearValid = Number.isInteger(year) && year >= 1900 && year <= THIS_YEAR - 30
@@ -63,7 +65,7 @@ export default function Setup({ profile, onDone, onCancel, focusRef }) {
   function save(e) {
     e.preventDefault()
     if (!canSave) return
-    onDone({
+    const saved = onDone({
       name: name.trim(),
       birthYear: year,
       lat: place.lat,
@@ -75,6 +77,9 @@ export default function Setup({ profile, onDone, onCancel, focusRef }) {
         job: anchors.job.trim(),
       },
     })
+    // Existing standalone callbacks may return undefined. Only an explicit
+    // persistence failure keeps the form in its local error/retry state.
+    setLocalSaveFailed(saved === false)
   }
 
   const setAnchor = (key) => (e) => setAnchors({ ...anchors, [key]: e.target.value })
@@ -174,8 +179,9 @@ export default function Setup({ profile, onDone, onCancel, focusRef }) {
           </details>
           <div className="onboarding-actions">
             {!canSave && <p className="onboarding-ready-note">Add their name, birth year, and location to begin.</p>}
+            {unsaved && <p className="status" role="alert">Changes are not saved to this device. Your details are still here. Keep this page open and try saving again.</p>}
             <button type="submit" className="btn primary big" disabled={!canSave}><span>{profile ? 'Save' : 'Start'}</span><span aria-hidden="true">↗</span></button>
-            {onCancel && <button type="button" className="btn" onClick={onCancel}>Cancel</button>}
+            {onCancel && <button type="button" className="btn" onClick={onCancel}>{unsaved ? 'Leave for now (not saved)' : 'Cancel'}</button>}
             <p className="onboarding-support-note">Caregiver support, not a medical treatment.</p>
           </div>
         </div>

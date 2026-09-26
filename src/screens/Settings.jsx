@@ -5,7 +5,7 @@ import AiPrompts from '../components/AiPrompts.jsx'
 import DeviceReadiness from '../components/DeviceReadiness.jsx'
 import '../styles/settings-experience.css'
 
-export default function Settings({ state, update, onEditProfile }) {
+export default function Settings({ state, update, saveError = false, onEditProfile }) {
   const { profile, logs } = state
   const [message, setMessage] = useState('')
   const [confirmReset, setConfirmReset] = useState(false)
@@ -56,7 +56,7 @@ export default function Settings({ state, update, onEditProfile }) {
       </section>
 
       <div className="settings-columns">
-        <div className="settings-main"><AiPrompts state={state} update={update} /></div>
+        <div className="settings-main"><AiPrompts state={state} update={update} saveError={saveError} /></div>
         <aside className="settings-side" aria-label="Device and caregiver guidance">
           <DeviceReadiness />
           <section className="settings-care-note">
@@ -69,7 +69,7 @@ export default function Settings({ state, update, onEditProfile }) {
       </div>
 
       <section className="settings-data-section" aria-labelledby="device-data-heading">
-        <div><p className="eyebrow">Your information</p><h2 id="device-data-heading">Saved in this browser.</h2></div>
+        <div><p className="eyebrow">Your information</p><h2 id="device-data-heading">{saveError ? 'Changes need saving.' : 'Saved in this browser.'}</h2></div>
         <div><p>Your profile, evening logs and selected starters stay in this browser. Anyone with access to this browser profile can view them. Moonrise has no account lock or automatic care-team sharing.</p>
           <p className="muted">Optional generated suggestions send the details listed above to the connected provider. A hospice pilot needs the organization’s approval of its devices, data handling and clinical workflow.</p>
         </div>
@@ -91,7 +91,7 @@ export default function Settings({ state, update, onEditProfile }) {
         )}
         {message && (
           <p className="status" role="status">
-            {message}
+            {message}{saveError && ' This change is only in this open session until saving succeeds.'}
           </p>
         )}
       </section>

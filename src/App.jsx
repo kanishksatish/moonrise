@@ -83,10 +83,14 @@ function App() {
     return (
       <Setup
         profile={profile}
+        saveError={storageError}
         focusRef={screenContent}
         onDone={(p) => {
-          update({ ...state, profile: p })
-          setScreen('today')
+          const saved = update({ ...state, profile: p })
+          // A first profile is retained in memory even if the write fails.
+          // Explicitly keep Setup mounted until it has actually been saved.
+          setScreen(saved ? 'today' : 'setup')
+          return saved
         }}
         onCancel={profile ? () => setScreen('settings') : null}
       />
@@ -134,7 +138,7 @@ function App() {
         {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
         {screen === 'report' && <Report state={state} />}
         {screen === 'settings' && (
-          <Settings state={state} update={update} onEditProfile={() => setScreen('setup')} />
+          <Settings state={state} update={update} saveError={storageRetryAvailable} onEditProfile={() => setScreen('setup')} />
         )}
         </main>
       </div>
