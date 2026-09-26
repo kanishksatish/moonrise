@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { moonPhase, moonriseStart, skyGradient, skyState } from '../engine/index.js'
-import { formatDuration, formatTime, todayString } from '../components/format.js'
+import { formatDuration, formatTime } from '../components/format.js'
+import { eveningKey } from '../components/eveningLog.js'
 import useNow from '../components/useNow.js'
 import MoonIcon from '../components/MoonIcon.jsx'
 
@@ -37,7 +38,7 @@ export default function Today({ state, sky, onStart }) {
   const schedule = sky ? moonriseStart(sky.effectiveDusk, logs) : null
   const stage = schedule ? alertStage(now, schedule.start) : null
   const duskPassed = sky && now > sky.effectiveDusk
-  const tonightLog = logs.find((l) => l.date === todayString(now))
+  const tonightLog = logs.find((l) => l.date === eveningKey(now))
   const moon = moonPhase(now)
   const gradient = skyGradient(skyState(now, profile.lat, profile.lon).darkness)
 
@@ -51,7 +52,7 @@ export default function Today({ state, sky, onStart }) {
   // Fire each alert once per evening.
   useEffect(() => {
     if (!alertText || tonightLog) return
-    const key = `${todayString(now)}:${stage}`
+    const key = `${eveningKey(now)}:${stage}`
     if (firedRef.current.has(key)) return
     firedRef.current.add(key)
     notify(alertText)
@@ -105,6 +106,7 @@ export default function Today({ state, sky, onStart }) {
                 Dusk tonight <strong>{formatTime(sky.effectiveDusk)}</strong>
               </p>
               <p className="small">
+                {sky.cached && 'Using the last available weather. '}
                 {sky.source === 'offline'
                   ? `Sunset ${formatTime(sky.sunset)}. No weather data right now, so no cloud adjustment.`
                   : sky.shiftMinutes > 0
@@ -114,7 +116,7 @@ export default function Today({ state, sky, onStart }) {
               <p className="small">
                 {schedule.basis === 'learned'
                   ? `Starting ${schedule.minutesBeforeDusk} min before dusk, learned from ${schedule.episodesUsed} logged episode${schedule.episodesUsed === 1 ? '' : 's'}.`
-                  : `Starting ${schedule.minutesBeforeDusk} min before dusk. After 3 logged evenings, Moonrise learns the best time.`}
+                  : `Starting ${schedule.minutesBeforeDusk} min before dusk. After 3 logged evenings with a timed episode, Moonrise can adjust this suggestion.`}
               </p>
             </div>
           </>

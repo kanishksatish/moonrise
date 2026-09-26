@@ -115,3 +115,8 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Internal: new `net.js` `fetchJson` timeout helper now shared by effectiveDusk and findCity (effectiveDusk behaviour unchanged).
 - Deferred per Codex: duskForecast (not built into the engine).
 - 106 tests pass.
+
+## 2026-09-26 02:42 UTC — Codex — midnight and Setup integration
+- Integrated main into the UI review branch. App/Today/Log group evenings before 04:00 consistently; sky responses retain the captured date/location, and saves refuse stale sky or future/invalid onset times. Same-evening song IDs survive late logs. Demo weeks end before the current evening.
+- Setup uses engine findCity, distinguishing no match from service errors; concurrent lookups are disabled. Added an accessible city label and explicit outcome button names. Storage failures are surfaced to the caregiver.
+- Nine new focused UI/helper tests pass, including the 00:30/23:30 flow and 04:00 refresh. Full suite/build and browser/demo pass follow PWA integration.
