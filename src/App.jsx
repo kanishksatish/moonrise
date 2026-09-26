@@ -3,6 +3,7 @@ import { effectiveDusk, eveningDate, loadState, saveState } from './engine/index
 import { currentSky, eveningKey } from './components/eveningLog.js'
 import useNow from './components/useNow.js'
 import NavBar from './components/NavBar.jsx'
+import Brand from './components/Brand.jsx'
 import Setup from './screens/Setup.jsx'
 import Today from './screens/Today.jsx'
 import Moonrise from './screens/Moonrise.jsx'
@@ -86,6 +87,7 @@ function App() {
   return (
     <div className="app">
       <div className="screen">
+        <Brand />
         {storageError && <p className="status" role="alert">This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>}
         {screen === 'today' && <Today state={state} sky={visibleSky} onStart={() => setScreen('moonrise')} />}
         {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}

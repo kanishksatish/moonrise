@@ -73,6 +73,7 @@ export default function Log({ state, sky, update, onDone }) {
   return (
     <div className="log">
       <h1>How was tonight?</h1>
+      <p className="lead">Every evening is worth remembering.</p>
       <p className="muted">Evening of {prettyDate(today)}</p>
       {error && <p className="status" role="alert">{error}</p>}
       {existing && (

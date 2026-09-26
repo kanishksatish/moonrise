@@ -25,7 +25,7 @@ No hardware, no account, no backend. It is a web app (PWA) that runs on any tabl
 | Today | The suggested **start time** with a countdown, the moon phase, and an **estimated dusk** (tap to see sunset and cloud details). A heads-up appears 10 minutes before the start while the app is open. A small "constellation" shows one star per logged evening in the last week. Every outcome counts the same, and there are no streaks or scores. |
 | Moonrise mode | A full-screen sky that follows the real sky (blue → dusk → night), a slowly rising moon, warm light that increases as it gets dark, a song from the person's era with a play link, and one memory prompt at a time for the caregiver to read aloud. |
 | Log | Three big buttons: **Calm**, **Restless**, **Episode**, plus an optional "episode started at" time. |
-| Report | A one-page printable weekly summary to share with family or a doctor, including "songs linked with calmer evenings" (logged associations, not proven benefit). |
+| Report | A one-page printable weekly summary to share with family or a doctor, including "songs from your evenings" (logged associations, not proven benefit). |
 
 ### The formulas
 
