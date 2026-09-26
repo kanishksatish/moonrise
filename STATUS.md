@@ -230,3 +230,6 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - `songVideo(songId)` -> { youtubeId, watchUrl, embedUrl (youtube-nocookie, no autoplay) } only when `verified: true` (set by hand after real in-app playback); else null. `playlist()` items gain `hasVideo`; ordering unchanged.
 - `scripts/verify-videos.mjs [--write]` records oembedStatus/oembedCheckedAt/oembedInfo only; never sets `verified`; non-200 kept as-is.
 - Ambient pad dropped per Codex (it's packaging a CC0 fallback). 193 tests.
+
+## 2026-09-26 05:16 UTC — Claude — wording matches final music behaviour
+- evidenceText now reads "Played in the app on N logged evenings: …" (songs are recorded only on an observed in-app PLAYING event; piano/local files never). Milestone 'first-song' titled "First song played in the app". METHODOLOGY/README updated. Not yet shown by any screen. 244 tests.

@@ -76,7 +76,7 @@ describe('weeklyReport', () => {
     expect(r.topSongs[0]).toMatchObject({ score: 2, plays: 3 })
     // s1: calm on 20th, restless on 22nd, calm on 24th
     expect(r.topSongs[0]).toMatchObject({ calm: 2, restless: 1, episode: 0 })
-    expect(r.topSongs[0].evidenceText).toBe('Opened on 3 logged evenings: 2 calm, 1 restless.')
+    expect(r.topSongs[0].evidenceText).toBe('Played in the app on 3 logged evenings: 2 calm, 1 restless.')
     for (const s of r.topSongs) {
       expect(s).not.toHaveProperty('calmRate')
       expect(s).not.toHaveProperty('status')
@@ -110,6 +110,6 @@ describe('per-song counts refer to distinct evenings', () => {
     const damaged = [log(24, 'calm', { songIds: ['s1', 's1'] }), log(25, 'restless', { songIds: ['s1'] })]
     const [top] = weeklyReport(damaged, { endDate, songs }).topSongs
     expect(top).toMatchObject({ id: 's1', plays: 2, calm: 1, restless: 1 })
-    expect(top.evidenceText).toBe('Opened on 2 logged evenings: 1 calm, 1 restless.')
+    expect(top.evidenceText).toBe('Played in the app on 2 logged evenings: 1 calm, 1 restless.')
   })
 })
