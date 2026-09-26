@@ -33,6 +33,9 @@ export default function Log({ state, sky, update, onDone }) {
   const savedContext = cleanCareContext(existing?.careContext)
   const [askTime, setAskTime] = useState(false)
   const [error, setError] = useState('')
+  const [errorLocation, setErrorLocation] = useState('outcome')
+  const [deviceSaveFailed, setDeviceSaveFailed] = useState(false)
+  const [savedEpisodeStart, setSavedEpisodeStart] = useState(existing?.episodeStart ?? null)
   const [steps, setSteps] = useState(() => savedContext?.comfortSteps ?? [])
   const [noneReported, setNoneReported] = useState(() => savedContext?.comfortSteps.length === 0)
   const [contextDirty, setContextDirty] = useState(false)
@@ -49,18 +52,30 @@ export default function Log({ state, sky, update, onDone }) {
     setContextDirty(false)
     setContextSaved(false)
     setAskTime(false)
+    setDeviceSaveFailed(false)
+    setSavedEpisodeStart(existing?.episodeStart ?? null)
     setTime(existing?.episodeStart ? timeValue(new Date(existing.episodeStart)) : timeValue(new Date()))
   }, [today])
 
-  function save(outcome, episodeTime) {
+  function save(outcome, episodeTime, location = 'outcome') {
+    setErrorLocation(location)
+    setContextSaved(false)
     try {
       if (contextDirty && !steps.length && !noneReported) {
         throw new Error('Choose a comfort step, choose “None of these,” or discard the optional changes.')
       }
       const context = contextDirty ? { source: 'caregiver', comfortSteps: steps } : undefined
       const log = makeEveningLog(state, sky, outcome, episodeTime, new Date(), context)
-      update(addLog(state, log))
+      if (update(addLog(state, log)) === false) {
+        // App keeps the edit in memory on failure. Keep this screen and its
+        // draft retryable; an in-memory edit is not a completed device save.
+        setDeviceSaveFailed(true)
+        setError('This note was not saved to this device. Your changes are still here. Keep this page open and try saving again.')
+        return false
+      }
       setError('')
+      setDeviceSaveFailed(false)
+      setSavedEpisodeStart(log.episodeStart)
       setContextDirty(false)
       return true
     } catch (err) {
@@ -76,7 +91,7 @@ export default function Log({ state, sky, update, onDone }) {
   }
 
   function saveTime() {
-    if (save('episode', time)) onDone()
+    if (save('episode', time, 'onset')) onDone()
   }
 
   function toggleStep(id) {
@@ -101,7 +116,7 @@ export default function Log({ state, sky, update, onDone }) {
     return (
       <div className="log evening-journal log-time">
         <header className="journal-heading">
-          <p className="eyebrow">Episode saved · optional detail</p>
+          <p className="eyebrow">{deviceSaveFailed ? 'Time change not saved to device' : 'Episode saved · optional detail'}</p>
           <h1>When did it start?</h1>
           <p className="lead">Evening of {prettyDate(today)}. After-midnight times count toward this evening.</p>
         </header>
@@ -118,8 +133,8 @@ export default function Log({ state, sky, update, onDone }) {
           />
           <div className="journal-time-actions">
             <button className="btn primary huge" onClick={saveTime}>Save time</button>
-            <button className="btn" onClick={onDone}>{existing?.episodeStart ? 'Keep saved time' : 'Skip'}</button>
-            {existing?.episodeStart && <button className="btn" onClick={() => { if (save('episode', null)) onDone() }}>Remove saved time</button>}
+            <button className="btn" onClick={onDone}>{deviceSaveFailed ? 'Leave for now (not saved)' : savedEpisodeStart ? 'Keep saved time' : 'Skip'}</button>
+            {savedEpisodeStart && <button className="btn" onClick={() => { if (save('episode', null, 'onset')) onDone() }}>Remove saved time</button>}
           </div>
         </div>
         <p className="care-plan-note">{CARE_PLAN_NOTE}</p>
@@ -135,8 +150,8 @@ export default function Log({ state, sky, update, onDone }) {
         <p className="lead">Your observation, in one tap.</p>
         <p className="journal-date"><span aria-hidden="true"/>Evening of {prettyDate(today)}</p>
       </header>
-      {error && <p className="status" role="alert">{error}</p>}
-      {existing && <p className="journal-recorded">Logged as <strong>{existing.outcome}</strong>. Tap to save a change.</p>}
+      {error && errorLocation !== 'comfort' && <p className="status" role="alert">{error}</p>}
+      {existing && <p className="journal-recorded">{deviceSaveFailed ? 'Current label (not saved to device):' : 'Recorded as'} <strong>{existing.outcome}</strong>. Tap to save a change.</p>}
       <p className="care-save-hint">Tap an evening below to save it. Optional comfort steps are included only if you add them.</p>
       <div className="journal-outcomes">
         {OUTCOMES.map((o) => (
@@ -160,7 +175,7 @@ export default function Log({ state, sky, update, onDone }) {
         <summary>Comfort steps used <span>Optional</span></summary>
         <div className="comfort-editor-content">
           <p id="comfort-help">What did you use this evening? These are your notes, not recommended actions or a measure of what worked.</p>
-          {savedContext && <p className="comfort-saved-summary">Saved: {comfortStepsText(savedContext)}</p>}
+          {savedContext && <p className="comfort-saved-summary">Current details{deviceSaveFailed ? ' (not saved to device)' : ''}: {comfortStepsText(savedContext)}</p>}
           <fieldset aria-describedby="comfort-help">
             <legend>Choose any that you used</legend>
             {COMFORT_STEPS.map(step => (
@@ -177,11 +192,12 @@ export default function Log({ state, sky, update, onDone }) {
             </label>
           </fieldset>
           <p className="comfort-save-note">{existing ? 'Save these details when ready, or tap an evening above to save both.' : 'Choose an evening above to save your observation and these details together.'} Leaving this blank means “not recorded.”</p>
+          {error && errorLocation === 'comfort' && <p className="status" role="alert">{error}</p>}
           <div className="comfort-actions">
             {existing && <button className="btn primary" disabled={!contextDirty || (!steps.length && !noneReported)} onClick={() => {
-              if (save(existing.outcome)) setContextSaved(true)
+              if (save(existing.outcome, undefined, 'comfort')) setContextSaved(true)
             }}>Save comfort steps</button>}
-            {contextDirty && <button className="btn" onClick={discardContext}>Discard optional changes</button>}
+            {contextDirty && !deviceSaveFailed && <button className="btn" onClick={discardContext}>Discard optional changes</button>}
           </div>
           {contextSaved && <p role="status">Comfort steps saved for this evening.</p>}
         </div>

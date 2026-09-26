@@ -20,7 +20,8 @@ afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 
 function LogHarness({ initial = base, onUpdate, onDone }) {
   const [state, setState] = useState(initial)
-  return <Log state={state} sky={sky} update={next => { setState(next); onUpdate(next) }} onDone={onDone} />
+  // Match App: retain edits in memory even when persistence returns false.
+  return <Log state={state} sky={sky} update={next => { setState(next); return onUpdate(next) }} onDone={onDone} />
 }
 
 describe('deliberate, optional caregiver context entry', () => {
@@ -71,6 +72,95 @@ describe('deliberate, optional caregiver context entry', () => {
     fireEvent.change(screen.getByLabelText('Episode started at'), { target: { value: '00:15' } })
     click('Save time')
     expect(onUpdate.mock.lastCall[0].logs[0]).toMatchObject({ episodeStart: '2026-09-27T05:15:00.000Z', careContext: { source: 'caregiver', comfortSteps: [] } })
+  })
+})
+
+describe('caregiver edits when device persistence fails', () => {
+  it.each(['Calm', 'Restless', 'Episode'])('keeps a failed %s observation on the editor until a successful retry', outcome => {
+    const onUpdate = vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true)
+    const onDone = vi.fn()
+    render(<LogHarness onUpdate={onUpdate} onDone={onDone} />)
+    openContext()
+    fireEvent.click(screen.getByLabelText('Quiet company'))
+    click(outcome)
+    expect(onDone).not.toHaveBeenCalled()
+    expect(screen.getByRole('heading', { name: 'How was tonight?' })).toBeTruthy()
+    expect(screen.queryByLabelText('Episode started at')).toBeNull()
+    expect(screen.getByRole('alert').textContent).toContain('not saved to this device')
+    expect(screen.getByLabelText('Quiet company').checked).toBe(true)
+    expect(screen.queryByText('Comfort steps saved for this evening.')).toBeNull()
+
+    click(outcome)
+    expect(onUpdate).toHaveBeenCalledTimes(2)
+    expect(onUpdate.mock.lastCall[0].logs[0].careContext).toEqual({ source: 'caregiver', comfortSteps: ['quiet-company'] })
+    expect(screen.queryByRole('alert')).toBeNull()
+    if (outcome === 'Episode') {
+      expect(screen.getByLabelText('Episode started at')).toBeTruthy()
+      expect(onDone).not.toHaveBeenCalled()
+    } else expect(onDone).toHaveBeenCalledOnce()
+  })
+
+  it('retains an unsaved onset and its context for an explicit retry without navigating', () => {
+    const careContext = { source: 'caregiver', comfortSteps: ['conversation'] }
+    const initial = { ...base, logs: [{ date: sky.date, outcome: 'episode', episodeStart: '2026-09-27T04:30:00.000Z', careContext }] }
+    const onUpdate = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false).mockReturnValueOnce(true)
+    const onDone = vi.fn()
+    render(<LogHarness initial={initial} onUpdate={onUpdate} onDone={onDone} />)
+    click('Episode')
+    fireEvent.change(screen.getByLabelText('Episode started at'), { target: { value: '00:15' } })
+    click('Save time')
+    expect(onDone).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Episode started at').value).toBe('00:15')
+    expect(screen.getByRole('alert').textContent).toContain('not saved to this device')
+    expect(screen.getByText('Time change not saved to device')).toBeTruthy()
+    expect(screen.queryByText('Episode saved · optional detail')).toBeNull()
+    click('Save time')
+    expect(onDone).toHaveBeenCalledOnce()
+    expect(onUpdate.mock.lastCall[0].logs[0]).toMatchObject({ episodeStart: '2026-09-27T05:15:00.000Z', careContext })
+  })
+
+  it('keeps a failed onset removal retryable despite the in-memory time already being cleared', () => {
+    const initial = { ...base, logs: [{ date: sky.date, outcome: 'episode', episodeStart: '2026-09-27T04:30:00.000Z' }] }
+    const onUpdate = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false).mockReturnValueOnce(true)
+    const onDone = vi.fn()
+    render(<LogHarness initial={initial} onUpdate={onUpdate} onDone={onDone} />)
+    click('Episode')
+    click('Remove saved time')
+    expect(onDone).not.toHaveBeenCalled()
+    expect(onUpdate.mock.lastCall[0].logs[0].episodeStart).toBeNull()
+    expect(screen.getByRole('button', { name: 'Remove saved time' })).toBeTruthy()
+    expect(screen.getByRole('alert').textContent).toContain('not saved to this device')
+    click('Remove saved time')
+    expect(onDone).toHaveBeenCalledOnce()
+    expect(onUpdate.mock.lastCall[0].logs[0].episodeStart).toBeNull()
+  })
+
+  it('keeps a failed comfort draft retryable, reports the error beside it, and confirms only success', () => {
+    const initial = { ...base, logs: [{ date: sky.date, outcome: 'episode', episodeStart: '2026-09-27T04:30:00.000Z', careContext: { source: 'caregiver', comfortSteps: ['conversation'] } }] }
+    const onUpdate = vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true).mockReturnValueOnce(false)
+    const onDone = vi.fn()
+    render(<LogHarness initial={initial} onUpdate={onUpdate} onDone={onDone} />)
+    openContext()
+    fireEvent.click(screen.getByLabelText('Quiet company'))
+    click('Save comfort steps')
+    expect(onDone).not.toHaveBeenCalled()
+    const editor = document.querySelector('.comfort-editor')
+    expect(within(editor).getByRole('alert').textContent).toContain('not saved to this device')
+    expect(within(editor).queryByRole('status')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Save comfort steps' }).disabled).toBe(false)
+    expect(screen.getByLabelText('Quiet company').checked).toBe(true)
+    expect(screen.getByText(/^Current details \(not saved to device\)/)).toBeTruthy()
+
+    click('Save comfort steps')
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(within(editor).getByRole('status').textContent).toBe('Comfort steps saved for this evening.')
+    expect(screen.getByRole('button', { name: 'Save comfort steps' }).disabled).toBe(true)
+    expect(onUpdate.mock.lastCall[0].logs[0]).toMatchObject({ episodeStart: '2026-09-27T04:30:00.000Z', careContext: { source: 'caregiver', comfortSteps: ['conversation', 'quiet-company'] } })
+
+    fireEvent.click(screen.getByLabelText('Stopped session'))
+    click('Save comfort steps')
+    expect(within(editor).queryByRole('status')).toBeNull()
+    expect(within(editor).getByRole('alert')).toBeTruthy()
   })
 })
 

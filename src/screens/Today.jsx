@@ -30,7 +30,7 @@ function notify(text) {
   }
 }
 
-export default function Today({ state, sky, onStart, onPersonalize }) {
+export default function Today({ state, sky, saveError = false, onStart, onPersonalize }) {
   const now = useNow()
   const firedRef = useRef(new Set())
   const [permission, setPermission] = useState(() =>
@@ -125,7 +125,7 @@ export default function Today({ state, sky, onStart, onPersonalize }) {
 
         <aside className="evening-journal" aria-label="Your evening journal">
           <Constellation logs={logs} now={now}/>
-          {tonightLog && <p className="logged"><span className="logged-star" aria-hidden="true">✧</span><span>Tonight’s note is saved.<br/>Recorded as <strong>{tonightLog.outcome}</strong>.</span></p>}
+          {tonightLog && <p className="logged"><span className="logged-star" aria-hidden="true">✧</span><span>{saveError ? 'Changes are waiting to be saved.' : 'Tonight’s note is saved.'}<br/>{saveError ? 'Current label: ' : 'Recorded as '}<strong>{tonightLog.outcome}</strong>.</span></p>}
           <section className="personal-note">
             <div className="record-art" aria-hidden="true"><span/></div>
             <p className="eyebrow">The listening library</p>

@@ -47,6 +47,28 @@ beforeEach(() => {
 })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
+it('keeps a failed note visibly unsaved after navigation and retries the complete state', async () => {
+  localStorage.setItem('moonrise:v1', JSON.stringify(initial))
+  await act(async () => render(<App />))
+  const originalSetItem = Storage.prototype.setItem
+  const storageWrite = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+    if (key === 'moonrise:v1') throw new DOMException('Storage full', 'QuotaExceededError')
+    return originalSetItem.call(this, key, value)
+  })
+  click('Log'); click('Calm')
+  expect(screen.getByRole('heading', { name: 'How was tonight?' })).toBeTruthy()
+  expect(saved().logs).toEqual([])
+  click('Today')
+  expect(screen.queryByText(/Tonight’s note is saved/)).toBeNull()
+  expect(screen.getByText(/Changes are waiting to be saved/)).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toMatch(/could not save/)
+  storageWrite.mockRestore()
+  click('Retry saving changes')
+  expect(saved().logs[0]).toMatchObject({ date: '2026-09-26', outcome: 'calm' })
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(screen.getByText(/Tonight’s note is saved/)).toBeTruthy()
+})
+
 describe('App midnight integration', () => {
   it('saves a 23:30 episode after midnight with the previous evening’s sky and songs', async () => {
     localStorage.setItem('moonrise:v1', JSON.stringify(initial))

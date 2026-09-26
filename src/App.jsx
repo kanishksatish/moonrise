@@ -19,6 +19,7 @@ function App() {
   const [screen, setScreen] = useState('today')
   const [sky, setSky] = useState(null)
   const [storageError, setStorageError] = useState(false)
+  const [storageRetryAvailable, setStorageRetryAvailable] = useState(false)
   const profile = state.profile
   const now = useNow()
   const evening = eveningKey(now)
@@ -33,6 +34,7 @@ function App() {
   function update(next) {
     const saved = saveState(next)
     setStorageError(!saved)
+    setStorageRetryAvailable(!saved && Boolean(next.profile))
     // Keep usable edits in memory if storage fails, but never show a completed
     // reset while the prior browser record is still present on disk.
     if (saved || next.profile) setState(next)
@@ -107,8 +109,8 @@ function App() {
           <div className="header-note"><span className="status-dot" aria-hidden="true"/>A little calm, every evening.</div>
           <button className="profile-chip" onClick={() => setScreen('settings')} aria-label={`Settings for ${profile.name}`}><span aria-hidden="true">{profile.name.trim().slice(0, 1).toUpperCase()}</span><span className="profile-name">{profile.name}</span></button>
         </header>
-        {storageError && <p className="status" role="alert">This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>}
-        {screen === 'today' && <Today state={state} sky={visibleSky} onStart={() => setScreen('launch')} onPersonalize={() => setScreen('settings')} />}
+        {storageError && <div className="status" role="alert"><p>This device could not save your changes. Keep this page open; changes may be lost when you close it.</p>{storageRetryAvailable && screen !== 'log' && <button className="btn" onClick={() => update(state)}>Retry saving changes</button>}</div>}
+        {screen === 'today' && <Today state={state} sky={visibleSky} saveError={storageError} onStart={() => setScreen('launch')} onPersonalize={() => setScreen('settings')} />}
         {screen === 'log' && <Log key={evening} state={state} sky={visibleSky} update={update} onDone={() => setScreen('today')} />}
         {screen === 'report' && <Report state={state} />}
         {screen === 'settings' && (

@@ -135,6 +135,7 @@ it('keeps Settings and existing records visible when deletion cannot be saved', 
   expect(saved()).toEqual(before)
   expect(screen.getByRole('heading', { name: 'Make it personal.' })).toBeTruthy()
   expect(screen.getByText(/profile and logs could not be deleted/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Retry saving changes', exact: true })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Start', exact: true })).toBeNull()
 })
 
