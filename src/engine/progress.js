@@ -4,7 +4,8 @@
 // becoming based on your own logs). They never reward a calm evening or a particular song,
 // there are no streaks to lose, nothing scores the person with dementia, and an episode
 // evening counts exactly like any other logged evening.
-// `usesDemo` is true when a milestone is only reached because of demo evenings.
+// `usesDemo` flags any milestone whose shown values depend on demo evenings; realProgress()
+// gives the same milestones from real evenings only.
 
 import { moonriseStart } from './schedule.js'
 
@@ -52,8 +53,17 @@ function evaluate(logs) {
 }
 
 // Returns milestones in a fixed order: [{ id, title, detail, done, current, target, usesDemo }].
+// usesDemo is true whenever demo evenings change anything shown for that milestone (its
+// progress count, its detail text or whether it's done), compared with real evenings alone.
 export function progress(logs = []) {
-  const all = evaluate(logs)
-  const realDone = new Map(evaluate(logs.filter((l) => !l.demo)).map((m) => [m.id, m.done]))
-  return all.map((m) => ({ ...m, usesDemo: m.done && !realDone.get(m.id) }))
+  const real = new Map(evaluate(logs.filter((l) => !l.demo)).map((m) => [m.id, m]))
+  return evaluate(logs).map((m) => {
+    const r = real.get(m.id)
+    return { ...m, usesDemo: m.current !== r.current || m.detail !== r.detail || m.done !== r.done }
+  })
+}
+
+// The same milestones from real evenings only (what to show if demo data should be ignored).
+export function realProgress(logs = []) {
+  return progress(logs.filter((l) => !l.demo))
 }

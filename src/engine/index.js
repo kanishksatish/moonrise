@@ -31,4 +31,4 @@ export {
 } from './storage.js'
 export { generateMemoryPrompts, AiPromptError, AI_MODEL } from './ai.js'
 export { songEvidence, evidenceText } from './learning.js'
-export { progress } from './progress.js'
+export { progress, realProgress } from './progress.js'

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { songEvidence, evidenceText } from '../learning.js'
-import { progress } from '../progress.js'
+import { progress, realProgress } from '../progress.js'
 import { generateDemoWeek } from '../demo.js'
 
 const ev = (outcome, songIds = [], extra = {}) => ({ date: extra.date ?? '2026-09-20', outcome, songIds, ...extra })
@@ -61,6 +61,26 @@ describe('progress milestones (process only)', () => {
     const m = progress(three).find((x) => x.id === 'start-from-logs')
     expect(m.done).toBe(true)
     expect(m.detail).toMatch(/1 timed episode /)
+  })
+
+  it('flags partial progress that includes demo evenings', () => {
+    const real = ev('calm', [], { date: '2026-09-26' })
+    const demo = ['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24'].map((date) => ev('calm', [], { date, demo: true }))
+    const week = progress([real, ...demo]).find((m) => m.id === 'week')
+    expect(week).toMatchObject({ current: 5, done: false, usesDemo: true })
+    expect(realProgress([real, ...demo]).find((m) => m.id === 'week')).toMatchObject({ current: 1, usesDemo: false })
+  })
+
+  it('flags a finished milestone whose detail text changed because of demo evenings', () => {
+    const t = (date, onsetIso, extra = {}) =>
+      ev('episode', [], { date, effectiveDusk: `${date}T18:00:00.000Z`, episodeStart: onsetIso ?? `${date}T17:30:00.000Z`, ...extra })
+    const realLogs = [t('2026-09-18'), t('2026-09-19'), t('2026-09-20')]
+    const withDemo = [...realLogs, t('2026-09-21', null, { demo: true })]
+    const m = progress(withDemo).find((x) => x.id === 'start-from-logs')
+    expect(m.done).toBe(true)
+    expect(m.detail).toMatch(/4 timed episodes/)
+    expect(m.usesDemo).toBe(true)
+    expect(progress(realLogs).find((x) => x.id === 'start-from-logs').usesDemo).toBe(false)
   })
 
   it('identifies milestones reached only through demo evenings', () => {
