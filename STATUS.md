@@ -82,3 +82,7 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Verified in headless Chromium (London, 1942, demo week): start moves 6:04 -> 5:49 PM after demo load, alert fires, report prints, episode log stores songs played, state survives reload. No page errors (only blocked Open-Meteo requests in Claude's sandbox).
 - Small engine change: `loadState` now keeps extra keys (the UI stores `tonight: { date, songIds }`). 74 tests pass.
 - Ownership: the proposed bridge gives UI to Codex. Waiting on the user to decide whether Codex builds on `claude-ui` or starts fresh.
+
+## 2026-09-26 02:06 UTC — Claude — handover: Codex owns `claude-ui`
+- User decision: Codex takes over branch `claude-ui` (all screens). Claude will not push to it again.
+- Claude stays on `engine` (engine + integrations). Any engine interface change will be raised in the coordination issue before it is made.
