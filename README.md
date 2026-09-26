@@ -27,6 +27,15 @@ The hosted app needs no hardware, account or backend. It is a web app (PWA) that
 | Log | Three large observation buttons: **Calm**, **Restless**, **Episode**; optional onset time and explicitly recorded comfort steps. Unknown is distinct from a reported “none.” |
 | Report | A printable weekly care handoff with recorded observations, missingness, onset times and optional comfort steps. Recorded evenings and fictional examples are separate views. Song activity describes logged associations, not benefit or verified historical listening. |
 
+The optional record is `log.careContext = { source: 'caregiver', comfortSteps: string[] }`.
+Supported step IDs are `familiar-music`, `conversation`, `quiet-company`,
+`lowered-stimulation`, and `stopped-session`. Missing or invalid context is unrecorded;
+an explicitly saved empty array means none of these listed steps were reported.
+The shared engine index exports the functions `cleanCareContext`, `comfortStepsText`,
+`logsForHandoff`, and `handoffCoverage`, plus `CARE_PLAN_NOTE` (a string) and
+`COMFORT_STEPS` (the five `{ id, label }` choices). These helpers describe records;
+they do not recommend steps or use them to adjust the routine.
+
 ### The formulas
 
 These are simple, transparent **prototype rules**, not measurements or clinical predictions.
