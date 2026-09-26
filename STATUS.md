@@ -230,3 +230,10 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - `songVideo(songId)` -> { youtubeId, watchUrl, embedUrl (youtube-nocookie, no autoplay) } only when `verified: true` (set by hand after real in-app playback); else null. `playlist()` items gain `hasVideo`; ordering unchanged.
 - `scripts/verify-videos.mjs [--write]` records oembedStatus/oembedCheckedAt/oembedInfo only; never sets `verified`; non-200 kept as-is.
 - Ambient pad dropped per Codex (it's packaging a CC0 fallback). 193 tests.
+## Codex — integrate reviewed main baseline, September 26
+- Merged origin/main5e0b1dc into claude-ui only, preserving the new direct/local/offline music player and generic recorded-song-activity labels. Main remains unchanged by Codex. Resolved status history, additive contract exports and a YouTube-specific source comment. Scheduling and song ranking are unchanged; descriptive engine helpers remain unused by UI.
+- Prior player headee73268 passed231tests, bothroot/basebuilds and GitHubCI. This integration is validated in GitHubCI to avoid restarting browsers/build servers on the host after Ketan reported computer crashes.
+
+## Codex — inert offline piano reference, September 26
+- Replaced the active audio prefetch hint with an inert HTML template. Vite still emits the exact hashed piano URL for service-worker shell discovery, while the browser has no active media element or prefetch to request before playback. Worker interception, audio allowlist and range handling are unchanged.
+- 245 tests pass across 20 files with one worker at a time; the 42 worker tests now exercise inert-template discovery plus the existing offline audio boundaries. Root and /moonrise/ builds pass, and DOM checks confirm the inert reference matches the player bundle and emitted 3,499,346-byte recording in both. Normal dist remains the root build. No browser, server or media-render process was started for this fix; a fresh browser offline-network audit remains for Claude.
