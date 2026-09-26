@@ -125,9 +125,12 @@ service-worker, pwa, github-actions
   is not included in the app or repository. Public soundtrack distribution rights have
   not been documented in this project.
 - **Public data.** A separate research benchmark on the public TIHM dataset was completed with
-  participant-separated testing. Its precision (about 4% of flagged six-hour windows matched a
-  recorded agitation label) was insufficient to support predictive care alerts, so no model
-  is connected to the app, and no data from it is in the app or repo (`METHODOLOGY.md`).
+  participant-separated testing. A later same-cohort experiment improved event-ranking average
+  precision from 0.0504 to 0.0640 by adding personal baselines; this is not alert accuracy.
+  No candidate met the fixed precision and support requirements. These exploratory results do
+  not support predictive care alerts, so no research model or participant data is connected to
+  the app or included in this repository (`RESEARCH_RESULTS.md`, `METHODOLOGY.md`). No patient
+  testing or hospice validation is established.
 - **Music.** The included piano is a CC0 recording (provenance in `src/assets/audio/`).
   Catalog songs are suggestions; no commercial recordings are distributed with the app.
 

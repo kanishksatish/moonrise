@@ -26,12 +26,29 @@ It is caregiver support, not a medical tool.
   0.019–0.094; ROC-AUC 0.80), against 0.027 for a clock-only baseline; the interval for the
   difference includes zero. At the prespecified threshold, 3.7% of flagged windows matched a
   recorded label. An exploratory follow-up selected model and threshold using only inner
-  participant-separated validation: at least50% precision, at least10 flags, and matched
-  labels from at least3 participants. Neither candidate met all requirements in any of
+  participant-separated validation: at least 50% precision, at least 10 flags, and matched
+  labels from at least 3 participants. Neither candidate met all requirements in any of
   the five outer training partitions. The policy abstained throughout: precision was
   undefined and recall was zero. No TIHM predictor is connected to Moonrise. Optional
   caregiver-reviewed conversation prompts use a separate pretrained language model. These are proxy metrics against recorded labels, not
   clinical performance.
+- **Personal-baseline follow-up, same-cohort comparison.** A further exploratory experiment
+  compared recent activity with each person's own earlier six days, retaining 50 participants
+  and 8,918 windows (128 recorded agitation-label windows). It used three fixed candidates,
+  five participant-separated outer folds and three inner folds, with 60 model fits. On that
+  identical reduced cohort, average precision was 0.0504 for recent-activity logistic regression,
+  0.0640 for personal-baseline logistic regression and 0.0668 for personal-baseline gradient
+  boosting. The prespecified paired logistic improvement was 0.0137 (descriptive 95%
+  participant-bootstrap interval 0.0025–0.0278). This is modest ranking improvement, not alert
+  accuracy; the interval uses fixed predictions and omits refitting and repeated-development
+  uncertainty. None of the three candidates met the same fixed precision/support requirements
+  in any outer fold. The selected policy still abstained, missing all 128 recorded labels.
+  A later diagnostic of six fixed, lower workload cutoffs did not retrain or tune on held-out
+  labels: personal-baseline nominal 5% inner workload transferred to 2.48% held-out workload,
+  with 20 of 221 flags matching labels (9.05% recorded-label precision, 15.62% recall). All settings
+  and limitations are in [RESEARCH_RESULTS.md](RESEARCH_RESULTS.md). Unlabelled windows are not
+  confirmed negatives. Household sensors and 174 hours of history are absent from Moonrise;
+  no predictor was integrated, and there is no independent patient or hospice validation.
 - **What the simulations do and don't show.** They check that the rules behave sensibly on
   synthetic data built from our stated assumptions. They say nothing about real people.
 

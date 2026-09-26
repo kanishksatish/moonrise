@@ -69,7 +69,10 @@ the optional demo week is explicitly labelled.
   rating or a claim that it helps. It also provides process-only milestones (first evening
   logged, first song played in the app, start time based on your logs, a week recorded) that never
   reward outcomes and flag any use of demo data. Whether and how the screens show these is
-  up to the UI. The app uses no TIHM-trained predictive model, and nothing is clinically validated (a separate TIHM research benchmark had too little precision to use). What we tried instead of
+  up to the UI. The app uses no TIHM-trained predictive model, and nothing is clinically validated.
+  A separate public-data experiment modestly improved event ranking using personal baselines,
+  but did not support dependable alerts; see [the complete research results](RESEARCH_RESULTS.md).
+  What we tried instead of
   the simple rules, and why they stayed, is in [METHODOLOGY.md](METHODOLOGY.md).
 - **Evenings after midnight.** Anything logged before 4 AM counts toward the previous
   evening, so late-night logs land on the right day.
