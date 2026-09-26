@@ -84,10 +84,24 @@ export function parseOpenMeteo(json) {
   }
 }
 
+// Last good weather result per day and place, kept for this page session. If a later
+// refresh fails (flaky wifi mid-evening), we keep the cloud-adjusted dusk instead of
+// jumping back to the plain sunset and moving the start time around.
+const lastGood = new Map()
+
+function cacheKey(date, lat, lon) {
+  return `${localDateString(date)}|${lat.toFixed(2)}|${lon.toFixed(2)}`
+}
+
+export function clearWeatherCache() {
+  lastGood.clear()
+}
+
 // Main entry point. Fetches today's sunset and cloud cover, then computes effective dusk.
 // If the network fails or takes longer than WEATHER_TIMEOUT_MS, falls back to SunCalc's
-// sunset with no cloud shift (source: 'offline').
-// Returns { sunset, cloudCover, shiftMinutes, effectiveDusk, source }.
+// sunset with no cloud shift (source: 'offline'), unless this session already has good
+// weather for the same day and place, which is reused (source: 'open-meteo', cached: true).
+// Returns { sunset, cloudCover, shiftMinutes, effectiveDusk, source, cached? }.
 export async function effectiveDusk(
   date,
   lat,
@@ -112,8 +126,12 @@ export async function effectiveDusk(
 
   try {
     const { sunset, hourly } = await Promise.race([fetchWeather(), timeout])
-    return { ...computeEffectiveDusk(sunset, hourly), source: 'open-meteo' }
+    const result = { ...computeEffectiveDusk(sunset, hourly), source: 'open-meteo' }
+    lastGood.set(cacheKey(date, lat, lon), result)
+    return result
   } catch {
+    const cached = lastGood.get(cacheKey(date, lat, lon))
+    if (cached) return { ...cached, cached: true }
     // Noon local time so SunCalc picks the right day's sunset.
     const noon = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12)
     const sunset = getTimes(noon, lat, lon).sunset

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { beforeEach } from 'vitest'
 import {
+  clearWeatherCache,
   cloudCoverBeforeSunset,
   cloudShiftMinutes,
   computeEffectiveDusk,
@@ -103,6 +105,7 @@ describe('Open-Meteo helpers', () => {
 })
 
 describe('effectiveDusk', () => {
+  beforeEach(() => clearWeatherCache())
   const json = {
     daily: { sunset: [sunset.getTime() / 1000] },
     hourly: {
@@ -158,5 +161,28 @@ describe('effectiveDusk', () => {
     }
     await effectiveDusk(new Date(2026, 8, 26), 51.5, -0.12, { fetchFn, timeoutMs: 20 })
     expect(signal.aborted).toBe(true)
+  })
+
+  it('keeps the last good weather when a later refresh fails', async () => {
+    const day = new Date(2026, 8, 26)
+    const ok = async () => ({ ok: true, json: async () => json })
+    const down = async () => {
+      throw new Error('offline')
+    }
+    await effectiveDusk(day, 51.5, -0.12, { fetchFn: ok })
+    const r = await effectiveDusk(day, 51.5, -0.12, { fetchFn: down })
+    expect(r.source).toBe('open-meteo')
+    expect(r.cached).toBe(true)
+    expect(r.shiftMinutes).toBe(27)
+  })
+
+  it('does not reuse weather from another day or place', async () => {
+    const ok = async () => ({ ok: true, json: async () => json })
+    const down = async () => {
+      throw new Error('offline')
+    }
+    await effectiveDusk(new Date(2026, 8, 26), 51.5, -0.12, { fetchFn: ok })
+    expect((await effectiveDusk(new Date(2026, 8, 27), 51.5, -0.12, { fetchFn: down })).source).toBe('offline')
+    expect((await effectiveDusk(new Date(2026, 8, 26), 40.7, -74, { fetchFn: down })).source).toBe('offline')
   })
 })
