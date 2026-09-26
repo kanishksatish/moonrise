@@ -25,13 +25,11 @@ function fakeClient(reply) {
   const calls = []
   return {
     calls,
-    beta: {
-      messages: {
-        parse: async (params) => {
-          calls.push(params)
-          if (reply instanceof Error) throw reply
-          return reply
-        },
+    messages: {
+      parse: async (params) => {
+        calls.push(params)
+        if (reply instanceof Error) throw reply
+        return reply
       },
     },
   }
@@ -59,11 +57,14 @@ describe('what gets sent', () => {
     const client = fakeClient(ok(['Tell me about the river in Dayton.']))
     await generateMemoryPrompts(profile, { client })
     const [req] = client.calls
-    expect(req.model).toBe(AI_MODEL)
-    expect(req.output_config.effort).toBe('low')
+    expect(req.model).toBe('claude-haiku-4-5')
+    expect(AI_MODEL).toBe('claude-haiku-4-5')
     expect(req.output_config.format).toBeTruthy()
-    expect(req.fallbacks).toBe('default')
-    expect(req.betas).toEqual(['server-side-fallback-2026-07-01'])
+    // Haiku 4.5 rejects these; make sure they never creep back in.
+    expect(req.output_config.effort).toBeUndefined()
+    expect(req.thinking).toBeUndefined()
+    expect(req.fallbacks).toBeUndefined()
+    expect(req.betas).toBeUndefined()
     expect(req.messages).toHaveLength(1)
     expect(req.messages[0].content).toContain('Dayton')
     expect(req.messages[0].content).not.toContain('Rose')

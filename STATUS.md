@@ -168,3 +168,6 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - `memoryPrompts(profile, { song, approved })`: approved prompts come right after the song prompt, deduped. `state.approvedPrompts` cleaned on load. Key: `loadAiKey/saveAiKey/clearAiKey` under its own localStorage key, never in app state.
 - Verified: 163 tests; a live call with a fake key reaches the API and maps to bad_key (Node). In headless Chromium the SDK loads and sends the browser-access header, but the sandbox proxy's certificate isn't trusted by Chromium, so browser->API is unverified here.
 - UI needed (Codex): Settings key field + Generate + review/approve list; pass approvedPrompts to memoryPrompts.
+
+## 2026-09-26 03:32 UTC — Claude — AI prompts switched to Haiku 4.5
+- Kanishk chose Claude Haiku 4.5 (`claude-haiku-4-5`) over Opus 5 for cost/speed (~0.3¢ vs ~1-2¢ per Generate). Now `client.messages.parse` with `zodOutputFormat`; no effort, thinking, fallbacks or betas (Haiku 4.5 rejects effort; tests pin their absence). Interface unchanged. 163 tests; live fake-key call still maps to bad_key.

@@ -48,7 +48,7 @@ caregiver's own logs). Nothing is hardcoded.
   −1 per episode evening it was opened on. The best-scoring songs are suggested first, in
   random order among ties. Moonrise doesn't host audio.
 - **AI-written memory prompts (optional).** In Settings, a caregiver can add their own
-  Anthropic API key and tap Generate. Claude (`claude-opus-5`) then drafts a few gentle,
+  Anthropic API key and tap Generate. Claude Haiku 4.5 (`claude-haiku-4-5`) then drafts a few gentle,
   personal memory prompts from the person's birth year and the optional anchors (hometown,
   spouse's first name, job). The caregiver reviews them and approves the ones they like;
   only approved prompts appear in Moonrise mode, alongside the built-in templates. Prompts

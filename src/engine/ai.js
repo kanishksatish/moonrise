@@ -18,7 +18,8 @@
 
 import { eraYears } from './songs.js'
 
-export const AI_MODEL = 'claude-opus-5'
+// Haiku 4.5: fast and inexpensive, plenty for six short prompts that a caregiver reviews.
+export const AI_MODEL = 'claude-haiku-4-5'
 export const AI_PROMPT_COUNT = 6
 export const AI_TIMEOUT_MS = 30000
 const MAX_PROMPT_LENGTH = 140
@@ -111,27 +112,21 @@ async function toAiError(err) {
 
 // Returns up to `count` new prompt strings for the caregiver to review.
 // Rejects with an AiPromptError whose .code tells the UI what to say.
-// Pass `client` (anything with beta.messages.parse) to test without the network.
+// Pass `client` (anything with messages.parse) to test without the network.
 export async function generateMemoryPrompts(profile, { apiKey, client, existing = [], count = AI_PROMPT_COUNT } = {}) {
   if (!client && !(typeof apiKey === 'string' && apiKey.trim())) {
     throw new AiPromptError('no_key', 'Add an Anthropic API key in Settings to use AI prompts.')
   }
   try {
     const api = client ?? (await defaultClient(apiKey.trim()))
-    const [{ z }, { betaZodOutputFormat }] = await Promise.all([
-      import('zod'),
-      import('@anthropic-ai/sdk/helpers/beta/zod'),
-    ])
+    const [{ z }, { zodOutputFormat }] = await Promise.all([import('zod'), import('@anthropic-ai/sdk/helpers/zod')])
     const Schema = z.object({ prompts: z.array(z.string()) })
 
-    const response = await api.beta.messages.parse({
+    // Haiku 4.5 takes no effort setting; structured output keeps the reply as { prompts: [...] }.
+    const response = await api.messages.parse({
       model: AI_MODEL,
       max_tokens: 16000,
-      // Simple, short task: low effort keeps it fast and inexpensive.
-      output_config: { effort: 'low', format: betaZodOutputFormat(Schema) },
-      // If the model declines, the API retries on a fallback model in the same call.
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
+      output_config: { format: zodOutputFormat(Schema) },
       system: SYSTEM,
       messages: [{ role: 'user', content: buildRequestText(profile, count) }],
     })
