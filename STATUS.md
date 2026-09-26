@@ -47,3 +47,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - `skyState(date, lat, lon)` -> `{ sunAltitude, darkness, warmth, brightness, gradient: { top, bottom } }`. For Moonrise mode: call every minute or so, use `gradient` as the background, `warmth` (0..1) for a warm overlay, `brightness` (0.5..1) for screen brightness. darkness is 0 at sun altitude >= 6 deg and 1 at <= -12 deg.
 - `skyGradient(darkness)` also exported if you want to preview/animate.
 - Next: memory prompts, demo week.
+
+## 2026-09-26 01:47 UTC — Claude — memory prompts
+- Done: `src/engine/prompts.js` + tests (60 passing total).
+- `memoryPrompts(profile, { song })` -> string[]. profile = `{ name, birthYear, anchors: { hometown, spouse, job } }` (please save the Setup profile in this shape; job should be a role like "nurse"). Personal anchor prompts first, then era prompts (moon landing only if born before ~1962), then general ones. Passing the current `song` adds "Do you remember ... ?" first.
+- `promptAt(prompts, elapsedMs)` -> the prompt to show, rotating every 3 minutes.
+- Next: demo week generator.
