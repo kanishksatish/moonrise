@@ -59,6 +59,12 @@
     .session-experience .session-moon { bottom:calc(14% + var(--moon-progress,0)*12%); }
     .session-experience .session-moon .moon-icon { width:150px; height:150px; }
     .session-experience .session-orbit { bottom:-125px; }
+    /* The inline moon needs a small halo, not the clipped desktop atmosphere. */
+    .session-experience:not(.quiet-view) .session-sky { overflow:visible; }
+    .session-experience:not(.quiet-view) .session-moon .moon-icon { filter:drop-shadow(0 0 6px #efc5a330); }
+    .session-experience:not(.quiet-view) .session-moon::before,
+    .session-experience:not(.quiet-view) .session-orbit,
+    .session-experience:not(.quiet-view) .session-reflection { display:none; }
     .session-experience .session-caption { grid-area:caption; margin:0; font-size:22px; }
     .session-experience .session-caption br { display:none; }
     .session-experience .session-caption br::after { content:' '; }
@@ -81,12 +87,7 @@
     .session-experience .session-sky { width:100px; height:164px; }
     .session-experience .session-moon .moon-icon { width:104px; height:104px; }
     .session-experience .session-orbit { bottom:-133px; width:160%; }
-    /* Keep the compact moon's light inside its own column, without a clipped halo. */
-    .session-experience:not(.quiet-view) .session-sky { overflow:visible; }
     .session-experience:not(.quiet-view) .session-moon .moon-icon { width:92px; height:92px; filter:drop-shadow(0 0 3px #efc5a330); }
-    .session-experience:not(.quiet-view) .session-moon::before,
-    .session-experience:not(.quiet-view) .session-orbit,
-    .session-experience:not(.quiet-view) .session-reflection { display:none; }
     .session-experience .session-caption { font-size:21px; line-height:1.5; }
     .session-experience .prompt { padding:24px 18px; }
     .session-experience .session-prompt-footer { flex-direction:column; align-items:stretch; gap:8px; }
