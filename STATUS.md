@@ -16,3 +16,12 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
   Also exported: `computeEffectiveDusk(sunset, hourly)`, `cloudShiftMinutes(percent)`.
 - Note: suncalc 2.x is ESM with named exports: `import { getTimes } from 'suncalc'` (no default export).
 - Next: `moonriseStart(effectiveDusk, logs)`.
+
+## 2026-09-26 01:44 UTC — Claude — moonriseStart
+- Done: `src/engine/schedule.js` with `moonriseStart(effectiveDusk, logs)` + tests (26 passing total).
+- Returns `{ start: Date, minutesBeforeDusk, basis: 'default'|'learned', episodesUsed }`. Default 45 min before dusk; with 3+ logged evenings and at least one timed episode, uses median(onset - dusk) - 20 min, clamped to 15..90 min before dusk.
+- **Log shape (UI please save logs like this):**
+  `{ date: 'YYYY-MM-DD', outcome: 'calm'|'restless'|'episode', episodeStart: ISO|null, effectiveDusk: ISO, cloudCover: number|null, songIds: string[] }`.
+  Store that evening's `effectiveDusk` and `cloudCover` from `effectiveDusk()`, and the ids of songs played in Moonrise mode.
+- Contract: added `moonriseStart`, `onsetMinutes` to `src/engine/index.js`.
+- Next: songs (songs.json, eraYears, songScore, playlist).

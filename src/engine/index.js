@@ -2,3 +2,4 @@
 // Change only after noting it in STATUS.md.
 
 export { effectiveDusk, computeEffectiveDusk, cloudShiftMinutes } from './sky.js'
+export { moonriseStart, onsetMinutes } from './schedule.js'
