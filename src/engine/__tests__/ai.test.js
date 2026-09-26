@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import Anthropic from '@anthropic-ai/sdk'
 import {
   AI_MODEL,
@@ -58,6 +58,7 @@ describe('what gets sent', () => {
     await generateMemoryPrompts(profile, { client })
     const [req] = client.calls
     expect(req.model).toBe('claude-haiku-4-5')
+    expect(req.max_tokens).toBe(2048)
     expect(AI_MODEL).toBe('claude-haiku-4-5')
     expect(req.output_config.format).toBeTruthy()
     // Haiku 4.5 rejects these; make sure they never creep back in.
@@ -131,11 +132,30 @@ describe('errors the caregiver can act on', () => {
       [new Anthropic.PermissionDeniedError(403, { type: 'error' }, 'forbidden', h), 'bad_key'],
       [new Anthropic.RateLimitError(429, { type: 'error' }, 'slow down', h), 'rate_limited'],
       [new Anthropic.APIConnectionError({ message: 'offline' }), 'offline'],
+      [new Anthropic.APIConnectionTimeoutError(), 'offline'],
       [new Anthropic.InternalServerError(500, { type: 'error' }, 'oops', h), 'service'],
       [new Error('anything else'), 'service'],
     ]
     for (const [err, code] of cases) {
       expect(await codeOf(generateMemoryPrompts(profile, { client: fakeClient(err) }))).toBe(code)
+    }
+  })
+})
+
+describe('SDK chunk unavailable (first use while offline)', () => {
+  it('rejects with an offline AiPromptError instead of a raw import error', async () => {
+    vi.resetModules()
+    vi.doMock('@anthropic-ai/sdk', () => {
+      throw new TypeError('Failed to fetch dynamically imported module')
+    })
+    try {
+      const fresh = await import('../ai.js')
+      const err = await fresh.generateMemoryPrompts(profile, { apiKey: 'sk-ant-x' }).catch((e) => e)
+      expect(err).toBeInstanceOf(fresh.AiPromptError)
+      expect(err.code).toBe('offline')
+    } finally {
+      vi.doUnmock('@anthropic-ai/sdk')
+      vi.resetModules()
     }
   })
 })
