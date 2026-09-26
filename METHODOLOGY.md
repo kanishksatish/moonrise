@@ -49,6 +49,15 @@ It is caregiver support, not a medical tool.
   and limitations are in [RESEARCH_RESULTS.md](RESEARCH_RESULTS.md). Unlabelled windows are not
   confirmed negatives. Household sensors and 174 hours of history are absent from Moonrise;
   no predictor was integrated, and there is no independent patient or hospice validation.
+- **Bounded broader tuning.** A subsequent frozen ten-candidate comparison completed 200 fits
+  on the same cohort, selecting candidates only by inner-fold AP. Its primary pooled AP was
+  0.0393 (descriptive interval 0.0221–0.0648), with difference versus the saved recent-activity
+  comparator −0.0111 (−0.0563–0.0303). Three selected folds used weighted logistic models and
+  two used unweighted boosting; incompatible score scales affect pooled ranking, so individual
+  fold results are also reported. All 50 candidate/fold strict cutoffs failed support and all
+  five outer folds abstained. No settings were changed afterward. Independent verification
+  reproduced saved predictions, choices and uncertainty without refitting. See every candidate
+  and limitation in [RESEARCH_BROADER.md](RESEARCH_BROADER.md). No clinical alert claim follows.
 - **What the simulations do and don't show.** They check that the rules behave sensibly on
   synthetic data built from our stated assumptions. They say nothing about real people.
 

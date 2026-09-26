@@ -127,7 +127,8 @@ service-worker, pwa, github-actions
 - **Public data.** A separate research benchmark on the public TIHM dataset was completed with
   participant-separated testing. A later same-cohort experiment improved event-ranking average
   precision from 0.0504 to 0.0640 by adding personal baselines; this is not alert accuracy.
-  No candidate met the fixed precision and support requirements. These exploratory results do
+  A broader 200-fit comparison also failed the fixed precision and support requirements.
+  All candidate results are retained in `RESEARCH_BROADER.md`. These exploratory results do
   not support predictive care alerts, so no research model or participant data is connected to
   the app or included in this repository (`RESEARCH_RESULTS.md`, `METHODOLOGY.md`). No patient
   testing or hospice validation is established.

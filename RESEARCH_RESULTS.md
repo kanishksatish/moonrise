@@ -1,6 +1,8 @@
-# Moonrise training results: a real improvement, with a clear limit
+# Moonrise research results: completed training and its limits
 
 **We trained models on real public dementia-monitoring data. Comparing a person's recent activity with their own earlier activity modestly improved event ranking. Reliable predictive alerts remain unsupported.**
+
+Latest update: a broader, fixed **200-fit comparison** also failed to find a supported high-precision alert policy. The earlier feature improvement is retained below, alongside the less favorable later result. More tuning did not establish clinical reliability.
 
 The source is the [official TIHM dataset](https://zenodo.org/records/7622128), with 1,030,559 household activity-sensor records from 56 participants. These are sensor records, not a million patients. The latest experiment required additional earlier history, retaining 50 participants and 8,918 six-hour windows, including 128 windows with a recorded agitation label. Participants were separated between training and evaluation; model and cutoff selection used only inner training folds.
 
@@ -16,9 +18,17 @@ The latest experiment completed 60 model fits across three fixed candidates and 
 
 The prespecified personal-versus-recent logistic comparison improved by **0.0137 average-precision units**, with a descriptive paired interval of **0.0025–0.0278**. Average precision summarizes ranking across cutoffs; it is not the percentage of alerts that were correct. These intervals resample whole participants from fixed predictions and do not include model refitting or uncertainty from repeated development on this dataset.
 
+## The broader tuning pass
+
+After the first feature comparison, we fixed ten candidates: six logistic models varying regularization and class weights, and four gradient-boosting configurations. Three inner folds within each of five participant-separated outer folds produced 150 inner fits and 50 outer fits. Model selection used inner results only; every candidate is reported in the [broader findings](RESEARCH_BROADER.md).
+
+The primary inner-selected procedure had pooled AP **0.0393** (descriptive 95% interval **0.0221–0.0648**), versus **0.0504** for the saved recent-activity comparator on the same cohort. Its paired difference was **−0.0111**, with interval **−0.0563 to +0.0303**. Selected weighted-logistic and unweighted-boosting models have different score scales, which can distort pooled ranking; the full report therefore also shows results for each fold. No post-hoc calibration or outer-test winner replaced the prespecified procedure.
+
+**All 50 candidate-by-fold strict cutoff searches failed the support requirements.** The policy still abstained in all five folds. Training stopped after the fixed pass; no candidates or requirements were altered after seeing the results. The dataset has been examined repeatedly, so this is exploratory development rather than an independent confirmation.
+
 ## What did not work
 
-The fixed selection rule required at least 50% observed precision, at least 10 flags, and matched recorded labels from at least three participants. **None of the candidates qualified in any outer fold.** The selected policy abstained: zero flags, all 128 labels missed, zero recall and undefined precision. This requirement was a research support rule, not a clinical standard.
+The fixed selection rule required at least 50% observed precision, at least 10 flags, and matched recorded labels from at least three participants. **None of the candidates qualified in any outer fold in either pass.** The selected policies abstained: zero flags, all 128 labels missed, zero recall and undefined precision. This requirement was a research support rule, not a clinical standard.
 
 A subsequent diagnostic tested lower alert cutoffs without retraining or choosing cutoffs from held-out labels. All six fixed settings are shown below. They are exploratory failure analysis and do not replace the original result.
 
@@ -47,6 +57,6 @@ Acknowledgement: TIHM creators, Surrey and Borders Partnership NHS Foundation Tr
 
 ## Reproducibility and access
 
-The local research handoff contains the fixed protocols, training code, aggregate results and hashes, independent verification, all six workload diagnostics, and a visual summary. Private participant records, individual predictions and fitted models are kept outside the app repository. The workload analysis and this summary did not retrain models.
+The local research handoff contains the fixed protocols, training code, aggregate results and hashes, independent verification, all six workload diagnostics, and a visual summary. Private participant records, individual predictions and fitted models are kept outside the app repository. The latest broader comparison performed 200 additional fits; the workload analysis and summary figure did not fit models.
 
 Prepared September 26, 2026. See [METHODOLOGY.md](METHODOLOGY.md) for the separate rules that run in Moonrise.

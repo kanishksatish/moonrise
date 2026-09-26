@@ -72,6 +72,7 @@ the optional demo week is explicitly labelled.
   up to the UI. The app uses no TIHM-trained predictive model, and nothing is clinically validated.
   A separate public-data experiment modestly improved event ranking using personal baselines,
   but did not support dependable alerts; see [the complete research results](RESEARCH_RESULTS.md).
+  A further bounded tuning pass also failed to establish a supported alert policy.
   What we tried instead of
   the simple rules, and why they stayed, is in [METHODOLOGY.md](METHODOLOGY.md).
 - **Evenings after midnight.** Anything logged before 4 AM counts toward the previous
