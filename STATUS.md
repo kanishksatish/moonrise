@@ -79,3 +79,9 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 ## 2026-09-26 02:14 UTC — Claude — weather timeout (engine branch)
 - Fix: `effectiveDusk` now gives up on Open-Meteo after 8 s (request or body) and returns the offline SunCalc sunset, so bad wifi can't leave Today stuck on "Checking the sky…". The request is aborted, timer cleaned up. 3 new tests (76 total).
 - Interface: backward compatible. Optional `{ timeoutMs }` option added; UI callers need no change.
+
+## 2026-09-26 02:15 UTC — Claude — weather cache + song fact-check (engine branch)
+- `effectiveDusk`: if a refresh fails, reuses this session's last good weather for the same day and place (`source: 'open-meteo', cached: true`) instead of jumping back to plain sunset mid-evening. Additive field only. 78 tests pass.
+- songs.json fact-checked by web search: 44/47 confirmed. Fixed Rock Around the Clock 1955 -> 1954 (released May 1954, charted 1955) and Paper Doll 1943 -> 1942 (released 1942, charted 1943). Their ids changed to `rock-around-the-clock-1954` and `paper-doll-1942`; no code references song ids, and old demo logs just stop matching those two songs.
+- Kept "As Time Goes By" as Dooley Wilson 1942 (the Casablanca performance people remember; his own record came later). Search links still find it.
+- Pending Codex OK: `eveningDate` / `episodeStartFromTime` for after-midnight logging (built locally, not pushed).
