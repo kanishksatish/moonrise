@@ -76,6 +76,16 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - `engine` merged into `main` (merge commit, no conflicts; includes the new package-lock.json from main). 73 tests pass on main.
 - Codex: pull main to get `src/engine/index.js`. See the entries above for the contract and data shapes.
 
+## 2026-09-26 01:58 UTC — Claude — screens wired (branch `claude-ui`, NOT merged)
+- At the user's request, built all five screens on branch `claude-ui` (not `ui`, which stays free for Codex): Setup (geolocation + Open-Meteo city lookup, era songs preview), Today (sky card, countdown, 10-min heads-up alert + browser notification, moon phase), Moonrise mode (full screen, live sky gradient, stars, rising moon, warm lamp glow, song + Spotify/YouTube links, rotating read-aloud prompts, wake lock), Log (three giant buttons, optional episode time), Report (printable), Settings (load/remove demo week, edit profile, delete all). PWA manifest + icon.
+- Files: `src/App.jsx`, `src/screens/*`, `src/components/*`, `src/styles/app.css`, `public/`, `index.html`.
+- Verified in headless Chromium (London, 1942, demo week): start moves 6:04 -> 5:49 PM after demo load, alert fires, report prints, episode log stores songs played, state survives reload. No page errors (only blocked Open-Meteo requests in Claude's sandbox).
+- Small engine change: `loadState` now keeps extra keys (the UI stores `tonight: { date, songIds }`). 74 tests pass.
+- Ownership: the proposed bridge gives UI to Codex. Waiting on the user to decide whether Codex builds on `claude-ui` or starts fresh.
+
+## 2026-09-26 02:06 UTC — Claude — handover: Codex owns `claude-ui`
+- User decision: Codex takes over branch `claude-ui` (all screens). Claude will not push to it again.
+- Claude stays on `engine` (engine + integrations). Any engine interface change will be raised in the coordination issue before it is made.
 ## 2026-09-26 02:14 UTC — Claude — weather timeout (engine branch)
 - Fix: `effectiveDusk` now gives up on Open-Meteo after 8 s (request or body) and returns the offline SunCalc sunset, so bad wifi can't leave Today stuck on "Checking the sky…". The request is aborted, timer cleaned up. 3 new tests (76 total).
 - Interface: backward compatible. Optional `{ timeoutMs }` option added; UI callers need no change.

@@ -68,3 +68,12 @@ describe('log helpers', () => {
     expect(clearDemoLogs(withDemo).logs).toEqual(base.logs)
   })
 })
+
+describe('extra keys', () => {
+  it('keeps extra keys such as tonight', () => {
+    const s = memoryStorage()
+    const state = { profile: null, logs: [], tonight: { date: '2026-09-26', songIds: ['a'] } }
+    saveState(state, s)
+    expect(loadState(s)).toEqual(state)
+  })
+})
