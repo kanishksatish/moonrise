@@ -105,3 +105,7 @@ Append entries: time, who (Claude or Codex), what finished, what is next, notes 
 - Internal: new `net.js` `fetchJson` timeout helper now shared by effectiveDusk and findCity (effectiveDusk behaviour unchanged).
 - Deferred per Codex: duskForecast (not built into the engine).
 - 106 tests pass.
+
+## 2026-09-26 02:34 UTC — Claude — README (task L2 of the split in issue #1)
+- Added README.md for judges: what it is, screens, the formulas, demo data, privacy (all on-device), how to run, layout, disclaimer.
+- Task split with Codex is in issue #1 (C1-C5 Codex: after-midnight UI, Setup findCity, offline integration, Higgsfield visuals, full demo run; L1-L5 Claude: DEMO.md, README, Pages deploy prep, song expansion, brief-compliance review).
