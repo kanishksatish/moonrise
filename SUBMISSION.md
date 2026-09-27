@@ -113,6 +113,7 @@ Neither our software checks nor the separate research establishes clinical benef
 ## What's next
 
 - Representative caregiver usability sessions using fictional scenarios.
+- Multiple people per device for care settings, with a per-person switcher and access controls.
 - Clinical, ethics, privacy and consent review before any patient-facing pilot.
 - More dependable background reminders and appropriate public-release key management.
 - Independent participants and app-relevant inputs before any further predictive evaluation.
