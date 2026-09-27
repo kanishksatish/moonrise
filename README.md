@@ -19,6 +19,12 @@ reflect associations in those logs, not proof that a song helps. No clinical pre
 
 The hosted app needs no hardware, account or backend. It is a web app (PWA) that runs on any tablet or phone. An optional laptop-only OpenAI demo gateway is described below; it is not deployed with the hosted app.
 
+**Try it:** https://kanishksatish.github.io/moonrise/ · step-by-step test guide: [TESTING.md](TESTING.md).
+
+**No patient data** was used to build or test Moonrise. Demo data is fictional and labelled; a caregiver's
+own records stay in their browser. A separate public-dataset research benchmark (TIHM) is described in
+[RESEARCH_RESULTS.md](RESEARCH_RESULTS.md); no model from it is in the app.
+
 ## How it works
 
 | Step | What Moonrise does |
@@ -65,8 +71,7 @@ the optional demo week is explicitly labelled.
   This does not establish listening duration or benefit. Old era-song IDs retain their
   meaning, and historical piano or personal-file activity is not reconstructed. The report
   can display old era songs and newly played included recordings together, with unknown
-  recording years omitted. In Moonrise mode the top-ranked era song (songScore) is shown with
-  YouTube and Spotify search links for the caregiver; opening a link is not logged as a play. Optional YouTube
+  recording years omitted. Era ranking remains separate internally. Optional YouTube
   playback still requires a verified recording; the unverified candidates are not shown as
   playable songs. **Play a music file** uses a temporary local file without uploading or
   assigning it a catalog ID. Nothing autoplays; changing a recording, Quiet view, and Finish
@@ -108,7 +113,7 @@ references to their original photos and plans. Browser storage can be cleared or
 is not a clinical record system or a backup. Photos, prepared stories, caregiver preferences
 and session events are excluded from generation requests.
 The hosted app has no Moonrise account or backend. Its network calls are weather and city lookups (Open-Meteo, which receives
-coordinates or a city name), YouTube when the caregiver explicitly loads an available player, the YouTube or Spotify search page when the caregiver opens an era-song link, and,
+coordinates or a city name), YouTube when the caregiver explicitly loads an available player, and,
 only if the caregiver sets up AI prompts and taps Generate, one request to the Anthropic
 API with the birth year and the optional hometown, spouse and job answers. The profile
 name, coordinates and evening logs are not sent. Anchors may themselves contain personal

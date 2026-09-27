@@ -4,7 +4,6 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import Today from '../screens/Today.jsx'
 import Moonrise from '../screens/Moonrise.jsx'
-import Setup from '../screens/Setup.jsx'
 import { memoryPrompts, moonriseStart } from '../engine/index.js'
 
 // AGENTS.md screens 2 and 3: Today shows moon phase and a countdown; Moonrise mode paints the real
@@ -61,8 +60,10 @@ it('Moonrise mode paints the live sky, raises the moon and rotates prompts every
   expect(Number(document.querySelector('.sky-stage').dataset.rise)).toBe(1)
 })
 
-it('Setup shows songs from the person’s youth once a birth year is entered', () => {
-  render(<Setup onDone={() => {}}/>)
-  fireEvent.change(screen.getByLabelText('Year they were born'), { target: { value: '1942' } })
-  expect(screen.getByText('Songs from their youth, 1952–1972')).toBeTruthy()
+it('the shared stage names only the recording that is actually playing', () => {
+  render(<Moonrise state={{ profile, logs: [] }} onPlayed={() => {}} onExit={() => {}}/>)
+  expect(document.querySelector('.studio-era')).toBeNull()
+  expect(screen.queryByRole('link', { name: /Spotify|YouTube/ })).toBeNull()
+  fireEvent.playing(screen.getByLabelText(/Für Elise —/))
+  expect(document.querySelector('.studio-era').textContent).toBe('Now playingFür Elise')
 })

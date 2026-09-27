@@ -20,7 +20,7 @@ Optional sourced context: in 2025, 12.7 million unpaid US caregivers provided 19
 
 **0:20–0:45 · Personal setup**
 
-Show **Who’s this evening for?** and **A few familiar details**. Enter 1942: **Songs from their youth, 1952–1972** appears with example titles. Say, “That is a starting collection; the caregiver decides what feels familiar.” Use **Find** for a city if geolocation is unavailable. Finish with **Save** for an existing profile, or **Start** for a new one.
+Show **Who’s this evening for?** and **A few familiar details**. Enter 1942 and say, “Birth year shapes the conversation starters.” Point out the included listening library. Say, “That is a starting collection; the caregiver decides what feels familiar.” Use **Find** for a city if geolocation is unavailable. Finish with **Save** for an existing profile, or **Start** for a new one.
 
 **0:45–1:10 · The evening dashboard**
 
@@ -34,7 +34,7 @@ Tap **Make it personal** to open Settings. With the prepared fictional profile a
 
 Return to Today and tap **Start Moonrise now**. The silent rocket flight lasts 2.4 seconds and can be bypassed with **Skip launch**, Escape, or reduced-motion settings. It occurs only after an explicit start.
 
-In the routine, point to the sky behind the activity: it follows the real sky, and the moon rises slowly over an hour. Choose **A little music**: the stage shows a song from their youth, with **Play on YouTube** / **Spotify** search links and **Next song** for the caregiver (links are not logged as plays). Or choose an included recording and use its native Play control, or **Play a music file** (plays here without uploading). Choose **A familiar story** for one conversation starter at a time; it changes every 3 minutes or with **Next prompt**. Only caregiver-approved AI text enters this view.
+In the routine, point to the sky behind the activity: it follows the real sky, and the moon rises slowly over an hour. Choose **A little music**, pick an included recording and press its native Play control (or **Play a music file**, which plays here without uploading). The stage then shows **Now playing** with that recording's title; only actual playback is recorded. Choose **A familiar story** for one conversation starter at a time; it changes every 3 minutes or with **Next prompt**. Only caregiver-approved AI text enters this view.
 
 Tap **Quiet view**, then **Show conversation**. Say, “The caregiver can put the controls aside for a moment.” Quiet view stops this app’s audio and hides the cards. A local recording must be selected again afterward. Tap **Finish** to reach Log.
 

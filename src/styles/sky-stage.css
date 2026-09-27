@@ -10,8 +10,8 @@
 .studio-era { margin-top:18px; }
 .studio-era .studio-stage__label { margin-bottom:6px; }
 .studio-era-title { font-family:Georgia,serif; font-size:clamp(30px,3vw,46px); line-height:1.15; margin:0 0 6px; overflow-wrap:anywhere; }
-.studio-era-links { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 18px; }
-.studio-era-links .btn { min-height:52px; display:inline-flex; align-items:center; }
+
+
 @media (prefers-reduced-motion: reduce) { .sky-stage, .sky-stage__stars, .sky-stage__moon, .sky-stage__glow { transition:none; } }
 @media print { .sky-stage { display:none; } }
 /* Today: tonight's sky card (live gradient, moon phase, start countdown). White text meets AA on every gradient stop. */

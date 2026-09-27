@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 process.env.TZ = 'America/Chicago'
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App.jsx'
 import Setup from '../screens/Setup.jsx'
@@ -334,15 +334,10 @@ it('records a song only after the integrated player observes playback', async ()
   expect(document.querySelector('iframe')).toBeNull()
 })
 
-it('suggests an era song as search links alongside included audio, recording only in-app playback', () => {
+it('offers included audio and generic conversation instead of unavailable era-song titles', () => {
   const onPlayed = vi.fn()
   render(<Moonrise state={initial} onPlayed={onPlayed} onExit={() => {}} />)
-  // AGENTS.md: era-matched music opens as Spotify or YouTube search links; a link is never logged as played.
-  const era = screen.getByRole('group', { name: /Song from their youth/ })
-  expect(within(era).getByRole('link', { name: /YouTube/ }).getAttribute('href')).toMatch(/^https:\/\/www\.youtube\.com\/results\?search_query=/)
-  expect(within(era).getByRole('link', { name: /Spotify/ }).getAttribute('href')).toMatch(/^https:\/\/open\.spotify\.com\/search\//)
-  fireEvent.click(within(era).getByRole('link', { name: /YouTube/ }))
-  expect(onPlayed).not.toHaveBeenCalled()
+  expect(screen.queryByRole('link', { name: /Spotify|YouTube/ })).toBeNull()
   expect(screen.queryByRole('button', { name: /Load YouTube/ })).toBeNull()
   expect(screen.getByRole('combobox', { name: 'Choose an included recording' })).toBeTruthy()
   expect(document.querySelector('.prompt-text').textContent).not.toContain('Do you remember "')

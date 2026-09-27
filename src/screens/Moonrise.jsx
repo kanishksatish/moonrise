@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import MusicPlayer from '../components/MusicPlayer.jsx'
 import Brand from '../components/Brand.jsx'
-import { eraYears, memoryPrompts, playlist, promptAt, songVideo, spotifySearchUrl, youtubeSearchUrl } from '../engine/index.js'
+import { memoryPrompts, playlist, promptAt, songVideo } from '../engine/index.js'
 import { normalizeEveningPlan } from '../engine/eveningSession.js'
 import { ACTIVITY_LABELS } from '../components/EveningWorkspace.jsx'
 import { eveningKey } from '../components/eveningLog.js'
@@ -29,12 +29,8 @@ export default function Moonrise({ state, session, onSessionEvent = () => {}, on
   const [songs] = useState(() => playlist(contextProfile.birthYear, session?.isDemo ? [] : state.logs).filter(item => songVideo(item.id)))
   const [songIndex, setSongIndex] = useState(0)
   const song = songs.length ? songs[songIndex % songs.length] : null
-  // Era suggestions from their reminiscence years (birth year + 10 to + 30), ranked by the family's own
-  // logs (songScore). These open as search links; only the in-app player records a song as played.
-  const [eraList] = useState(() => playlist(contextProfile.birthYear, session?.isDemo ? [] : state.logs))
-  const [eraIndex, setEraIndex] = useState(0)
-  const eraSong = eraList.length ? eraList[eraIndex % eraList.length] : null
-  const era = eraYears(contextProfile.birthYear)
+  // The recording actually playing, shown on the shared stage; cleared when playback stops.
+  const [nowPlaying, setNowPlaying] = useState(null)
   useEffect(() => {
     let lock; let disposed = false
     const release = async value => { try { await value?.release() } catch { /* Device may already have released it. */ } }
@@ -76,10 +72,9 @@ export default function Moonrise({ state, session, onSessionEvent = () => {}, on
         <p className="eyebrow">{name}</p>
         <div className="studio-stage__content">{activity === 'story' && plan.photoId ? <ComfortPhoto id={plan.photoId} alt={plan.familiarPlace || 'Photo selected by the caregiver'}/> : <span className="studio-orbit" aria-hidden="true">{activity === 'music' ? '♫' : activity === 'story' ? '◇' : '◌'}</span>}<p className="studio-stage__label">{ACTIVITY_LABELS[activity]}</p><h1>{title}</h1>
         {activity === 'story' && <><p className="studio-stage__label">{plan.story ? 'Shared by the caregiver' : 'Conversation starter'}</p><p className="studio-story prompt-text">{plan.story || prompt || 'Conversation starter unavailable.'}</p></>}
-        {activity === 'music' && (eraSong ? <div className="studio-era" aria-live="polite">
-          <p className="studio-stage__label">From their youth · {era.from}–{era.to}</p>
-          <p className="studio-era-title">{eraSong.title}</p>
-          <p className="studio-stage__label">{eraSong.artist} · {eraSong.year}</p>
+        {activity === 'music' && (nowPlaying ? <div className="studio-era" aria-live="polite">
+          <p className="studio-stage__label">Now playing</p>
+          <p className="studio-era-title">{nowPlaying}</p>
         </div> : <p className="studio-story">Choose a recording from the library.</p>)}
         {activity === 'quiet' && <p className="studio-story">Music is stopped.</p>}
         </div>
@@ -87,12 +82,7 @@ export default function Moonrise({ state, session, onSessionEvent = () => {}, on
       <aside className="studio-caregiver" aria-label="Caregiver controls">
         <h2>Session controls</h2>{plan.avoid && <p className="studio-preference"><strong>Keep in mind:</strong> {plan.avoid}</p>}
         <div className="studio-choices" role="group" aria-label="Shared activity choices">{Object.entries(ACTIVITY_LABELS).filter(([key]) => key === 'quiet' || plan.activities.includes(key)).map(([key, label]) => <button key={key} className="btn" aria-pressed={activity === key} onClick={() => changeActivity(key)}>{label}</button>)}</div>
-        {activity === 'music' && eraSong && <div className="studio-era-links" role="group" aria-label={`Song from their youth: ${eraSong.title}`}>
-          <a className="btn" href={youtubeSearchUrl(eraSong)} target="_blank" rel="noreferrer">Play on YouTube <span aria-hidden="true">↗</span></a>
-          <a className="btn" href={spotifySearchUrl(eraSong)} target="_blank" rel="noreferrer">Spotify <span aria-hidden="true">↗</span></a>
-          {eraList.length > 1 && <button className="btn" onClick={() => setEraIndex(i => i + 1)}>Next song</button>}
-        </div>}
-        {activity === 'music' && <><MusicPlayer song={song} youtubeId={song ? songVideo(song.id)?.youtubeId : null} onNext={songs.length > 1 ? () => setSongIndex(i => i + 1) : undefined} sessionId={session?.id || startedAt} playedSongIds={playedSongIds} onStopped={() => { onSessionEvent({ type: 'stopped', activity: 'music', source: 'player' }); setAcknowledged(false) }} onPlayback={id => { setAcknowledged(true); onSessionEvent({ type: 'started', activity: 'music', source: 'player', text: id ? `Recording: ${recordingCatalog.find(item => item.id === id)?.title || 'Catalog recording'}` : 'A music file from this device' }) }} onPlayed={onPlayed}/><details className="studio-cue" open><summary>Conversation starter</summary><p className="prompt-text">{prompt}</p><button className="btn" onClick={() => setPromptOffset(offset => offset + 1)}>Next prompt</button></details></>}
+        {activity === 'music' && <><MusicPlayer song={song} youtubeId={song ? songVideo(song.id)?.youtubeId : null} onNext={songs.length > 1 ? () => setSongIndex(i => i + 1) : undefined} sessionId={session?.id || startedAt} playedSongIds={playedSongIds} onStopped={() => { onSessionEvent({ type: 'stopped', activity: 'music', source: 'player' }); setAcknowledged(false); setNowPlaying(null) }} onPlayback={id => { const label = id ? recordingCatalog.find(item => item.id === id)?.title || 'Catalog recording' : 'A music file from this device'; setAcknowledged(true); setNowPlaying(label); onSessionEvent({ type: 'started', activity: 'music', source: 'player', text: id ? `Recording: ${label}` : label }) }} onPlayed={onPlayed}/><details className="studio-cue" open><summary>Conversation starter</summary><p className="prompt-text">{prompt}</p><button className="btn" onClick={() => setPromptOffset(offset => offset + 1)}>Next prompt</button></details></>}
         {activity === 'story' && !plan.story && <button className="btn" onClick={() => setPromptOffset(offset => offset + 1)}>Next prompt</button>}
         <div className="studio-actions">
           {activity !== 'music' && <button className="btn primary" disabled={acknowledged} onClick={() => { onSessionEvent({ type: 'started', activity }); setAcknowledged(true) }}>{acknowledged ? 'Started in the session record' : 'Record that we started'}</button>}

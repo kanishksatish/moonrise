@@ -89,6 +89,11 @@
   .report.care-handoff .handoff-row-source { display: block; font-size: 8pt; font-weight: 400; margin-top: 0; }
   .report.care-handoff .doctor-note { margin: 8pt 0 5pt; padding: 5pt 7pt; font-size: 9pt; border: 1px solid #333; }
   .report.care-handoff .handoff-limits { font-size: 8pt; line-height: 1.3; }
+  /* The weekly report is the one-page summary (AGENTS.md); a recorded session handoff prints after it,
+     on its own page, without the per-action source toggles. */
+  .report.care-handoff { display: flex; flex-direction: column; }
+  .report.care-handoff > .session-handoff { order: 2; break-before: page; }
+  .report.care-handoff .session-handoff-source { display: none; }
   /* Let the night-by-night table continue on the same page instead of jumping whole to page 2. */
   .report.care-handoff .report-records { break-inside: auto; }
 }

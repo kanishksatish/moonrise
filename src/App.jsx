@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { effectiveDusk, eveningDate, loadState, moonPhase, saveState } from './engine/index.js'
 import { currentSky, eveningKey } from './components/eveningLog.js'
 import useNow from './components/useNow.js'
+import { formatTime } from './components/format.js'
 import useRoutineReminders from './components/useRoutineReminders.js'
 import NavBar from './components/NavBar.jsx'
 import Brand from './components/Brand.jsx'
@@ -171,7 +172,7 @@ function App() {
             if (sessionToLog) {
               const session = stateRef.current.sessions?.find(item => item.id === sessionToLog)
               const log = savedLog
-              if (!session?.isDemo && log) recordEvent({ type:'observation', text: `Evening indicator: ${log.outcome}.${log.episodeStart ? ` Reported onset: ${log.episodeStart}.` : ''}` })
+              if (!session?.isDemo && log) recordEvent({ type:'observation', text: `Evening indicator: ${log.outcome}.${log.episodeStart ? ` Reported onset: ${formatTime(new Date(log.episodeStart))}.` : ''}` })
               setSessionToLog(null); setScreen('report')
             } else setScreen('today')
           }} /> }

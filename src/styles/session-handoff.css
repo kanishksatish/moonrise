@@ -91,7 +91,7 @@
   .session-handoff-preferences dl,
   .session-handoff-preferences dl div { margin-top: 5pt; }
   .session-handoff .session-handoff-lines { margin: 4pt 0 8pt; }
-  .session-handoff-lines > li { padding: 6pt 0; }
+  .session-handoff-lines > li { padding: 2pt 0; }
   .session-handoff .session-handoff-missing { padding: 6pt; margin-top: 6pt; background: transparent; }
   .session-handoff .session-handoff-source { background: transparent; padding: 4pt; }
   .session-handoff-source summary { font-size: 9pt; min-height: 0; padding: 0; }

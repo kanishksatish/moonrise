@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { eraSongs, eraYears, findCity } from '../engine/index.js'
+import { findCity } from '../engine/index.js'
 import includedCatalog from '../assets/audio/catalog.json'
 import Brand from '../components/Brand.jsx'
 import MoonIcon from '../components/MoonIcon.jsx'
@@ -128,13 +128,8 @@ export default function Setup({ profile, onDone, onCancel, focusRef, saveError =
             <p id="setup-year-note" className="onboarding-section-note">{birthYear.length === 4 && !yearValid ? `Use a birth year between 1900 and ${THIS_YEAR - 30}.` : 'Their birth year helps us choose conversation starters.'}</p>
             {yearValid && (
               <div className="onboarding-era">
-                {eraSongs(year).length > 0 ? <>
-                  <p className="era-title">Songs from their youth, {eraYears(year).from}–{eraYears(year).to}</p>
-                  <p>{eraSongs(year).length} suggestions, like {eraSongs(year).slice(0, 3).map(song => song.title).join(', ')}. Plus {includedCatalog.length} included recordings, or a music file of your own.</p>
-                </> : <>
-                  <p className="era-title">There’s room for their favorites.</p>
-                  <p>Choose from {includedCatalog.length} included recordings or bring a music file of your own.</p>
-                </>}
+                <p className="era-title">There’s room for their favorites.</p>
+                <p>Choose from {includedCatalog.length} included recordings or bring a music file of your own.</p>
               </div>
             )}
           </section>
