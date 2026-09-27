@@ -20,6 +20,7 @@ reflect associations in those logs, not proof that a song helps. No clinical pre
 The hosted app needs no hardware, account or backend. It is a web app (PWA) that runs on any tablet or phone. An optional laptop-only OpenAI demo gateway is described below; it is not deployed with the hosted app.
 
 **Try it:** https://kanishksatish.github.io/moonrise/ · step-by-step test guide: [TESTING.md](TESTING.md).
+**Devpost submission package** (copy-paste text + screenshots): [submission/DEVPOST.md](submission/DEVPOST.md).
 
 **No patient data** was used to build or test Moonrise. Demo data is fictional and labelled; a caregiver's
 own records stay in their browser. A separate public-dataset research benchmark (TIHM) is described in
